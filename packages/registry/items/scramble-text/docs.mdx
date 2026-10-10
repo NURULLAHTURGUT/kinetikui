@@ -1,0 +1,25 @@
+## Usage
+
+```tsx
+import { ScrambleText } from '@/components/kinetik/scramble-text';
+
+<ScrambleText text="KINETIK" style={{ fontSize: 48, fontWeight: '800' }} />;
+```
+
+The effect plays on mount and whenever `text` changes. Change `replayKey` to replay it with the same text.
+
+## When to use
+
+- Headlines, codes and status labels that change: a build number, a reveal, a mode switch.
+- Monospace or uppercase text, where the cycling glyphs keep a steady rhythm.
+
+## When not to use
+
+- Paragraphs. Scrambled body text is unreadable and long strings wrap unpredictably while cycling.
+- Text the user is trying to read while it changes, such as prices during checkout.
+
+## Notes
+
+- The settled text sizes the component, so scrambling never shifts the layout around it.
+- While scrambling, one `Text` re-renders about 18 times a second; when every character has settled the timer stops. This is deliberate: driving a `TextInput`'s text from the UI thread every frame chains text-input states on Android's New Architecture and can crash a long-running screen.
+- Screen readers get the final text immediately.

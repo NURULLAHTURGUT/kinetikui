@@ -1,0 +1,30 @@
+## Usage
+
+```tsx
+import { HoldToConfirm } from '@/components/kinetik/hold-to-confirm';
+
+<HoldToConfirm
+  label="Hold to delete project"
+  confirmedLabel="Project deleted"
+  tone="danger"
+  onConfirm={deleteProject}
+/>;
+```
+
+Holding for `duration` ms (1200 by default) confirms. Letting go or sliding the finger more than 40 pt away cancels and the ring unwinds.
+
+## When to use
+
+- Destructive or costly actions where a confirmation dialog would be heavy: delete, transfer, end a session.
+- Actions that should not fire from an accidental tap in a pocket or a scroll.
+
+## When not to use
+
+- Everyday actions. Holding is slower than tapping; reserve it for moments that deserve the pause.
+- Actions that need to be undone easily. Prefer an undo toast after a normal tap.
+
+## Notes
+
+- Screen-reader users confirm with a double tap and hold (the `longpress` accessibility action). A plain double tap explains how to use the control instead of confirming.
+- The ring and fill keep advancing under reduced motion because they show progress; only the press scale is reduced.
+- After `resetAfter` ms the button returns to idle. Pass `null` to keep it confirmed.

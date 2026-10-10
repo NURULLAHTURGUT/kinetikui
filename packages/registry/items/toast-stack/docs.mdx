@@ -1,0 +1,35 @@
+## Usage
+
+```tsx
+import { ToastProvider, useToast } from '@/components/kinetik/toast-stack';
+
+// Once, near the root (inside GestureHandlerRootView and SafeAreaProvider):
+<ToastProvider>
+  <App />
+</ToastProvider>;
+
+// Anywhere below it:
+const toast = useToast();
+toast.show({ title: 'Card removed', action: { label: 'Undo', onPress: restore } });
+toast.show({ title: 'Payment failed', description: 'Try another card.', tone: 'danger' });
+```
+
+`show` returns an id you can pass to `dismiss`. `dismissAll` clears the stack.
+
+## When to use
+
+- Short, non-blocking confirmations and errors that do not need a decision.
+- Offering a quick Undo after an action.
+
+## When not to use
+
+- Errors the user must fix before continuing. Show them inline next to the field or action.
+- Long messages or several actions. Use a sheet or a dialog.
+
+## Notes
+
+- Up to `max` toasts (3) stay in the stack; older ones animate out.
+- Tapping the stack fans it out into a list and pauses every timer until it collapses again.
+- Swipe a toast sideways past 30% of the screen, or fling it, to dismiss.
+- `success`, `warning` and `danger` toasts play the matching haptic; every toast is announced to screen readers.
+- Set `safeArea={false}` when the provider wraps a small region instead of the whole screen.

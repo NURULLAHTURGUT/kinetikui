@@ -1,0 +1,42 @@
+## Usage
+
+```tsx
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+
+import { PlayerSheet } from '@/components/kinetik/screens/player-sheet';
+
+export default function Music() {
+  const player = useAudioPlayer();
+  const status = useAudioPlayerStatus(player);
+  return (
+    <PlayerSheet
+      tracks={tracks}
+      position={status.currentTime}
+      onPlay={(track) => {
+        player.replace(track.url);
+        player.play();
+      }}
+      onPause={() => player.pause()}
+      onSeek={(seconds) => player.seekTo(seconds)}
+    />
+  );
+}
+```
+
+`Track` needs `id`, `title`, `artist` and `duration`; add your own fields (like `url`) and read them in the callbacks.
+
+## When to use
+
+- A list of playable items (music, podcasts, lessons) with a persistent mini player.
+- When the full player is a step away from the list, not a separate route.
+
+## When not to use
+
+- Video. The sheet covers the list; use a dedicated player screen.
+- One-off audio clips in a feed. Inline play buttons are enough.
+
+## Notes
+
+- Without `position`, the screen runs its own one-second clock and advances to the next track, so the demo plays on its own. Pass `position` from your audio player in a real app.
+- Previous restarts the track when more than three seconds in, like most players.
+- The player opens at the tall snap point; drag down to the shorter one or close.

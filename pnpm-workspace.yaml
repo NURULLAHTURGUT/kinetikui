@@ -1,0 +1,14 @@
+packages:
+  - apps/*
+  - packages/*
+
+# React Native native modules must exist exactly once on disk; hoisting keeps
+# registry sources, the playground and the docs site on one copy.
+nodeLinker: hoisted
+
+# Only packages that genuinely need install scripts. Skia downloads its
+# prebuilt native binaries in postinstall.
+allowBuilds:
+  '@shopify/react-native-skia': true
+  esbuild: true
+  unrs-resolver: false

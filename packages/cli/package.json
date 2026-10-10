@@ -1,0 +1,46 @@
+{
+  "name": "kinetik-ui",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Add Kinetik UI motion components to an Expo project: copies the source, installs SDK-compatible dependencies, and serves the registry to AI agents over MCP.",
+  "license": "MIT",
+  "homepage": "https://kinetik-ui.dev",
+  "bin": {
+    "kinetik-ui": "dist/index.js",
+    "kinetik": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20.19"
+  },
+  "keywords": [
+    "expo",
+    "react-native",
+    "reanimated",
+    "skia",
+    "animation",
+    "components",
+    "shadcn",
+    "registry",
+    "mcp",
+    "ai"
+  ],
+  "scripts": {
+    "build": "tsc --noEmit -p tsconfig.build.json && node build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test \"src/**/*.test.ts\""
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@kinetik/mcp": "workspace:*",
+    "@types/node": "^22.15.0",
+    "esbuild": "0.28.2",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3"
+  }
+}

@@ -1,0 +1,25 @@
+## Usage
+
+```tsx
+import { Odometer } from '@/components/kinetik/odometer';
+
+<Odometer value={revenue} decimals={2} prefix="$" locale="en-US" />;
+```
+
+Every digit 0–9 in the formatted value rolls; separators, signs and units stay put. When the value grows the columns roll forward, when it shrinks they roll back, and a column that wraps (9 → 0) keeps rolling instead of reversing through every digit.
+
+## When to use
+
+- Counters and totals that change while the user watches: balances, scores, live metrics.
+- Moments where the size of a change matters as much as the result.
+
+## When not to use
+
+- Values that change many times per second. The digits blur; show a static number or throttle updates.
+- Long tables of numbers. Rolling columns draw the eye; keep them for a few headline figures.
+
+## Notes
+
+- Pass `format` for full control; the default uses `Intl.NumberFormat` with `decimals` fixed so columns stay aligned.
+- Columns are keyed from the right, so gaining a digit (999 → 1,000) slides a new column in on the left.
+- Use a font with tabular figures (the default sets `fontVariant: ['tabular-nums']`) so digits keep a steady width.

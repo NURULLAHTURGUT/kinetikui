@@ -1,0 +1,25 @@
+## Usage
+
+```tsx
+import { WordCascade } from '@/components/kinetik/word-cascade';
+
+<WordCascade text="Motion should explain, not decorate." style={{ fontSize: 28 }} />;
+```
+
+It plays on mount and whenever `text` or `replayKey` changes. Line breaks (`\n`) in the text are kept.
+
+## When to use
+
+- A headline or short intro that should feel composed rather than dumped on screen: onboarding, empty states, section openers.
+- Text that appears in response to an action, such as an AI answer or a result summary.
+
+## When not to use
+
+- Body copy the user needs right away. A long cascade makes people wait to read.
+- Lists, labels and buttons. Animate the container instead.
+
+## Notes
+
+- One shared clock drives every word, so a long paragraph costs one timing animation, not one per word.
+- Words wrap with flexbox; for very long texts consider a plain `Text` for the remainder.
+- Screen readers receive the whole paragraph at once.

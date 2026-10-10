@@ -1,0 +1,65 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "aperture-card",
+  "type": "registry:item",
+  "title": "Aperture Card",
+  "description": "A card closed by a camera-like iris whose blades turn open to reveal the content.",
+  "categories": [
+    "card"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/aperture-card.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/aperture-card.tsx",
+      "content": "import { Canvas, Path, RadialGradient, Skia, vec, type SkSize } from '@shopify/react-native-skia';\nimport { useEffect, useState, type ReactNode } from 'react';\nimport {\n  StyleSheet,\n  View,\n  type AccessibilityActionEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport { Gesture, GestureDetector } from 'react-native-gesture-handler';\nimport Animated, {\n  useAnimatedStyle,\n  useDerivedValue,\n  useSharedValue,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring, timing } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type ApertureCardProps = {\n  /** Content revealed when the aperture opens. */\n  children: ReactNode;\n  /** Shown on the closed blades, e.g. a label or icon. */\n  cover?: ReactNode;\n  /** Controlled open state. */\n  open?: boolean;\n  /** Initial state when uncontrolled. Defaults to false. */\n  defaultOpen?: boolean;\n  onOpenChange?: (open: boolean) => void;\n  /** Number of iris blades, 5–9. Defaults to 7. */\n  blades?: number;\n  /** Toggle on tap. Defaults to true. */\n  toggleOnPress?: boolean;\n  /** A tap when the aperture finishes opening. Defaults to true. */\n  haptics?: boolean;\n  /** Accessible name of the card. */\n  accessibilityLabel?: string;\n  /** Corner radius. Defaults to the theme `xl` radius. */\n  radius?: number;\n  style?: StyleProp<ViewStyle>;\n};\n\n/**\n * A card closed by a camera-like iris. Tapping it turns the blades and opens\n * the aperture outward, revealing the content beneath.\n */\nexport function ApertureCard({\n  children,\n  cover,\n  open: controlled,\n  defaultOpen = false,\n  onOpenChange,\n  blades = 7,\n  toggleOnPress = true,\n  haptics = true,\n  accessibilityLabel,\n  radius,\n  style,\n}: ApertureCardProps) {\n  const theme = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const [internal, setInternal] = useState(defaultOpen);\n  const open = controlled ?? internal;\n  const r = radius ?? theme.radius.xl;\n  const n = Math.max(5, Math.min(9, Math.round(blades)));\n\n  const progress = useSharedValue(open ? 1 : 0);\n  const size = useSharedValue<SkSize>({ width: 0, height: 0 });\n\n  const landed = () => haptic('tap');\n  useEffect(() => {\n    const target = open ? 1 : 0;\n    const done = (finished?: boolean) => {\n      'worklet';\n      if (finished && target === 1) scheduleOnRN(landed);\n    };\n    progress.set(\n      reduced\n        ? withTiming(target, timing('base', true), done)\n        : withSpring(target, { ...spring('smooth'), overshootClamping: true }, done),\n    );\n    // `landed` only plays a haptic; it does not need to retrigger the animation.\n    // eslint-disable-next-line react-hooks/exhaustive-deps\n  }, [open, reduced, progress]);\n\n  const toggle = () => {\n    const next = !open;\n    if (controlled === undefined) setInternal(next);\n    onOpenChange?.(next);\n  };\n\n  const tap = Gesture.Tap()\n    .withTestId('aperture-card')\n    .enabled(toggleOnPress)\n    .onEnd((_e, success) => {\n      if (success) scheduleOnRN(toggle);\n    });\n\n  // The blades: the whole card minus a rotating polygon that grows with\n  // progress, plus a seam along each blade edge.\n  const blade = useDerivedValue(() => {\n    const { width, height } = size.get();\n    const p = reduced ? 0 : progress.get();\n    const cx = width / 2;\n    const cy = height / 2;\n    const reach = Math.sqrt(cx * cx + cy * cy) * 1.25;\n    const radiusNow = p * reach;\n    const turn = (1 - p) * (Math.PI / 2.2);\n    const path = Skia.Path.Make();\n    path.addRect({ x: 0, y: 0, width, height });\n    for (let i = 0; i < n; i++) {\n      const a = turn + (i / n) * Math.PI * 2;\n      const x = cx + Math.cos(a) * radiusNow;\n      const y = cy + Math.sin(a) * radiusNow;\n      if (i === 0) path.moveTo(x, y);\n      else path.lineTo(x, y);\n    }\n    path.close();\n    path.setFillType(1); // EvenOdd: rect minus the aperture\n    return path;\n  });\n\n  const seams = useDerivedValue(() => {\n    const { width, height } = size.get();\n    const p = reduced ? 0 : progress.get();\n    const cx = width / 2;\n    const cy = height / 2;\n    const reach = Math.sqrt(cx * cx + cy * cy) * 1.25;\n    const radiusNow = Math.max(2, p * reach);\n    const turn = (1 - p) * (Math.PI / 2.2);\n    const path = Skia.Path.Make();\n    for (let i = 0; i < n; i++) {\n      const a = turn + (i / n) * Math.PI * 2;\n      const b = turn + ((i + 1) / n) * Math.PI * 2;\n      const x0 = cx + Math.cos(a) * radiusNow;\n      const y0 = cy + Math.sin(a) * radiusNow;\n      // Each seam runs along the polygon edge and on past the corner.\n      const dx = Math.cos(b) * radiusNow + cx - x0;\n      const dy = Math.sin(b) * radiusNow + cy - y0;\n      const len = Math.sqrt(dx * dx + dy * dy) || 1;\n      path.moveTo(x0, y0);\n      path.lineTo(x0 + (dx / len) * reach * 2, y0 + (dy / len) * reach * 2);\n    }\n    return path;\n  });\n\n  const center = useDerivedValue(() => vec(size.get().width / 2, size.get().height / 2));\n  const shadeRadius = useDerivedValue(() =>\n    Math.max(1, Math.max(size.get().width, size.get().height) * 0.75),\n  );\n\n  const canvasStyle = useAnimatedStyle(() => ({\n    // Reduced motion: the blades fade instead of turning.\n    opacity: reduced ? 1 - progress.get() : progress.get() > 0.995 ? 0 : 1,\n  }));\n  const coverStyle = useAnimatedStyle(() => ({\n    opacity: Math.max(0, 1 - progress.get() * 3),\n    transform: [{ scale: 1 - progress.get() * 0.15 }],\n  }));\n\n  const onAccessibilityAction = (e: AccessibilityActionEvent) => {\n    if (e.nativeEvent.actionName === 'activate' && toggleOnPress) toggle();\n  };\n\n  const bladeColor = theme.colors.surfaceRaised;\n\n  return (\n    <GestureDetector gesture={tap}>\n      <View\n        collapsable={false}\n        accessible\n        accessibilityRole={toggleOnPress ? 'button' : undefined}\n        accessibilityLabel={accessibilityLabel}\n        accessibilityHint={\n          toggleOnPress ? (open ? 'Closes the card' : 'Opens the card') : undefined\n        }\n        accessibilityState={{ expanded: open }}\n        accessibilityActions={toggleOnPress ? [{ name: 'activate' }] : undefined}\n        onAccessibilityAction={onAccessibilityAction}\n        style={[\n          styles.card,\n          {\n            borderRadius: r,\n            backgroundColor: theme.colors.surface,\n            borderColor: theme.colors.border,\n            boxShadow: theme.shadow.md,\n          },\n          style,\n        ]}\n      >\n        <View\n          style={styles.content}\n          importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}\n          accessibilityElementsHidden={!open}\n        >\n          {children}\n        </View>\n        <Animated.View pointerEvents=\"none\" style={[StyleSheet.absoluteFill, canvasStyle]}>\n          <Canvas style={StyleSheet.absoluteFill} onSize={size}>\n            {/* Opaque blades, then a soft shade so they read as curved metal. */}\n            <Path path={blade} color={bladeColor} />\n            <Path path={blade}>\n              <RadialGradient\n                c={center}\n                r={shadeRadius}\n                colors={[\n                  withAlpha(theme.colors.highlight, 0.06),\n                  withAlpha(theme.colors.surfaceSunken, 0.85),\n                ]}\n              />\n            </Path>\n            <Path\n              path={seams}\n              style=\"stroke\"\n              strokeWidth={1.25}\n              color={withAlpha(theme.colors.highlight, 0.14)}\n            />\n          </Canvas>\n        </Animated.View>\n        {cover ? (\n          <Animated.View pointerEvents=\"none\" style={[styles.cover, coverStyle]}>\n            {cover}\n          </Animated.View>\n        ) : null}\n      </View>\n    </GestureDetector>\n  );\n}\n\nconst styles = StyleSheet.create({\n  card: { overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, minHeight: 200 },\n  content: { flexGrow: 1 },\n  cover: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "card",
+    "web": "live",
+    "perf": {
+      "budget": "While opening or closing, two small paths (blades and seams) are rebuilt on the UI thread each frame; nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-10",
+          "build": "release",
+          "frameMs": 69,
+          "p90Ms": 101,
+          "baselineMs": 65,
+          "jankyPercent": 85.28,
+          "atRest": "idle",
+          "memoryMb": 152
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The blades fade out instead of turning.",
+      "screenReader": "Button role with expanded state; the hidden content is not exposed until the card is open.",
+      "touchTarget": "The whole card (at least 200 pt tall)."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { ApertureCard } from '@/components/kinetik/aperture-card';\n\n<ApertureCard\n  accessibilityLabel=\"Mystery reward\"\n  cover={<Text>Tap to open</Text>}\n  style={{ height: 280 }}\n>\n  <Reward />\n</ApertureCard>;\n```\n\nUncontrolled by default: a tap opens and closes the iris. Pass `open` and `onOpenChange` to drive it from state, for example after a purchase completes.\n\n## When to use\n\n- Reveals with a little ceremony: rewards, unlocked content, a daily surprise.\n- Camera, photo and media products, where the iris is a natural metaphor.\n\n## When not to use\n\n- Hiding content people need right away. A reveal is a delay.\n- Small cards; the blades need room to read as an aperture.\n\n## Notes\n\n- The revealed content is hidden from screen readers until the card opens.\n- `blades` takes 5 to 9; odd numbers look most like a real lens.\n- A light tap plays when the aperture finishes opening.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add aperture-card`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

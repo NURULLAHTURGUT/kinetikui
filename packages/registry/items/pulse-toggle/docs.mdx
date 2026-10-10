@@ -1,0 +1,31 @@
+## Usage
+
+```tsx
+import { PulseToggle } from '@/components/kinetik/pulse-toggle';
+
+const [enabled, setEnabled] = useState(false);
+
+<PulseToggle
+  label="Release alerts"
+  description="A nudge when a new build is ready"
+  value={enabled}
+  onValueChange={setEnabled}
+/>;
+```
+
+With a `label` the whole row is the touch target and stretches to its container. Without one, give it an `accessibilityLabel`.
+
+## When to use
+
+- Settings that take effect immediately.
+- Places where a little personality is welcome: onboarding, preferences, playful products.
+
+## When not to use
+
+- Choices that only apply after a Save button. Use a checkbox.
+- More than two states. Use a segmented control.
+
+## Notes
+
+- `activeColor` changes the on colour per toggle; the thumb is always the theme highlight when on.
+- The pulse ring only plays when the user turns the switch on, not on first render.

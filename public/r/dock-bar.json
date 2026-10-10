@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "dock-bar",
+  "type": "registry:item",
+  "title": "Dock Bar",
+  "description": "A floating bottom navigation bar whose items swell under the finger like a dock.",
+  "categories": [
+    "navigation"
+  ],
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/dock-bar.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/dock-bar.tsx",
+      "content": "import { useState, type ReactNode } from 'react';\nimport {\n  StyleSheet,\n  Text,\n  View,\n  type AccessibilityActionEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport { Gesture, GestureDetector } from 'react-native-gesture-handler';\nimport Animated, {\n  useAnimatedReaction,\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  type SharedValue,\n} from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget } from '../../lib/kinetik/tokens/tokens';\n\nexport type DockItem = {\n  key: string;\n  label: string;\n  /** Icon drawn inside the item; receive the active state to style it. */\n  icon: (state: { active: boolean; color: string }) => ReactNode;\n};\n\nexport type DockBarProps = {\n  items: readonly DockItem[];\n  /** Key of the active item. */\n  value: string;\n  onChange: (key: string) => void;\n  /** Size of the item under the finger relative to rest. Defaults to 1.6. */\n  magnification?: number;\n  /** Item size at rest, in pt. Defaults to 48. */\n  itemSize?: number;\n  /** Ticks as the finger crosses items. Defaults to true. */\n  haptics?: boolean;\n  /** Accessible name of the bar. */\n  accessibilityLabel?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst GAP = 6;\nconst TOOLTIP_WIDTH = 160;\n\n/**\n * A floating bottom navigation bar that swells under the finger like a dock.\n * Slide along it to preview items, release to choose; a tap chooses directly.\n */\nexport function DockBar({\n  items,\n  value,\n  onChange,\n  magnification = 1.6,\n  itemSize = 48,\n  haptics = true,\n  accessibilityLabel,\n  style,\n}: DockBarProps) {\n  const theme = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const mag = reduced ? 1 : Math.max(1, Math.min(2.2, magnification));\n  const pad = theme.space[2];\n\n  const finger = useSharedValue(-1000);\n  const touching = useSharedValue(0);\n  const hovered = useSharedValue(-1);\n  const [preview, setPreview] = useState<number | null>(null);\n\n  const step = itemSize + GAP;\n  const indexAt = (x: number) => {\n    'worklet';\n    const i = Math.floor((x - pad + GAP / 2) / step);\n    return Math.max(0, Math.min(items.length - 1, i));\n  };\n\n  const choose = (i: number) => {\n    const item = items[i];\n    setPreview(null);\n    if (item && item.key !== value) onChange(item.key);\n  };\n  const show = (i: number) => {\n    setPreview(i < 0 ? null : i);\n    if (i >= 0) haptic('tick');\n  };\n\n  // Tick and show the label whenever the finger moves onto a new item.\n  useAnimatedReaction(\n    () => (touching.get() > 0.5 ? indexAt(finger.get()) : -1),\n    (i, prev) => {\n      if (i !== prev) {\n        hovered.set(i);\n        scheduleOnRN(show, i);\n      }\n    },\n  );\n\n  const pan = Gesture.Pan()\n    .withTestId('dock-bar')\n    .minDistance(0)\n    .shouldCancelWhenOutside(false)\n    .onBegin((e) => {\n      finger.set(e.x);\n      touching.set(withSpring(1, spring('snappy', reduced)));\n    })\n    .onUpdate((e) => {\n      finger.set(e.x);\n    })\n    .onEnd((e) => {\n      scheduleOnRN(choose, indexAt(e.x));\n    })\n    .onFinalize(() => {\n      touching.set(withSpring(0, spring('smooth', reduced)));\n      hovered.set(-1);\n      scheduleOnRN(show, -1);\n    });\n\n  // The bar's backdrop widens as the outer items are pushed out, so they never\n  // hang over its edge. Only a transform: no layout work per frame.\n  const barWidth = pad * 2 + items.length * itemSize + (items.length - 1) * GAP;\n  const spread = (mag - 1) * itemSize * 0.75 * 2;\n  const backdrop = useAnimatedStyle(() => ({\n    transform: [{ scaleX: 1 + (spread / barWidth) * touching.get() }],\n  }));\n\n  const activeIndex = items.findIndex((i) => i.key === value);\n  const previewItem = preview === null ? null : items[preview];\n\n  return (\n    <View style={[styles.wrap, style]}>\n      {previewItem ? (\n        <View\n          pointerEvents=\"none\"\n          style={[\n            styles.tooltip,\n            {\n              left: pad + (preview ?? 0) * step + itemSize / 2 - TOOLTIP_WIDTH / 2,\n              bottom: itemSize * mag + pad * 2 + 6,\n            },\n          ]}\n        >\n          <View\n            style={[\n              styles.tooltipInner,\n              { backgroundColor: theme.colors.text, borderRadius: theme.radius.sm },\n            ]}\n          >\n            <Text\n              style={{\n                color: theme.colors.background,\n                fontSize: theme.font.size.xs,\n                fontWeight: theme.font.weight.bold,\n              }}\n            >\n              {previewItem.label}\n            </Text>\n          </View>\n        </View>\n      ) : null}\n      <GestureDetector gesture={pan}>\n        <View\n          collapsable={false}\n          accessibilityRole=\"tablist\"\n          accessibilityLabel={accessibilityLabel}\n          style={[styles.bar, { padding: pad, gap: GAP }]}\n        >\n          <Animated.View\n            pointerEvents=\"none\"\n            style={[\n              styles.backdrop,\n              {\n                borderRadius: theme.radius.xl,\n                backgroundColor: theme.colors.surfaceRaised,\n                borderColor: theme.colors.border,\n                boxShadow: theme.shadow.lg,\n              },\n              backdrop,\n            ]}\n          />\n          {items.map((item, i) => (\n            <DockSlot\n              key={item.key}\n              item={item}\n              i={i}\n              active={i === activeIndex}\n              size={itemSize}\n              step={step}\n              pad={pad}\n              mag={mag}\n              finger={finger}\n              touching={touching}\n              onActivate={() => choose(i)}\n            />\n          ))}\n        </View>\n      </GestureDetector>\n    </View>\n  );\n}\n\nfunction DockSlot({\n  item,\n  i,\n  active,\n  size,\n  step,\n  pad,\n  mag,\n  finger,\n  touching,\n  onActivate,\n}: {\n  item: DockItem;\n  i: number;\n  active: boolean;\n  size: number;\n  step: number;\n  pad: number;\n  mag: number;\n  finger: SharedValue<number>;\n  touching: SharedValue<number>;\n  onActivate: () => void;\n}) {\n  const { colors, radius } = useKinetikTheme();\n  const center = pad + i * step + size / 2;\n\n  // Gaussian falloff around the finger; items grow upward from the bar.\n  const animated = useAnimatedStyle(() => {\n    const d = (finger.get() - center) / (size * 1.25);\n    const s = 1 + (mag - 1) * Math.exp(-d * d) * touching.get();\n    // Neighbours make room: items shift away from the finger as they grow.\n    const push = -Math.tanh(d) * (mag - 1) * size * 0.75 * touching.get();\n    return {\n      transform: [{ translateX: push }, { translateY: (-(s - 1) * size) / 2 }, { scale: s }],\n    };\n  });\n\n  const onAccessibilityAction = (e: AccessibilityActionEvent) => {\n    if (e.nativeEvent.actionName === 'activate') onActivate();\n  };\n\n  const tint = active ? colors.ember : colors.textMuted;\n\n  return (\n    <Animated.View\n      accessible\n      accessibilityRole=\"tab\"\n      accessibilityLabel={item.label}\n      accessibilityState={{ selected: active }}\n      accessibilityActions={[{ name: 'activate' }]}\n      onAccessibilityAction={onAccessibilityAction}\n      style={{ width: size, height: size }}\n    >\n      <Animated.View\n        style={[\n          styles.item,\n          {\n            width: size,\n            height: size,\n            borderRadius: radius.md,\n            backgroundColor: active ? colors.emberSoft : colors.surface,\n          },\n          animated,\n        ]}\n      >\n        {item.icon({ active, color: tint })}\n      </Animated.View>\n      <View style={[styles.dot, { backgroundColor: active ? colors.ember : 'transparent' }]} />\n    </Animated.View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  wrap: { alignSelf: 'center' },\n  bar: { flexDirection: 'row', alignItems: 'flex-end', minHeight: minTouchTarget },\n  backdrop: { ...StyleSheet.absoluteFill, borderWidth: StyleSheet.hairlineWidth },\n  item: { alignItems: 'center', justifyContent: 'center' },\n  dot: {\n    position: 'absolute',\n    bottom: -6,\n    alignSelf: 'center',\n    width: 4,\n    height: 4,\n    borderRadius: 2,\n  },\n  tooltip: { position: 'absolute', width: TOOLTIP_WIDTH, alignItems: 'center' },\n  tooltipInner: { paddingHorizontal: 10, paddingVertical: 5 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "navigation",
+    "web": "live",
+    "perf": {
+      "budget": "While touching, one shared value (finger position) drives one transform per item on the UI thread; React renders only when the hovered item changes.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-10",
+          "build": "release",
+          "frameMs": 73,
+          "p90Ms": 93,
+          "baselineMs": 65,
+          "jankyPercent": 79.39,
+          "atRest": "idle",
+          "memoryMb": 150
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "No magnification; items stay their rest size and the label bubble still shows.",
+      "screenReader": "Tab list; each item is a tab with its label and selected state, and 'activate' chooses it.",
+      "touchTarget": "Items are 48 pt square by default (minimum 40)."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { DockBar } from '@/components/kinetik/dock-bar';\n\n<DockBar\n  accessibilityLabel=\"Main\"\n  value={tab}\n  onChange={setTab}\n  items={[\n    { key: 'home', label: 'Home', icon: ({ color }) => <HomeIcon color={color} /> },\n    { key: 'search', label: 'Search', icon: ({ color }) => <SearchIcon color={color} /> },\n    { key: 'profile', label: 'Profile', icon: ({ color }) => <ProfileIcon color={color} /> },\n  ]}\n/>;\n```\n\nPlace it at the bottom of the screen above the safe area. `icon` receives the active state and a colour so your icons follow the theme.\n\n## When to use\n\n- Primary navigation with three to six destinations.\n- Apps with personality where the bar itself is part of the brand.\n\n## When not to use\n\n- More than six items; the dock gets cramped and the magnification overlaps.\n- Screens that need every pixel; a floating dock covers content beneath it.\n\n## Notes\n\n- A tap chooses an item; sliding previews items with a label bubble and a tick per item, and releasing chooses the one under the finger.\n- The bar claims the touch as soon as the finger lands, so it should not sit inside a horizontal scroll view.\n- Under reduced motion the items keep their size; the label still shows while sliding.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add dock-bar`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

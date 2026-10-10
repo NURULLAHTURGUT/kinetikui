@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "grain-drift",
+  "title": "Grain Drift",
+  "description": "A drifting four-colour mesh gradient under moving film grain, drawn by a shader.",
+  "category": "background",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-clock", "kinetik-shaders"],
+  "files": ["grain-drift.tsx", "grain-drift.shader.ts"],
+  "web": "live",
+  "perf": {
+    "budget": "One full-surface shader per frame: four distance weights, two noise lookups and one hash per pixel. frameRate={30} halves it.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-10",
+        "build": "release",
+        "frameMs": 73,
+        "p90Ms": 109,
+        "baselineMs": 65,
+        "jankyPercent": 83.19,
+        "atRest": "animating",
+        "memoryMb": 147,
+        "notes": "Animates by design while active; pass active={false} off-screen."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "A single still frame without drift or grain animation.",
+    "screenReader": "Decorative: the canvas is hidden from assistive tech. Children stay accessible.",
+    "touchTarget": "Not interactive."
+  }
+}

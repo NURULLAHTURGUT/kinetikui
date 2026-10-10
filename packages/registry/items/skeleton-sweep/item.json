@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "skeleton-sweep",
+  "title": "Skeleton Sweep",
+  "description": "Loading placeholders with one band of light sweeping across the whole layout.",
+  "category": "feedback",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["skeleton-sweep.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One repeating timing per group; each block applies a single translate. Pauses when `active` is false.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-10",
+        "build": "release",
+        "frameMs": 77,
+        "p90Ms": 93,
+        "baselineMs": 65,
+        "jankyPercent": 85.8,
+        "atRest": "animating",
+        "memoryMb": 142,
+        "notes": "Sweeps by design while loading; unmounts with the placeholder."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Static placeholders with no sweep.",
+    "screenReader": "The group is a busy progress bar with a label ('Loading' by default); individual blocks are hidden.",
+    "touchTarget": "Not interactive."
+  }
+}

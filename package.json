@@ -1,0 +1,30 @@
+{
+  "name": "kinetik-monorepo",
+  "private": true,
+  "packageManager": "pnpm@12.10.1",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "build:registry": "tsx scripts/build-registry.ts",
+    "check:registry": "tsx scripts/build-registry.ts --check",
+    "test:integrity": "node --import tsx --test tests/*.test.ts",
+    "verify": "pnpm check:registry && pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:integrity",
+    "changeset": "changeset"
+  },
+  "devDependencies": {
+    "@changesets/cli": "3.0.3",
+    "eslint": "^10.12.0",
+    "eslint-config-expo": "~57.0.2",
+    "prettier": "^3.9.9",
+    "tsx": "^4.23.15",
+    "turbo": "^2.11.7",
+    "typescript": "~6.0.3"
+  }
+}

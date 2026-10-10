@@ -1,0 +1,29 @@
+## Usage
+
+```tsx
+import { FlipLedger } from '@/components/kinetik/flip-ledger';
+
+<FlipLedger
+  accessibilityLabel="October ledger"
+  front={<Balance />}
+  back={<RecentTransactions />}
+/>;
+```
+
+Uncontrolled by default: a tap turns the card over. Pass `flipped` and `onFlippedChange` to drive it from state, or `flipOnPress={false}` to flip only from code.
+
+## When to use
+
+- Two closely related views of one object: a summary and its detail, a question and its answer, a front and a back.
+- Content that fits on a card; both faces take the height of the taller one.
+
+## When not to use
+
+- Hiding information the user needs to compare side by side. Show both instead.
+- Long or scrolling content on either face. Navigate to a detail screen.
+- Forms. Inputs on a face that turns away are easy to lose.
+
+## Notes
+
+- Only the visible face is exposed to screen readers and receives touches.
+- The axis can be `y` (like a page) or `x` (like a flap). Reduced motion swaps the rotation for a crossfade.

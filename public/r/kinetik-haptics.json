@@ -1,0 +1,30 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "kinetik-haptics",
+  "type": "registry:item",
+  "title": "Kinetik Haptics",
+  "description": "useHaptic: a small, meaningful haptic vocabulary that respects the provider switch.",
+  "dependencies": [
+    "expo-haptics"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json"
+  ],
+  "files": [
+    {
+      "path": "src/lib/kinetik/hooks/use-haptic.ts",
+      "type": "registry:file",
+      "target": "~/lib/kinetik/hooks/use-haptic.ts",
+      "content": "import * as Haptics from 'expo-haptics';\nimport { useMemo } from 'react';\nimport { Platform } from 'react-native';\n\nimport { useKinetikConfig } from '../tokens/theme';\n\n/**\n * Kinetik's haptic vocabulary. Haptics are reserved for moments that carry\n * meaning — a threshold crossed, an action confirmed — and default to light.\n *\n *  - tick:    a discrete step (slider detent, odometer digit, tab change)\n *  - tap:     a light physical acknowledgement (press, toggle)\n *  - thud:    a heavier landing (card dropped, sheet snapped)\n *  - success: an action completed (hold-to-confirm, form sent)\n *  - warning: something needs attention\n *  - error:   an action failed\n */\nexport type HapticKind = 'tick' | 'tap' | 'thud' | 'success' | 'warning' | 'error';\n\nexport type Haptic = (kind?: HapticKind) => void;\n\nconst supported = Platform.OS === 'ios' || Platform.OS === 'android';\n\nfunction play(kind: HapticKind): void {\n  let pending: Promise<void>;\n  switch (kind) {\n    case 'tick':\n      pending = Haptics.selectionAsync();\n      break;\n    case 'tap':\n      pending = Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);\n      break;\n    case 'thud':\n      pending = Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);\n      break;\n    case 'success':\n      pending = Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);\n      break;\n    case 'warning':\n      pending = Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);\n      break;\n    case 'error':\n      pending = Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);\n      break;\n  }\n  // Haptics are best-effort; a device without an actuator must not throw.\n  pending.catch(() => {});\n}\n\nconst noop: Haptic = () => {};\n\n/**\n * Returns a stable function that plays a haptic, or a no-op when haptics are\n * disabled globally (provider), locally (`enabled = false`) or unsupported.\n *\n * Call it from the JS thread. Inside a worklet, use\n * `scheduleOnRN(haptic, 'tick')` from `react-native-worklets`.\n */\nexport function useHaptic(enabled = true): Haptic {\n  const { haptics } = useKinetikConfig();\n  const active = supported && haptics && enabled;\n  return useMemo(() => (active ? (kind: HapticKind = 'tap') => play(kind) : noop), [active]);\n}\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "shared",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "requires": "React Native New Architecture (Reanimated 4)"
+  }
+}

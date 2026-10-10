@@ -1,0 +1,30 @@
+## Usage
+
+```tsx
+import { TiltDeck, TiltLayer } from '@/components/kinetik/tilt-deck';
+
+<TiltDeck onPress={openAlbum} accessibilityLabel="Night Drive, album">
+  <Artwork />
+  <TiltLayer depth={0.5}>
+    <Title />
+  </TiltLayer>
+</TiltDeck>;
+```
+
+Wherever the finger presses, that corner sinks away. Children wrapped in `TiltLayer` shift by their `depth`: positive values float above the card, negative values sink below it, `0` stays flat.
+
+## When to use
+
+- Covers, tickets, product shots: objects the user should want to pick up.
+- Cards with layered artwork, where parallax sells the depth.
+
+## When not to use
+
+- Rows in a long list. The effect is for a hero object, not every item.
+- Cards with inputs or several buttons inside; the whole card reacts to every touch.
+
+## Notes
+
+- Touch tracking never claims the gesture: a vertical drag scrolls the page and the card springs back.
+- `onPress` fires on a tap that does not drag and makes the card a button for screen readers.
+- Give the deck room around it; the floor shadow and the 3% lift extend past its bounds.

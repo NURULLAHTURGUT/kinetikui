@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "liquid-tabs",
+  "title": "Liquid Tabs",
+  "description": "A tab bar whose indicator flows like liquid, stretching, thinning and melting into place.",
+  "category": "interaction",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["liquid-tabs.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "While switching, three springs drive one small blurred layer (body and droplet); nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-10",
+        "build": "release",
+        "frameMs": 73,
+        "p90Ms": 89,
+        "baselineMs": 65,
+        "jankyPercent": 86.96,
+        "atRest": "idle",
+        "memoryMb": 151
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The indicator slides without stretching, droplet or goo filter.",
+    "screenReader": "Tab list with tabs that expose their selected state.",
+    "touchTarget": "Each tab spans its share of the bar and is 44 pt tall."
+  }
+}

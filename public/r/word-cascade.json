@@ -1,0 +1,62 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "word-cascade",
+  "type": "registry:item",
+  "title": "Word Cascade",
+  "description": "A paragraph that arrives word by word, each word rising into place after the last.",
+  "categories": [
+    "text"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/word-cascade.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/word-cascade.tsx",
+      "content": "import { useEffect, useMemo, useRef } from 'react';\nimport { StyleSheet, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';\nimport Animated, {\n  Easing,\n  useAnimatedStyle,\n  useSharedValue,\n  withTiming,\n  type SharedValue,\n} from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { durations } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type WordCascadeProps = {\n  text: string;\n  /** Delay between consecutive words, in ms. Defaults to 45. */\n  stagger?: number;\n  /** How long each word takes to arrive, in ms. Defaults to the `slow` duration. */\n  wordDuration?: number;\n  /** Wait before the first word, in ms. Defaults to 0. */\n  delay?: number;\n  /** Distance each word rises, in pt. Defaults to 10. */\n  rise?: number;\n  /** Change this value to replay. */\n  replayKey?: string | number;\n  /** Play on first render. Defaults to true. */\n  animateOnMount?: boolean;\n  onDone?: () => void;\n  style?: StyleProp<TextStyle>;\n  containerStyle?: StyleProp<ViewStyle>;\n};\n\n/**\n * A paragraph that arrives word by word: each word rises a few points and\n * fades in, slightly after the one before it. One clock drives every word.\n */\nexport function WordCascade({\n  text,\n  stagger = 45,\n  wordDuration = durations.slow,\n  delay = 0,\n  rise = 10,\n  replayKey,\n  animateOnMount = true,\n  onDone,\n  style,\n  containerStyle,\n}: WordCascadeProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  // Split on spaces but keep line breaks as their own tokens.\n  const words = useMemo(() => text.split(/(\\n)| +/).filter((w): w is string => !!w), [text]);\n  const total = delay + Math.max(0, words.length - 1) * stagger + wordDuration;\n  const clock = useSharedValue(animateOnMount && !reduced ? 0 : total);\n  const first = useRef(true);\n  const onDoneRef = useRef(onDone);\n  useEffect(() => {\n    onDoneRef.current = onDone;\n  }, [onDone]);\n\n  useEffect(() => {\n    const skip = reduced || (first.current && !animateOnMount);\n    first.current = false;\n    if (skip) {\n      clock.set(total);\n      return;\n    }\n    const finished = () => onDoneRef.current?.();\n    clock.set(0);\n    clock.set(\n      withTiming(total, { duration: total, easing: Easing.linear }, (done) => {\n        'worklet';\n        if (done) scheduleOnRN(finished);\n      }),\n    );\n    // Replays when the text or replayKey changes.\n    // eslint-disable-next-line react-hooks/exhaustive-deps\n  }, [text, replayKey, reduced]);\n\n  const textStyle: StyleProp<TextStyle> = [\n    {\n      color: colors.text,\n      fontSize: font.size.lg,\n      lineHeight: font.size.lg * font.lineHeight.relaxed,\n    },\n    style,\n  ];\n\n  let index = 0;\n  return (\n    <View\n      accessible\n      accessibilityRole=\"text\"\n      accessibilityLabel={text}\n      style={[styles.flow, containerStyle]}\n    >\n      {words.map((word, i) => {\n        if (word === '\\n') return <View key={`br${i}`} style={styles.lineBreak} />;\n        const at = delay + index++ * stagger;\n        return (\n          <Word\n            key={`${i}-${word}`}\n            word={word}\n            start={at}\n            length={wordDuration}\n            rise={rise}\n            clock={clock}\n            style={textStyle}\n          />\n        );\n      })}\n    </View>\n  );\n}\n\nfunction Word({\n  word,\n  start,\n  length,\n  rise,\n  clock,\n  style,\n}: {\n  word: string;\n  start: number;\n  length: number;\n  rise: number;\n  clock: SharedValue<number>;\n  style: StyleProp<TextStyle>;\n}) {\n  const animated = useAnimatedStyle(() => {\n    const p = Math.min(1, Math.max(0, (clock.get() - start) / length));\n    // Ease-out cubic: words decelerate into place.\n    const e = 1 - (1 - p) * (1 - p) * (1 - p);\n    return { opacity: e, transform: [{ translateY: (1 - e) * rise }] };\n  });\n  return (\n    <Animated.Text\n      style={[style, animated]}\n      importantForAccessibility=\"no\"\n      accessibilityElementsHidden\n    >\n      {word}{' '}\n    </Animated.Text>\n  );\n}\n\nconst styles = StyleSheet.create({\n  flow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline' },\n  lineBreak: { width: '100%', height: 0 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "text",
+    "web": "live",
+    "perf": {
+      "budget": "One linear timing drives every word; each word evaluates a small style worklet per frame until the cascade ends.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-10",
+          "build": "release",
+          "frameMs": 73,
+          "p90Ms": 93,
+          "baselineMs": 65,
+          "jankyPercent": 85.92,
+          "atRest": "idle",
+          "memoryMb": 146
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The whole paragraph appears at once.",
+      "screenReader": "Exposed as one text element with the full paragraph; individual words are hidden.",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { WordCascade } from '@/components/kinetik/word-cascade';\n\n<WordCascade text=\"Motion should explain, not decorate.\" style={{ fontSize: 28 }} />;\n```\n\nIt plays on mount and whenever `text` or `replayKey` changes. Line breaks (`\\n`) in the text are kept.\n\n## When to use\n\n- A headline or short intro that should feel composed rather than dumped on screen: onboarding, empty states, section openers.\n- Text that appears in response to an action, such as an AI answer or a result summary.\n\n## When not to use\n\n- Body copy the user needs right away. A long cascade makes people wait to read.\n- Lists, labels and buttons. Animate the container instead.\n\n## Notes\n\n- One shared clock drives every word, so a long paragraph costs one timing animation, not one per word.\n- Words wrap with flexbox; for very long texts consider a plain `Text` for the remainder.\n- Screen readers receive the whole paragraph at once.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add word-cascade`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

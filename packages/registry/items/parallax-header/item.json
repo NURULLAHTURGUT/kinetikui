@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "parallax-header",
+  "title": "Parallax Header",
+  "description": "A scroll view whose header artwork scrolls at half speed, stretches on pull and hands off to a compact bar.",
+  "category": "navigation",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-safe-area-context"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["parallax-header.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The scroll offset is read on the UI thread; four style worklets (artwork, title, bar, bar title) run per scroll frame. No JS work while scrolling.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-10",
+        "build": "release",
+        "frameMs": 65,
+        "p90Ms": 89,
+        "baselineMs": 65,
+        "jankyPercent": 85.92,
+        "atRest": "idle",
+        "memoryMb": 144
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The artwork scrolls with the content instead of at half speed; titles fade without moving.",
+    "screenReader": "The large title is a header; the compact bar's copy of it is hidden to avoid reading it twice. Artwork is decorative.",
+    "touchTarget": "Not interactive itself; barAccessory keeps its own targets."
+  }
+}

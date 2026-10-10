@@ -1,0 +1,27 @@
+## Usage
+
+```tsx
+import { AuroraVeil } from '@/components/kinetik/aurora-veil';
+
+<AuroraVeil style={StyleSheet.absoluteFill}>
+  <Hero />
+</AuroraVeil>;
+```
+
+The aurora fills its container and draws behind its children. It fades into `baseColor` (the theme background by default) towards the bottom, so text placed low on the surface stays readable.
+
+## When to use
+
+- Hero areas, onboarding and empty states that should feel alive without asking for attention.
+- One large surface per screen.
+
+## When not to use
+
+- Behind dense text or forms. Motion behind reading slows people down; use a still frame (`reduceEffects`) or no background.
+- Several instances at once. Each one is a full-surface shader.
+
+## Notes
+
+- Pass `active={false}` when the screen loses focus to stop all per-frame work.
+- `frameRate={30}` halves the GPU cost on weaker devices; the motion is slow enough that it barely shows.
+- Colours come from the theme by default; pass `colors` for brand ribbons.

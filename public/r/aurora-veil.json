@@ -1,0 +1,72 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "aurora-veil",
+  "type": "registry:item",
+  "title": "Aurora Veil",
+  "description": "A slow, flowing aurora drawn by a fragment shader, for screen and hero backgrounds.",
+  "categories": [
+    "background"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-clock.json",
+    "https://kinetik-ui.dev/r/kinetik-shaders.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/aurora-veil.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/aurora-veil.tsx",
+      "content": "import { Canvas, Fill, Shader, type SkSize } from '@shopify/react-native-skia';\nimport type { ReactNode } from 'react';\nimport { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';\nimport { useDerivedValue, useSharedValue } from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { useShaderClock } from '../../lib/kinetik/hooks/use-shader-clock';\nimport { colorUniform, runtimeEffect } from '../../lib/kinetik/shaders/sksl';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { AURORA_SHADER } from './aurora-veil.shader';\n\nexport type AuroraVeilProps = {\n  /** Content drawn on top of the aurora. */\n  children?: ReactNode;\n  /** Ribbon colours, back to front. Defaults to ice, success and ember from the theme. */\n  colors?: [string, string, string];\n  /** Ground colour behind the ribbons. Defaults to the theme background. */\n  baseColor?: string;\n  /** Strength of the ribbons, 0–1. Defaults to 0.85. */\n  intensity?: number;\n  /** Animation speed multiplier. Defaults to 1. */\n  speed?: number;\n  /** Shader updates per second. 30 halves the GPU cost on weaker devices. Defaults to 60. */\n  frameRate?: 60 | 30;\n  /** Draw a single still frame: no per-frame work. Reduced-motion users always get this. */\n  reduceEffects?: boolean;\n  /** Pause the animation, e.g. while the screen is off-screen. Defaults to true. */\n  active?: boolean;\n  style?: StyleProp<ViewStyle>;\n};\n\n/**\n * A slow, flowing aurora drawn by a fragment shader. Use it as a screen or\n * hero background; children render on top.\n */\nexport function AuroraVeil({\n  children,\n  colors,\n  baseColor,\n  intensity = 0.85,\n  speed = 1,\n  frameRate = 60,\n  reduceEffects = false,\n  active = true,\n  style,\n}: AuroraVeilProps) {\n  const theme = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const still = reduced || reduceEffects;\n  const size = useSharedValue<SkSize>({ width: 0, height: 0 });\n  // Still frames start a few seconds in, where the ribbons are well formed.\n  const time = useShaderClock({ running: active && !still, speed, frameRate, start: 4 });\n\n  const [a, b, c] = colors ?? [theme.colors.ice, theme.colors.success, theme.colors.ember];\n  const base = colorUniform(baseColor ?? theme.colors.background);\n  const c0 = colorUniform(a);\n  const c1 = colorUniform(b);\n  const c2 = colorUniform(c);\n  const k = Math.max(0, Math.min(1, intensity));\n\n  const uniforms = useDerivedValue(() => ({\n    res: [size.get().width, size.get().height],\n    time: time.get(),\n    intensity: k,\n    base,\n    c0,\n    c1,\n    c2,\n  }));\n\n  return (\n    <View style={[styles.root, style]}>\n      <Canvas\n        style={StyleSheet.absoluteFill}\n        onSize={size}\n        pointerEvents=\"none\"\n        accessibilityElementsHidden\n        importantForAccessibility=\"no-hide-descendants\"\n      >\n        <Fill>\n          <Shader source={runtimeEffect(AURORA_SHADER)} uniforms={uniforms} />\n        </Fill>\n      </Canvas>\n      {children}\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  root: { overflow: 'hidden' },\n});\n"
+    },
+    {
+      "path": "src/components/kinetik/aurora-veil.shader.ts",
+      "type": "registry:file",
+      "target": "~/components/kinetik/aurora-veil.shader.ts",
+      "content": "import { NOISE } from '../../lib/kinetik/shaders/sksl';\n\n/**\n * Three aurora ribbons that sway and shimmer over a base colour.\n * Uniforms: res (px), time (s), intensity (0–1), base + three ribbon colours.\n */\nexport const AURORA_SHADER = `\nuniform float2 res;\nuniform float time;\nuniform float intensity;\nuniform half4 base;\nuniform half4 c0;\nuniform half4 c1;\nuniform half4 c2;\n${NOISE}\n\nfloat ribbon(float y, float center, float width) {\n  float d = (y - center) / width;\n  return exp(-d * d);\n}\n\nhalf4 main(float2 xy) {\n  float2 uv = xy / res;\n  float aspect = res.x / max(res.y, 1.0);\n  float x = uv.x * aspect;\n  float t = time * 0.12;\n\n  // Slow domain warp gives the curtains their drift.\n  float warp = fbm(float2(x * 1.3 + t, uv.y * 0.8 - t * 0.6));\n  float sway = warp * 0.35;\n\n  // Fine vertical rays, like light through the curtain.\n  float rays = 0.55 + 0.45 * fbm(float2(x * 9.0 + warp * 2.0, t * 1.6));\n\n  float r0 = ribbon(uv.y, 0.30 + 0.10 * sin(x * 2.2 + t * 2.6) + sway * 0.2, 0.10) * rays;\n  float r1 = ribbon(uv.y, 0.46 + 0.08 * sin(x * 1.6 - t * 2.1 + 1.7) + sway * 0.25, 0.13) * rays;\n  float r2 = ribbon(uv.y, 0.22 + 0.12 * sin(x * 2.9 + t * 1.4 + 3.1) - sway * 0.15, 0.07) * rays;\n\n  half3 col = base.rgb;\n  col = mix(col, c0.rgb, clamp(r0 * intensity, 0.0, 1.0));\n  col = mix(col, c1.rgb, clamp(r1 * intensity * 0.85, 0.0, 1.0));\n  col = mix(col, c2.rgb, clamp(r2 * intensity * 0.75, 0.0, 1.0));\n\n  // Fade back into the base towards the bottom so content stays legible.\n  col = mix(col, base.rgb, smoothstep(0.45, 1.0, uv.y) * 0.85);\n  return half4(col, 1.0);\n}\n`;\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "background",
+    "web": "live",
+    "perf": {
+      "budget": "One full-surface fragment shader (4-octave fbm, twice) per frame. frameRate={30} halves the work; reduceEffects draws a single frame.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-10",
+          "build": "release",
+          "frameMs": 69,
+          "p90Ms": 101,
+          "baselineMs": 65,
+          "jankyPercent": 86.04,
+          "atRest": "animating",
+          "memoryMb": 151,
+          "notes": "Animates by design while active; pass active={false} off-screen. Clock drops to 30 fps with reduceEffects."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "A single still frame of the aurora; no per-frame work.",
+      "screenReader": "Decorative: the canvas is hidden from assistive tech. Children stay accessible.",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { AuroraVeil } from '@/components/kinetik/aurora-veil';\n\n<AuroraVeil style={StyleSheet.absoluteFill}>\n  <Hero />\n</AuroraVeil>;\n```\n\nThe aurora fills its container and draws behind its children. It fades into `baseColor` (the theme background by default) towards the bottom, so text placed low on the surface stays readable.\n\n## When to use\n\n- Hero areas, onboarding and empty states that should feel alive without asking for attention.\n- One large surface per screen.\n\n## When not to use\n\n- Behind dense text or forms. Motion behind reading slows people down; use a still frame (`reduceEffects`) or no background.\n- Several instances at once. Each one is a full-surface shader.\n\n## Notes\n\n- Pass `active={false}` when the screen loses focus to stop all per-frame work.\n- `frameRate={30}` halves the GPU cost on weaker devices; the motion is slow enough that it barely shows.\n- Colours come from the theme by default; pass `colors` for brand ribbons.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add aurora-veil`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

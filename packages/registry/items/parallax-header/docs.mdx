@@ -1,0 +1,31 @@
+## Usage
+
+```tsx
+import { ParallaxHeader } from '@/components/kinetik/parallax-header';
+
+<ParallaxHeader
+  title="Long Exposure"
+  subtitle="Lumen Fields · 10 tracks"
+  header={<Image source={cover} style={StyleSheet.absoluteFill} />}
+>
+  <TrackList />
+</ParallaxHeader>;
+```
+
+`ParallaxHeader` is the scroll view: put the screen's content inside it. The artwork fills `headerHeight` and should cover its area (`StyleSheet.absoluteFill`).
+
+## When to use
+
+- Detail screens led by an image: albums, places, profiles, products.
+- Screens where the title should stay reachable after the hero scrolls away.
+
+## When not to use
+
+- Lists without a meaningful hero; a plain header is quieter.
+- Screens that already use a native large-title navigation bar. Pick one.
+
+## Notes
+
+- The stretch on pull-down needs bounce scrolling (iOS); Android scrolls without it.
+- The compact bar starts below `topInset` (the safe-area top by default). Pass `0` when the component is not at the top of the screen.
+- Use `barAccessory` for a share or close button that stays visible.

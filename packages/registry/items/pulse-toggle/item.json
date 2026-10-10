@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "pulse-toggle",
+  "title": "Pulse Toggle",
+  "description": "A switch whose thumb stretches mid-flight, lands as a rounded square and pulses when it turns on.",
+  "category": "interaction",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["pulse-toggle.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One spring and one 480 ms ring timing per toggle; nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-10",
+        "build": "release",
+        "frameMs": 77,
+        "p90Ms": 93,
+        "baselineMs": 65,
+        "jankyPercent": 81.95,
+        "atRest": "idle",
+        "memoryMb": 149
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Thumb slides with a short timing; no stretch and no pulse ring.",
+    "screenReader": "Switch role with checked and disabled states; the visible label is the accessible name.",
+    "touchTarget": "Row is at least 44 pt tall; a bare toggle gets an 8 pt hit slop."
+  }
+}

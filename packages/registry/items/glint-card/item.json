@@ -1,0 +1,40 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "glint-card",
+  "title": "Glint Card",
+  "description": "A card with a specular glint that slides with the finger or the tilt of the device.",
+  "category": "card",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-gesture-handler",
+    "react-native-reanimated"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-tilt"],
+  "files": ["glint-card.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Idle: no per-frame work. Moving: three gradients redrawn by Skia on the UI thread.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-10",
+        "build": "release",
+        "frameMs": 93,
+        "p90Ms": 125,
+        "baselineMs": 65,
+        "jankyPercent": 93.31,
+        "atRest": "idle",
+        "memoryMb": 159,
+        "notes": "Tilt changes below the visible threshold are ignored, so a phone at rest stops redrawing (was 113 frames per 5 s before). Heaviest interaction cost in the set: three gradients and a 3D transform per frame."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Static reflection; tilt sensor and touch tracking are not started.",
+    "screenReader": "Canvas is hidden from assistive tech; pass accessibilityLabel/Role to describe the card.",
+    "touchTarget": "Not interactive by itself; any controls inside keep their own targets."
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "ripple-field",
+  "type": "registry:item",
+  "title": "Ripple Field",
+  "description": "A dot-grid surface that ripples outward from every touch, drawn by a shader.",
+  "categories": [
+    "background"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json",
+    "https://kinetik-ui.dev/r/kinetik-clock.json",
+    "https://kinetik-ui.dev/r/kinetik-shaders.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/ripple-field.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/ripple-field.tsx",
+      "content": "import { Canvas, Fill, Shader, type SkSize } from '@shopify/react-native-skia';\nimport { useEffect, useState, type ReactNode } from 'react';\nimport { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';\nimport { Gesture, GestureDetector } from 'react-native-gesture-handler';\nimport { useDerivedValue, useSharedValue } from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { useShaderClock } from '../../lib/kinetik/hooks/use-shader-clock';\nimport { colorUniform, runtimeEffect } from '../../lib/kinetik/shaders/sksl';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { RIPPLE_SHADER } from './ripple-field.shader';\n\nexport type RippleFieldProps = {\n  children?: ReactNode;\n  /** Distance between grid dots, in pt. Defaults to 18. */\n  spacing?: number;\n  /** How far the waves push the dots, 0–1. Defaults to 0.8. */\n  strength?: number;\n  /** Colour of the wave fronts. Defaults to the theme ice. */\n  accentColor?: string;\n  /** A light tap on each touch. Defaults to false. */\n  haptics?: boolean;\n  /** Static grid with no ripples. Reduced-motion users always get this. */\n  reduceEffects?: boolean;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst LIFE_MS = 2500;\ntype Ripple = [number, number, number];\nconst OFF: Ripple = [0, 0, -100];\n\n/**\n * A dot-grid surface that ripples outward from every touch. Up to four waves\n * overlap. The shader only animates while a wave is alive; at rest it costs\n * nothing per frame. Touches never claim the gesture, so it can sit under\n * scrolling content.\n */\nexport function RippleField({\n  children,\n  spacing = 18,\n  strength = 0.8,\n  accentColor,\n  haptics = false,\n  reduceEffects = false,\n  style,\n}: RippleFieldProps) {\n  const theme = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const still = reduced || reduceEffects;\n  const haptic = useHaptic(haptics);\n  const size = useSharedValue<SkSize>({ width: 0, height: 0 });\n  const [awake, setAwake] = useState(false);\n  const [touches, setTouches] = useState(0);\n  const time = useShaderClock({ running: awake && !still });\n  const ripples = useSharedValue<Ripple[]>([OFF, OFF, OFF, OFF]);\n  const next = useSharedValue(0);\n\n  // Keep the clock running until the last wave has faded, then stop it.\n  useEffect(() => {\n    if (touches === 0) return;\n    const t = setTimeout(() => setAwake(false), LIFE_MS);\n    return () => clearTimeout(t);\n  }, [touches]);\n\n  const wake = () => {\n    setAwake(true);\n    setTouches((n) => n + 1);\n    haptic('tap');\n  };\n\n  const gesture = Gesture.Manual()\n    .withTestId('ripple-field')\n    .enabled(!still)\n    .onTouchesDown((e) => {\n      const list = ripples.get().slice();\n      for (const t of e.changedTouches) {\n        list[next.get() % 4] = [t.x, t.y, time.get()];\n        next.set(next.get() + 1);\n      }\n      ripples.set(list);\n      scheduleOnRN(wake);\n    });\n\n  const base = colorUniform(theme.colors.background);\n  const dot = colorUniform(theme.colors.textSubtle);\n  const accent = colorUniform(accentColor ?? theme.colors.ice);\n  const k = Math.max(0, Math.min(1, strength));\n\n  const uniforms = useDerivedValue(() => {\n    const r = ripples.get();\n    return {\n      res: [size.get().width, size.get().height],\n      time: time.get(),\n      r0: r[0] ?? OFF,\n      r1: r[1] ?? OFF,\n      r2: r[2] ?? OFF,\n      r3: r[3] ?? OFF,\n      spacing,\n      strength: k,\n      base,\n      dotColor: dot,\n      accent,\n    };\n  });\n\n  return (\n    <GestureDetector gesture={gesture}>\n      <View collapsable={false} style={[styles.root, style]}>\n        <Canvas\n          style={StyleSheet.absoluteFill}\n          onSize={size}\n          pointerEvents=\"none\"\n          accessibilityElementsHidden\n          importantForAccessibility=\"no-hide-descendants\"\n        >\n          <Fill>\n            <Shader source={runtimeEffect(RIPPLE_SHADER)} uniforms={uniforms} />\n          </Fill>\n        </Canvas>\n        {children}\n      </View>\n    </GestureDetector>\n  );\n}\n\nconst styles = StyleSheet.create({\n  root: { overflow: 'hidden' },\n});\n"
+    },
+    {
+      "path": "src/components/kinetik/ripple-field.shader.ts",
+      "type": "registry:file",
+      "target": "~/components/kinetik/ripple-field.shader.ts",
+      "content": "/**\n * A dot grid displaced by up to four expanding ripples.\n * Uniforms: res, time, ripple origins/start times (r0–r3: x, y, start),\n * spacing (pt), strength (0–1), base / dot / accent colours.\n */\nexport const RIPPLE_SHADER = `\nuniform float2 res;\nuniform float time;\nuniform float3 r0;\nuniform float3 r1;\nuniform float3 r2;\nuniform float3 r3;\nuniform float spacing;\nuniform float strength;\nuniform half4 base;\nuniform half4 dotColor;\nuniform half4 accent;\n\nconst float LIFE = 2.4;\nconst float SPEED = 340.0;\n\n// Displacement (xy) and glow (z) contributed by one ripple at point p.\nfloat3 ripple(float2 p, float3 r) {\n  float age = time - r.z;\n  if (age < 0.0 || age > LIFE) return float3(0.0);\n  float2 dir = p - r.xy;\n  float d = length(dir);\n  float x = d - age * SPEED;\n  float fade = 1.0 - age / LIFE;\n  float env = exp(-(x * x) / 1800.0) * fade * fade;\n  float wave = sin(x * 0.09) * env;\n  float2 n = d > 0.001 ? dir / d : float2(0.0);\n  return float3(n * wave * 14.0 * strength, env);\n}\n\nhalf4 main(float2 xy) {\n  float3 a = ripple(xy, r0) + ripple(xy, r1) + ripple(xy, r2) + ripple(xy, r3);\n  float2 q = xy - a.xy;\n  float glow = clamp(a.z, 0.0, 1.0);\n\n  float2 cell = (fract(q / spacing) - 0.5) * spacing;\n  float d = length(cell);\n  float radius = 1.3 + glow * 1.6;\n  float dotMask = smoothstep(radius + 0.8, radius - 0.4, d);\n\n  half3 col = base.rgb;\n  half3 dotRgb = mix(dotColor.rgb, accent.rgb, glow);\n  col = mix(col, dotRgb, dotMask * (0.55 + 0.45 * glow));\n  // A faint tint travels with each wave front.\n  col = mix(col, accent.rgb, glow * 0.08);\n  return half4(col, 1.0);\n}\n`;\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "background",
+    "web": "live",
+    "perf": {
+      "budget": "A full-surface shader runs only for 2.5 s after a touch; at rest the grid is drawn once and nothing runs per frame.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-10",
+          "build": "release",
+          "frameMs": 69,
+          "p90Ms": 113,
+          "baselineMs": 65,
+          "jankyPercent": 83.49,
+          "atRest": "idle",
+          "memoryMb": 149
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "A static dot grid; touches do not start ripples.",
+      "screenReader": "Decorative: the canvas is hidden from assistive tech. Children stay accessible.",
+      "touchTarget": "The whole surface; it never claims the gesture from children or scroll views."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { RippleField } from '@/components/kinetik/ripple-field';\n\n<RippleField style={StyleSheet.absoluteFill}>\n  <Welcome />\n</RippleField>;\n```\n\nEvery touch sends a wave through the dot grid; up to four waves overlap. The shader only runs while a wave is alive, so an untouched field costs nothing per frame.\n\n## When to use\n\n- Playful idle surfaces: welcome screens, empty states, a lock or splash screen.\n- Spaces where touching \"nothing\" should still feel responsive.\n\n## When not to use\n\n- Behind interactive lists or forms; every tap would ripple and distract.\n- As feedback for a specific action. Animate the control itself instead.\n\n## Notes\n\n- Touches are tracked without claiming the gesture, so buttons and scroll views on top keep working.\n- `haptics` adds a light tap per touch; it is off by default because the visual already answers the touch.\n- Under reduced motion the grid stays still.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add ripple-field`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

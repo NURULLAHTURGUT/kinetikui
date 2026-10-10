@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "tilt-deck",
+  "type": "registry:item",
+  "title": "Tilt Deck",
+  "description": "A card that tilts in 3D under the finger, with parallax layers and a drifting floor shadow.",
+  "categories": [
+    "card"
+  ],
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/tilt-deck.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/tilt-deck.tsx",
+      "content": "import { createContext, useContext, type ReactNode } from 'react';\nimport {\n  StyleSheet,\n  View,\n  type AccessibilityActionEvent,\n  type StyleProp,\n  type ViewProps,\n  type ViewStyle,\n} from 'react-native';\nimport { Gesture, GestureDetector } from 'react-native-gesture-handler';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  type SharedValue,\n} from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\ntype TiltState = {\n  /** -1 (left) … 1 (right) */\n  x: SharedValue<number>;\n  /** -1 (top) … 1 (bottom) */\n  y: SharedValue<number>;\n  /** 0 at rest, 1 while pressed */\n  press: SharedValue<number>;\n  parallax: number;\n  reduced: boolean;\n};\n\nconst TiltContext = createContext<TiltState | null>(null);\n\nexport type TiltDeckProps = Omit<ViewProps, 'style' | 'children'> & {\n  children?: ReactNode;\n  /** Maximum rotation in degrees. Defaults to 12. */\n  maxTilt?: number;\n  /** Scale while pressed. Defaults to 1.03. */\n  lift?: number;\n  /** How far `TiltLayer`s travel per unit of depth, in pt. Defaults to 10. */\n  parallax?: number;\n  /** Called on a tap that does not drag. Makes the card a button. */\n  onPress?: () => void;\n  /** Plays a light tap on press. Defaults to true. */\n  haptics?: boolean;\n  /** Corner radius. Defaults to the theme `xl` radius. */\n  radius?: number;\n  style?: StyleProp<ViewStyle>;\n  /** Style for the inner content container (padding, layout). */\n  contentStyle?: StyleProp<ViewStyle>;\n};\n\n/**\n * A card that tilts in 3D under the finger: the pressed corner sinks away,\n * the floor shadow slides the other way and `TiltLayer` children parallax by\n * depth. Touch tracking never claims the gesture, so it scrolls normally.\n */\nexport function TiltDeck({\n  children,\n  maxTilt = 12,\n  lift = 1.03,\n  parallax = 10,\n  onPress,\n  haptics = true,\n  radius,\n  style,\n  contentStyle,\n  accessibilityLabel,\n  accessibilityHint,\n  ...viewProps\n}: TiltDeckProps) {\n  const theme = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const r = radius ?? theme.radius.xl;\n\n  const x = useSharedValue(0);\n  const y = useSharedValue(0);\n  const press = useSharedValue(0);\n  const size = useSharedValue({ width: 0, height: 0 });\n\n  const aim = (tx: number, ty: number) => {\n    'worklet';\n    const { width, height } = size.get();\n    if (width === 0 || height === 0) return;\n    const nx = Math.max(-1, Math.min(1, (tx / width) * 2 - 1));\n    const ny = Math.max(-1, Math.min(1, (ty / height) * 2 - 1));\n    x.set(withSpring(reduced ? 0 : nx, spring('snappy', reduced)));\n    y.set(withSpring(reduced ? 0 : ny, spring('snappy', reduced)));\n  };\n\n  const settle = () => {\n    'worklet';\n    x.set(withSpring(0, spring('bouncy', reduced)));\n    y.set(withSpring(0, spring('bouncy', reduced)));\n    press.set(withSpring(0, spring('smooth', reduced)));\n  };\n\n  const pressed = () => {\n    haptic('tap');\n    onPress?.();\n  };\n\n  const track = Gesture.Manual()\n    .withTestId('tilt-deck')\n    .onTouchesDown((e) => {\n      const t = e.allTouches[0];\n      if (!t) return;\n      press.set(withSpring(1, spring('snappy', reduced)));\n      aim(t.x, t.y);\n    })\n    .onTouchesMove((e) => {\n      const t = e.allTouches[0];\n      if (t) aim(t.x, t.y);\n    })\n    .onTouchesUp(() => settle())\n    .onTouchesCancelled(() => settle());\n\n  const tap = Gesture.Tap()\n    .withTestId('tilt-deck-tap')\n    .enabled(onPress !== undefined)\n    .maxDuration(1000)\n    .onEnd((_e, success) => {\n      if (success) scheduleOnRN(pressed);\n    });\n\n  const gesture = Gesture.Simultaneous(track, tap);\n\n  const cardStyle = useAnimatedStyle(() => {\n    const p = press.get();\n    return {\n      transform: [\n        { perspective: 800 },\n        { scale: reduced ? 1 - p * 0.02 : 1 + (lift - 1) * p },\n        { rotateX: `${-y.get() * maxTilt}deg` },\n        { rotateY: `${x.get() * maxTilt}deg` },\n      ],\n    };\n  });\n\n  // The floor shadow drifts away from the sinking corner and spreads on lift.\n  const shadowStyle = useAnimatedStyle(() => ({\n    opacity: 0.55 + press.get() * 0.45,\n    transform: [\n      { translateX: -x.get() * 8 },\n      { translateY: 6 - y.get() * 8 + press.get() * 8 },\n      { scale: 0.94 + press.get() * 0.04 },\n    ],\n  }));\n\n  const onAccessibilityAction = (e: AccessibilityActionEvent) => {\n    if (e.nativeEvent.actionName === 'activate' && onPress) pressed();\n  };\n\n  return (\n    <TiltContext.Provider value={{ x, y, press, parallax, reduced }}>\n      <GestureDetector gesture={gesture}>\n        <View\n          collapsable={false}\n          {...viewProps}\n          accessible={onPress !== undefined || accessibilityLabel !== undefined}\n          accessibilityRole={onPress ? 'button' : undefined}\n          accessibilityLabel={accessibilityLabel}\n          accessibilityHint={accessibilityHint}\n          accessibilityActions={onPress ? [{ name: 'activate' }] : undefined}\n          onAccessibilityAction={onAccessibilityAction}\n          onLayout={(e) => {\n            size.set({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height });\n            viewProps.onLayout?.(e);\n          }}\n          style={style}\n        >\n          <Animated.View\n            pointerEvents=\"none\"\n            style={[\n              StyleSheet.absoluteFill,\n              { borderRadius: r, boxShadow: theme.shadow.lg },\n              shadowStyle,\n            ]}\n          />\n          <Animated.View\n            style={[\n              styles.card,\n              {\n                borderRadius: r,\n                backgroundColor: theme.colors.surface,\n                borderColor: theme.colors.border,\n              },\n              cardStyle,\n            ]}\n          >\n            <View style={[{ padding: theme.space[5] }, contentStyle]}>{children}</View>\n          </Animated.View>\n        </View>\n      </GestureDetector>\n    </TiltContext.Provider>\n  );\n}\n\nexport type TiltLayerProps = ViewProps & {\n  /**\n   * How far this layer floats above the card. 0 stays flat; 1 travels the\n   * deck's full `parallax` distance; negative values sink below the surface.\n   */\n  depth?: number;\n};\n\n/**\n * A child of `TiltDeck` that shifts with the tilt to read as a separate plane.\n * A `transform` array in `style` is kept and applied after the parallax offset.\n */\nexport function TiltLayer({ depth = 1, style, ...props }: TiltLayerProps) {\n  const ctx = useContext(TiltContext);\n  const { transform, ...rest } = StyleSheet.flatten(style) ?? {};\n  const own = Array.isArray(transform) ? transform : [];\n  const animated = useAnimatedStyle(() => {\n    const k = !ctx || ctx.reduced ? 0 : ctx.parallax * depth;\n    return {\n      transform: [\n        { translateX: (ctx?.x.get() ?? 0) * k },\n        { translateY: (ctx?.y.get() ?? 0) * k },\n        ...own,\n      ],\n    };\n  });\n  return <Animated.View {...props} style={[rest, animated]} />;\n}\n\nconst styles = StyleSheet.create({\n  card: {\n    borderWidth: StyleSheet.hairlineWidth,\n    overflow: 'hidden',\n  },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "card",
+    "web": "live",
+    "perf": {
+      "budget": "Touch moves retarget two springs on the UI thread; each TiltLayer adds one transform. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-10",
+          "build": "release",
+          "frameMs": 77,
+          "p90Ms": 101,
+          "baselineMs": 65,
+          "jankyPercent": 84.4,
+          "atRest": "idle",
+          "memoryMb": 146
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "No rotation, parallax or lift; the card dips 2% while pressed.",
+      "screenReader": "Button role when onPress is set; pass accessibilityLabel to describe the card. Layers are not separately exposed.",
+      "touchTarget": "The whole card is the target."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { TiltDeck, TiltLayer } from '@/components/kinetik/tilt-deck';\n\n<TiltDeck onPress={openAlbum} accessibilityLabel=\"Night Drive, album\">\n  <Artwork />\n  <TiltLayer depth={0.5}>\n    <Title />\n  </TiltLayer>\n</TiltDeck>;\n```\n\nWherever the finger presses, that corner sinks away. Children wrapped in `TiltLayer` shift by their `depth`: positive values float above the card, negative values sink below it, `0` stays flat.\n\n## When to use\n\n- Covers, tickets, product shots: objects the user should want to pick up.\n- Cards with layered artwork, where parallax sells the depth.\n\n## When not to use\n\n- Rows in a long list. The effect is for a hero object, not every item.\n- Cards with inputs or several buttons inside; the whole card reacts to every touch.\n\n## Notes\n\n- Touch tracking never claims the gesture: a vertical drag scrolls the page and the card springs back.\n- `onPress` fires on a tap that does not drag and makes the card a button for screen readers.\n- Give the deck room around it; the floor shadow and the 3% lift extend past its bounds.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add tilt-deck`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

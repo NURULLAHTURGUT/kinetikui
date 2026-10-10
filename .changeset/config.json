@@ -1,0 +1,11 @@
+{
+  "$schema": "../node_modules/@changesets/config/schema.json",
+  "baseBranch": "main",
+  "access": "restricted",
+  "commit": false,
+  "changelog": "@changesets/cli/changelog",
+  "fixed": [["kinetik-ui", "@kinetik/registry", "@kinetik/mcp"]],
+  "ignore": ["@kinetik/playground", "@kinetik/docs"],
+  "privatePackages": { "version": true, "tag": false },
+  "updateInternalDependencies": "patch"
+}

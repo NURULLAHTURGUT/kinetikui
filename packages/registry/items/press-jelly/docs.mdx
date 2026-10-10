@@ -1,0 +1,28 @@
+## Usage
+
+```tsx
+import { PressJelly } from '@/components/kinetik/press-jelly';
+
+<PressJelly onPress={checkout} size="lg" block>
+  Continue
+</PressJelly>;
+```
+
+Variants: `ember` (primary), `ice` (secondary accent) and `surface` (neutral). Pass `loading` while work is in flight; presses are ignored and a spinner replaces the label without changing the button's size.
+
+## When to use
+
+- The one primary action on a screen: continue, buy, send.
+- Moments where a tactile response makes the app feel physical.
+
+## When not to use
+
+- Dense toolbars or lists of actions. A screen full of wobbling buttons stops feeling special.
+- Destructive actions that need a pause. Use Hold to Confirm.
+
+## Notes
+
+- The squash starts on the UI thread the moment the finger lands, so it stays responsive while JavaScript is busy.
+- Moving the finger more than 32 pt away cancels the press.
+- Pass `accessibilityLabel` when the label is not a plain string.
+- The button sizes to its label; `block` stretches it to the parent. Position it with `style`, e.g. `style={{ alignSelf: 'center' }}`.

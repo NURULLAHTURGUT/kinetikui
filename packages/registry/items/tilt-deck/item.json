@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "tilt-deck",
+  "title": "Tilt Deck",
+  "description": "A card that tilts in 3D under the finger, with parallax layers and a drifting floor shadow.",
+  "category": "card",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["tilt-deck.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Touch moves retarget two springs on the UI thread; each TiltLayer adds one transform. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-10",
+        "build": "release",
+        "frameMs": 77,
+        "p90Ms": 101,
+        "baselineMs": 65,
+        "jankyPercent": 84.4,
+        "atRest": "idle",
+        "memoryMb": 146
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "No rotation, parallax or lift; the card dips 2% while pressed.",
+    "screenReader": "Button role when onPress is set; pass accessibilityLabel to describe the card. Layers are not separately exposed.",
+    "touchTarget": "The whole card is the target."
+  }
+}

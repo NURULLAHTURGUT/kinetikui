@@ -1,0 +1,72 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "grain-drift",
+  "type": "registry:item",
+  "title": "Grain Drift",
+  "description": "A drifting four-colour mesh gradient under moving film grain, drawn by a shader.",
+  "categories": [
+    "background"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-clock.json",
+    "https://kinetik-ui.dev/r/kinetik-shaders.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/grain-drift.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/grain-drift.tsx",
+      "content": "import { Canvas, Fill, Shader, type SkSize } from '@shopify/react-native-skia';\nimport type { ReactNode } from 'react';\nimport { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';\nimport { useDerivedValue, useSharedValue } from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { useShaderClock } from '../../lib/kinetik/hooks/use-shader-clock';\nimport { colorUniform, runtimeEffect } from '../../lib/kinetik/shaders/sksl';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { GRAIN_SHADER } from './grain-drift.shader';\n\nexport type GrainDriftProps = {\n  children?: ReactNode;\n  /** Four mesh colours. Defaults to ember, ice, surface and background from the theme. */\n  colors?: [string, string, string, string];\n  /** Film grain strength, 0–1. Defaults to 0.5. Set 0 for a clean gradient. */\n  grain?: number;\n  /** Drift speed multiplier. Defaults to 1. */\n  speed?: number;\n  /** Shader updates per second. 30 halves the GPU cost. Defaults to 60. */\n  frameRate?: 60 | 30;\n  /** Draw a single still frame. Reduced-motion users always get this. */\n  reduceEffects?: boolean;\n  /** Pause while off-screen. Defaults to true. */\n  active?: boolean;\n  style?: StyleProp<ViewStyle>;\n};\n\n/**\n * A drifting mesh gradient with moving film grain: four colour points on slow\n * orbits, blended on the GPU. Children render on top.\n */\nexport function GrainDrift({\n  children,\n  colors,\n  grain = 0.5,\n  speed = 1,\n  frameRate = 60,\n  reduceEffects = false,\n  active = true,\n  style,\n}: GrainDriftProps) {\n  const theme = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const still = reduced || reduceEffects;\n  const size = useSharedValue<SkSize>({ width: 0, height: 0 });\n  const time = useShaderClock({ running: active && !still, speed, frameRate, start: 2 });\n\n  const [p0, p1, p2, p3] = colors ?? [\n    theme.colors.ember,\n    theme.colors.ice,\n    theme.colors.surfaceRaised,\n    theme.colors.background,\n  ];\n  const c0 = colorUniform(p0);\n  const c1 = colorUniform(p1);\n  const c2 = colorUniform(p2);\n  const c3 = colorUniform(p3);\n  const g = Math.max(0, Math.min(1, grain));\n\n  const uniforms = useDerivedValue(() => ({\n    res: [size.get().width, size.get().height],\n    time: time.get(),\n    grain: g,\n    c0,\n    c1,\n    c2,\n    c3,\n  }));\n\n  return (\n    <View style={[styles.root, style]}>\n      <Canvas\n        style={StyleSheet.absoluteFill}\n        onSize={size}\n        pointerEvents=\"none\"\n        accessibilityElementsHidden\n        importantForAccessibility=\"no-hide-descendants\"\n      >\n        <Fill>\n          <Shader source={runtimeEffect(GRAIN_SHADER)} uniforms={uniforms} />\n        </Fill>\n      </Canvas>\n      {children}\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  root: { overflow: 'hidden' },\n});\n"
+    },
+    {
+      "path": "src/components/kinetik/grain-drift.shader.ts",
+      "type": "registry:file",
+      "target": "~/components/kinetik/grain-drift.shader.ts",
+      "content": "import { NOISE } from '../../lib/kinetik/shaders/sksl';\n\n/**\n * A mesh gradient of four colour points drifting on slow orbits, under a\n * moving film grain. Uniforms: res, time, grain (0–1), four colours.\n */\nexport const GRAIN_SHADER = `\nuniform float2 res;\nuniform float time;\nuniform float grain;\nuniform half4 c0;\nuniform half4 c1;\nuniform half4 c2;\nuniform half4 c3;\n${NOISE}\n\nfloat2 orbit(float2 center, float radius, float speed, float phase) {\n  float a = time * speed + phase;\n  return center + radius * float2(cos(a), sin(a * 1.3));\n}\n\nhalf4 main(float2 xy) {\n  float2 uv = xy / res;\n  float aspect = res.x / max(res.y, 1.0);\n  float2 p = float2(uv.x * aspect, uv.y);\n\n  // A little noise in the lookup softens the blend into a painted look.\n  p += (float2(valueNoise(p * 3.0 + time * 0.05), valueNoise(p * 3.0 - time * 0.04)) - 0.5) * 0.12;\n\n  float2 a = orbit(float2(0.25 * aspect, 0.25), 0.18, 0.21, 0.0);\n  float2 b = orbit(float2(0.80 * aspect, 0.30), 0.20, 0.17, 2.1);\n  float2 c = orbit(float2(0.30 * aspect, 0.80), 0.22, 0.13, 4.0);\n  float2 d = orbit(float2(0.75 * aspect, 0.75), 0.16, 0.19, 5.3);\n\n  // Inverse-distance weights: each point owns the area around it.\n  float wa = 1.0 / pow(distance(p, a) + 0.05, 2.2);\n  float wb = 1.0 / pow(distance(p, b) + 0.05, 2.2);\n  float wc = 1.0 / pow(distance(p, c) + 0.05, 2.2);\n  float wd = 1.0 / pow(distance(p, d) + 0.05, 2.2);\n  half3 col = (c0.rgb * wa + c1.rgb * wb + c2.rgb * wc + c3.rgb * wd) / (wa + wb + wc + wd);\n\n  // Film grain re-seeded at 24 fps, like real film.\n  float frame = floor(time * 24.0);\n  float g = hash21(xy + frame * 17.0) - 0.5;\n  col += g * grain * 0.16;\n  return half4(col, 1.0);\n}\n`;\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "background",
+    "web": "live",
+    "perf": {
+      "budget": "One full-surface shader per frame: four distance weights, two noise lookups and one hash per pixel. frameRate={30} halves it.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-10",
+          "build": "release",
+          "frameMs": 73,
+          "p90Ms": 109,
+          "baselineMs": 65,
+          "jankyPercent": 83.19,
+          "atRest": "animating",
+          "memoryMb": 147,
+          "notes": "Animates by design while active; pass active={false} off-screen."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "A single still frame without drift or grain animation.",
+      "screenReader": "Decorative: the canvas is hidden from assistive tech. Children stay accessible.",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { GrainDrift } from '@/components/kinetik/grain-drift';\n\n<GrainDrift colors={['#FF6A3D', '#8FD8FF', '#1E2330', '#0B0D12']} style={{ height: 320 }}>\n  <NowPlaying />\n</GrainDrift>;\n```\n\nFour colour points drift on slow orbits and blend into a soft mesh gradient. A film grain, re-seeded 24 times a second like real film, sits on top. Set `grain={0}` for a clean gradient.\n\n## When to use\n\n- Media surfaces: now-playing cards, covers, story backgrounds.\n- Brand moments where a flat colour feels too static.\n\n## When not to use\n\n- Behind small or low-contrast text; the moving grain adds noise. Keep text large and on a solid backdrop.\n- Long lists. Use it for one hero surface.\n\n## Notes\n\n- Pass `active={false}` while off-screen; `frameRate={30}` halves the shader work.\n- Under reduced motion the gradient is drawn once and stays still.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add grain-drift`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

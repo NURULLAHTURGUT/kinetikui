@@ -1,0 +1,29 @@
+## Usage
+
+```tsx
+import { ConfettiBurst, type ConfettiHandle } from '@/components/kinetik/confetti-burst';
+
+const confetti = useRef<ConfettiHandle>(null);
+
+<ConfettiBurst ref={confetti} style={StyleSheet.absoluteFill}>
+  <Checkout onPaid={() => confetti.current?.burst()} />
+</ConfettiBurst>;
+```
+
+Fire it with the ref (`burst()` or `burst({ x, y })` to start from a point) or by changing `trigger`. The confetti is drawn over the children and never blocks touches.
+
+## When to use
+
+- Rare moments worth celebrating: first purchase, a finished goal, a streak.
+- Paired with a clear message about what happened.
+
+## When not to use
+
+- Routine confirmations. Celebrating every save makes the moment meaningless; use a toast.
+- On its own for important feedback. Screen readers do not see confetti; say what happened in text.
+
+## Notes
+
+- Hundreds of particles cost one draw call; the physics runs only while they are in the air.
+- Under reduced motion no particles appear, but the success haptic still plays.
+- `colors` defaults to the theme accents; pass brand colours for campaigns.

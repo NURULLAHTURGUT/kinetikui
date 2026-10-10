@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "deckfall",
+  "title": "Deckfall",
+  "description": "A stack of cards swiped away one at a time, with the cards behind rising into place.",
+  "category": "card",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["deckfall.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Only visible cards (plus one) are mounted. Dragging updates two shared values on the UI thread; each card evaluates one style worklet.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-10",
+        "build": "release",
+        "frameMs": 69,
+        "p90Ms": 93,
+        "baselineMs": 65,
+        "jankyPercent": 81.54,
+        "atRest": "idle",
+        "memoryMb": 150
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "No tilt or vertical drift; a swiped card fades out quickly instead of flying away.",
+    "screenReader": "Only the top card is exposed, with 'swipe left' and 'swipe right' actions named by leftLabel/rightLabel. Other cards are hidden.",
+    "touchTarget": "The whole top card."
+  }
+}

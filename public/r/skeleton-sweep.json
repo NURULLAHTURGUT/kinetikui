@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "skeleton-sweep",
+  "type": "registry:item",
+  "title": "Skeleton Sweep",
+  "description": "Loading placeholders with one band of light sweeping across the whole layout.",
+  "categories": [
+    "feedback"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/skeleton-sweep.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/skeleton-sweep.tsx",
+      "content": "import { createContext, useContext, useEffect, useRef, type ReactNode } from 'react';\nimport {\n  StyleSheet,\n  View,\n  useWindowDimensions,\n  type DimensionValue,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  Easing,\n  cancelAnimation,\n  useAnimatedStyle,\n  useSharedValue,\n  withRepeat,\n  withTiming,\n  type SharedValue,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { gradient } from '../../lib/kinetik/tokens/gradient';\nimport { withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nconst BAND = 180;\n\ntype Sweep = { clock: SharedValue<number>; still: boolean };\nconst SweepContext = createContext<Sweep | null>(null);\n\n/** One looping clock, 0 → 1 per pass. Stops when `active` is false or motion is reduced. */\nfunction useSweepClock(active: boolean, period: number): Sweep {\n  const reduced = useReduceMotion();\n  const clock = useSharedValue(0);\n  const still = reduced || !active;\n  useEffect(() => {\n    if (still) {\n      cancelAnimation(clock);\n      clock.set(0);\n      return;\n    }\n    clock.set(0);\n    clock.set(\n      withRepeat(withTiming(1, { duration: period, easing: Easing.inOut(Easing.quad) }), -1),\n    );\n    return () => cancelAnimation(clock);\n  }, [still, period, clock]);\n  return { clock, still };\n}\n\nexport type SkeletonGroupProps = {\n  children: ReactNode;\n  /** Pause the sweep, e.g. while the screen is not focused. Defaults to true. */\n  active?: boolean;\n  /** Time for one pass across the screen, in ms. Defaults to 1400. */\n  period?: number;\n  /** Announced to screen readers. Defaults to \"Loading\". */\n  accessibilityLabel?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\n/**\n * Shares one sweep between every `Skeleton` inside it. Each skeleton offsets\n * the light by its position on screen, so a single band of light passes over\n * the whole layout instead of each block shimmering on its own.\n */\nexport function SkeletonGroup({\n  children,\n  active = true,\n  period = 1400,\n  accessibilityLabel = 'Loading',\n  style,\n}: SkeletonGroupProps) {\n  const sweep = useSweepClock(active, period);\n  return (\n    <SweepContext.Provider value={sweep}>\n      <View\n        accessible\n        accessibilityRole=\"progressbar\"\n        accessibilityLabel={accessibilityLabel}\n        accessibilityState={{ busy: true }}\n        style={style}\n      >\n        {children}\n      </View>\n    </SweepContext.Provider>\n  );\n}\n\nexport type SkeletonProps = {\n  width?: DimensionValue;\n  height?: DimensionValue;\n  /** Corner radius. Defaults to the theme `sm` radius. */\n  radius?: number;\n  /** Shorthand for a circle of this diameter. */\n  circle?: number;\n  style?: StyleProp<ViewStyle>;\n};\n\n/** A placeholder block with a sweeping highlight. Use inside a `SkeletonGroup`. */\nexport function Skeleton({ width = '100%', height = 14, radius, circle, style }: SkeletonProps) {\n  const { colors, radius: radii } = useKinetikTheme();\n  const shared = useContext(SweepContext);\n  const own = useSweepClock(shared === null, 1400);\n  const { clock, still } = shared ?? own;\n  const { width: screen } = useWindowDimensions();\n  const ref = useRef<View>(null);\n  const pageX = useSharedValue(0);\n  const remeasure = useRef<ReturnType<typeof setTimeout> | null>(null);\n  useEffect(\n    () => () => {\n      if (remeasure.current) clearTimeout(remeasure.current);\n    },\n    [],\n  );\n\n  // Measure on layout, and again once screen transitions have settled: a\n  // measurement taken mid-transition includes the sliding screen's offset.\n  const measure = () => {\n    ref.current?.measureInWindow((x) => pageX.set(x));\n    if (remeasure.current) clearTimeout(remeasure.current);\n    remeasure.current = setTimeout(() => ref.current?.measureInWindow((x) => pageX.set(x)), 500);\n  };\n\n  const band = useAnimatedStyle(() => {\n    // The band travels from off-screen left to off-screen right in screen space.\n    const x = -BAND + clock.get() * (screen + BAND * 2) - pageX.get();\n    return { transform: [{ translateX: x }] };\n  });\n\n  const size = circle\n    ? { width: circle, height: circle, borderRadius: circle / 2 }\n    : { width, height, borderRadius: radius ?? radii.sm };\n  const light = colors.skeletonHighlight;\n\n  return (\n    <View\n      ref={ref}\n      importantForAccessibility=\"no-hide-descendants\"\n      accessibilityElementsHidden\n      onLayout={measure}\n      style={[styles.block, size, { backgroundColor: colors.skeleton }, style]}\n    >\n      {!still && (\n        <Animated.View\n          pointerEvents=\"none\"\n          style={[\n            styles.band,\n            gradient(\n              `linear-gradient(90deg, ${withAlpha(light, 0)} 0%, ${light} 50%, ${withAlpha(light, 0)} 100%)`,\n            ),\n            band,\n          ]}\n        />\n      )}\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  block: { overflow: 'hidden' },\n  band: { position: 'absolute', top: 0, bottom: 0, left: 0, width: BAND },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "feedback",
+    "web": "live",
+    "perf": {
+      "budget": "One repeating timing per group; each block applies a single translate. Pauses when `active` is false.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-10",
+          "build": "release",
+          "frameMs": 77,
+          "p90Ms": 93,
+          "baselineMs": 65,
+          "jankyPercent": 85.8,
+          "atRest": "animating",
+          "memoryMb": 142,
+          "notes": "Sweeps by design while loading; unmounts with the placeholder."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Static placeholders with no sweep.",
+      "screenReader": "The group is a busy progress bar with a label ('Loading' by default); individual blocks are hidden.",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { Skeleton, SkeletonGroup } from '@/components/kinetik/skeleton-sweep';\n\n<SkeletonGroup accessibilityLabel=\"Loading messages\">\n  <Skeleton circle={44} />\n  <Skeleton width=\"60%\" height={14} />\n  <Skeleton width=\"90%\" height={12} />\n</SkeletonGroup>;\n```\n\nAll skeletons in a group share one clock and offset the light by their position on screen, so one band of light passes over the whole layout.\n\n## When to use\n\n- Content whose shape is known before it loads: lists, profiles, cards.\n- Loads that usually take longer than about 300 ms.\n\n## When not to use\n\n- Very fast loads. A skeleton that flashes for 100 ms is noisier than nothing.\n- Unknown or highly variable layouts. Use a spinner or a progress bar.\n\n## Notes\n\n- Pass `active={false}` while the screen is out of focus to stop the sweep.\n- A `Skeleton` outside a group runs its own sweep.\n- The group is announced as a busy progress bar; the blocks themselves are hidden from screen readers.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add skeleton-sweep`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

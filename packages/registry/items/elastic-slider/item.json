@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "elastic-slider",
+  "title": "Elastic Slider",
+  "description": "A slider that stretches like rubber past its ends and springs back, with a value bubble.",
+  "category": "interaction",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["elastic-slider.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Dragging updates shared values on the UI thread; React re-renders only when the stepped value changes.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-10",
+        "build": "release",
+        "frameMs": 69,
+        "p90Ms": 89,
+        "baselineMs": 65,
+        "jankyPercent": 80.14,
+        "atRest": "idle",
+        "memoryMb": 151
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "No rubber-band stretch; the thumb still follows the finger and the value bubble appears without travel.",
+    "screenReader": "Adjustable role with min, max, current value and formatted text; increment and decrement move by one step (at least 5% of the range).",
+    "touchTarget": "At least 44 pt tall across the full width."
+  }
+}

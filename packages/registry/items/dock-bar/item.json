@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "dock-bar",
+  "title": "Dock Bar",
+  "description": "A floating bottom navigation bar whose items swell under the finger like a dock.",
+  "category": "navigation",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["dock-bar.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "While touching, one shared value (finger position) drives one transform per item on the UI thread; React renders only when the hovered item changes.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-10",
+        "build": "release",
+        "frameMs": 73,
+        "p90Ms": 93,
+        "baselineMs": 65,
+        "jankyPercent": 79.39,
+        "atRest": "idle",
+        "memoryMb": 150
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "No magnification; items stay their rest size and the label bubble still shows.",
+    "screenReader": "Tab list; each item is a tab with its label and selected state, and 'activate' chooses it.",
+    "touchTarget": "Items are 48 pt square by default (minimum 40)."
+  }
+}

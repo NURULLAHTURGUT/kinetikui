@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "magnet-button",
+  "type": "registry:item",
+  "title": "Magnet Button",
+  "description": "A button that leans toward the finger from a field around it and presses on release.",
+  "categories": [
+    "interaction"
+  ],
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/magnet-button.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/magnet-button.tsx",
+      "content": "import type { ReactNode } from 'react';\nimport {\n  StyleSheet,\n  Text,\n  View,\n  type AccessibilityActionEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport { Gesture, GestureDetector } from 'react-native-gesture-handler';\nimport Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { glow, minTouchTarget } from '../../lib/kinetik/tokens/tokens';\n\nexport type MagnetButtonProps = {\n  /** Button label. A string gets the variant's text style; any node is rendered as is. */\n  children: ReactNode;\n  onPress?: () => void;\n  /** Defaults to `ember`. */\n  variant?: 'ember' | 'surface';\n  /** How strongly the button follows the finger, 0–1. Defaults to 0.5. */\n  strength?: number;\n  /** Width of the invisible field around the button that attracts the finger, in pt. Defaults to 40. */\n  field?: number;\n  /** Maximum distance the button travels toward the finger, in pt. Defaults to 14. */\n  maxPull?: number;\n  /** Plays a tick when the finger is captured and a tap on press. Defaults to true. */\n  haptics?: boolean;\n  disabled?: boolean;\n  /** Required when `children` is not a string. */\n  accessibilityLabel?: string;\n  accessibilityHint?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\n/**\n * A button that leans toward the finger. Touching anywhere in the field around\n * it pulls the button closer; releasing over the button presses it. The field\n * never claims the gesture, so it is safe inside scroll views.\n */\nexport function MagnetButton({\n  children,\n  onPress,\n  variant = 'ember',\n  strength = 0.5,\n  field = 40,\n  maxPull = 14,\n  haptics = true,\n  disabled = false,\n  accessibilityLabel,\n  accessibilityHint,\n  style,\n}: MagnetButtonProps) {\n  const { colors, radius, font, space, shadow } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const k = Math.max(0, Math.min(1, strength));\n  const live = !disabled && !reduced;\n\n  const box = useSharedValue({ x: 0, y: 0, width: 0, height: 0 });\n  const tx = useSharedValue(0);\n  const ty = useSharedValue(0);\n  const lift = useSharedValue(0);\n  const captured = useSharedValue(false);\n\n  const palette =\n    variant === 'ember'\n      ? { bg: colors.ember, fg: colors.onEmber, border: 'transparent', shadow: glow(colors.ember) }\n      : {\n          bg: colors.surfaceRaised,\n          fg: colors.text,\n          border: colors.borderStrong,\n          shadow: shadow.sm,\n        };\n\n  const press = () => {\n    haptic('tap');\n    onPress?.();\n  };\n  const capture = () => haptic('tick');\n\n  /** Moves the button toward (x, y). Returns true while the finger is over the button. */\n  const follow = (x: number, y: number): boolean => {\n    'worklet';\n    const b = box.get();\n    if (b.width === 0) return false;\n    const dx = x - (b.x + b.width / 2);\n    const dy = y - (b.y + b.height / 2);\n    const inside =\n      x >= b.x - 6 && x <= b.x + b.width + 6 && y >= b.y - 6 && y <= b.y + b.height + 6;\n    if (live) {\n      // Pull falls off with distance so the edge of the field is gentle.\n      const reach = Math.max(b.width, b.height) / 2 + field;\n      const d = Math.sqrt(dx * dx + dy * dy);\n      const falloff = Math.max(0, 1 - d / (reach * 1.6));\n      const px = Math.max(-maxPull, Math.min(maxPull, dx * 0.35 * k * (0.4 + falloff)));\n      const py = Math.max(-maxPull, Math.min(maxPull, dy * 0.35 * k * (0.4 + falloff)));\n      tx.set(withSpring(px, spring('snappy')));\n      ty.set(withSpring(py, spring('snappy')));\n    }\n    if (inside !== captured.get()) {\n      captured.set(inside);\n      lift.set(withSpring(inside ? 1 : 0, spring('snappy', reduced)));\n      if (inside) scheduleOnRN(capture);\n    }\n    return inside;\n  };\n\n  const release = (pressed: boolean) => {\n    'worklet';\n    tx.set(withSpring(0, spring('bouncy', reduced)));\n    ty.set(withSpring(0, spring('bouncy', reduced)));\n    lift.set(withSpring(0, spring('bouncy', reduced)));\n    if (pressed) scheduleOnRN(press);\n    captured.set(false);\n  };\n\n  const gesture = Gesture.Manual()\n    .withTestId('magnet-button')\n    .enabled(!disabled)\n    // In the field the gesture stays passive, so a drag there still scrolls.\n    // Once the finger is on the button the gesture claims the touch, so\n    // wiggling a finger on the button does not scroll the page away.\n    .onTouchesDown((e, manager) => {\n      const t = e.allTouches[0];\n      if (t && follow(t.x, t.y)) manager.activate();\n    })\n    .onTouchesMove((e, manager) => {\n      const t = e.allTouches[0];\n      if (t && follow(t.x, t.y)) manager.activate();\n    })\n    .onTouchesUp((_e, manager) => {\n      release(captured.get());\n      manager.end();\n    })\n    .onTouchesCancelled(() => {\n      release(false);\n    });\n\n  const buttonStyle = useAnimatedStyle(() => ({\n    transform: [\n      { translateX: tx.get() },\n      { translateY: ty.get() },\n      { scale: 1 + lift.get() * (reduced ? -0.02 : 0.04) },\n    ],\n  }));\n  // The label travels further than the button, giving the face a little depth.\n  const labelStyle = useAnimatedStyle(() => ({\n    transform: [{ translateX: tx.get() * 0.45 }, { translateY: ty.get() * 0.45 }],\n  }));\n\n  const onAccessibilityAction = (e: AccessibilityActionEvent) => {\n    if (e.nativeEvent.actionName === 'activate' && !disabled) press();\n  };\n\n  return (\n    <GestureDetector gesture={gesture}>\n      {/* collapsable={false}: a layout-only View is flattened away on Fabric and\n          the gesture would have no native view to attach to. */}\n      <View collapsable={false} style={[{ padding: field, margin: -field }, styles.field, style]}>\n        <Animated.View\n          accessible\n          accessibilityRole=\"button\"\n          accessibilityLabel={\n            accessibilityLabel ?? (typeof children === 'string' ? children : undefined)\n          }\n          accessibilityHint={accessibilityHint}\n          accessibilityState={{ disabled }}\n          accessibilityActions={[{ name: 'activate' }]}\n          onAccessibilityAction={onAccessibilityAction}\n          onLayout={(e) => box.set(e.nativeEvent.layout)}\n          style={[\n            styles.button,\n            {\n              minHeight: Math.max(minTouchTarget, 52),\n              paddingHorizontal: space[8],\n              borderRadius: radius.pill,\n              backgroundColor: palette.bg,\n              borderColor: palette.border,\n              boxShadow: disabled ? undefined : palette.shadow,\n              opacity: disabled ? 0.45 : 1,\n            },\n            buttonStyle,\n          ]}\n        >\n          <Animated.View style={[styles.label, { gap: space[2] }, labelStyle]}>\n            {typeof children === 'string' ? (\n              <Text\n                numberOfLines={1}\n                style={{ color: palette.fg, fontSize: font.size.md, fontWeight: font.weight.bold }}\n              >\n                {children}\n              </Text>\n            ) : (\n              children\n            )}\n          </Animated.View>\n        </Animated.View>\n      </View>\n    </GestureDetector>\n  );\n}\n\nconst styles = StyleSheet.create({\n  field: { alignSelf: 'flex-start' },\n  button: {\n    alignItems: 'center',\n    justifyContent: 'center',\n    borderWidth: StyleSheet.hairlineWidth,\n  },\n  label: { flexDirection: 'row', alignItems: 'center' },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "interaction",
+    "web": "live",
+    "perf": {
+      "budget": "Touch moves retarget two springs on the UI thread; nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-10",
+          "build": "release",
+          "frameMs": 77,
+          "p90Ms": 93,
+          "baselineMs": 65,
+          "jankyPercent": 81.43,
+          "atRest": "idle",
+          "memoryMb": 146
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The button stays put and only dims slightly while the finger is over it.",
+      "screenReader": "Button role; 'activate' presses it.",
+      "touchTarget": "At least 52 pt tall; the field adds 40 pt of reach on every side."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { MagnetButton } from '@/components/kinetik/magnet-button';\n\n<MagnetButton onPress={start}>Get started</MagnetButton>;\n```\n\nTouching anywhere in the field around the button (40 pt by default) pulls it toward the finger. Releasing over the button presses it; releasing elsewhere lets it spring back.\n\n## When to use\n\n- A hero call to action with space around it: landing, onboarding, empty states.\n- Playful products where the button can invite the finger in.\n\n## When not to use\n\n- Tight layouts. The field reaches into neighbouring elements and needs room.\n- Rows of buttons. Fields overlap and the pulls compete.\n\n## Notes\n\n- The field uses negative margins, so it does not change your layout. Give the button at least `field` points of free space on each side.\n- The touch tracking never claims the gesture, so the button works inside scroll views.\n- Reduced motion keeps the button still and only dims it under the finger.\n- The button sizes to its label. Position it with `style`, e.g. `style={{ alignSelf: 'center' }}`.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add magnet-button`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

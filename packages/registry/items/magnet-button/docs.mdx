@@ -1,0 +1,26 @@
+## Usage
+
+```tsx
+import { MagnetButton } from '@/components/kinetik/magnet-button';
+
+<MagnetButton onPress={start}>Get started</MagnetButton>;
+```
+
+Touching anywhere in the field around the button (40 pt by default) pulls it toward the finger. Releasing over the button presses it; releasing elsewhere lets it spring back.
+
+## When to use
+
+- A hero call to action with space around it: landing, onboarding, empty states.
+- Playful products where the button can invite the finger in.
+
+## When not to use
+
+- Tight layouts. The field reaches into neighbouring elements and needs room.
+- Rows of buttons. Fields overlap and the pulls compete.
+
+## Notes
+
+- The field uses negative margins, so it does not change your layout. Give the button at least `field` points of free space on each side.
+- The touch tracking never claims the gesture, so the button works inside scroll views.
+- Reduced motion keeps the button still and only dims it under the finger.
+- The button sizes to its label. Position it with `style`, e.g. `style={{ alignSelf: 'center' }}`.

@@ -1,0 +1,29 @@
+## Usage
+
+```tsx
+import { Skeleton, SkeletonGroup } from '@/components/kinetik/skeleton-sweep';
+
+<SkeletonGroup accessibilityLabel="Loading messages">
+  <Skeleton circle={44} />
+  <Skeleton width="60%" height={14} />
+  <Skeleton width="90%" height={12} />
+</SkeletonGroup>;
+```
+
+All skeletons in a group share one clock and offset the light by their position on screen, so one band of light passes over the whole layout.
+
+## When to use
+
+- Content whose shape is known before it loads: lists, profiles, cards.
+- Loads that usually take longer than about 300 ms.
+
+## When not to use
+
+- Very fast loads. A skeleton that flashes for 100 ms is noisier than nothing.
+- Unknown or highly variable layouts. Use a spinner or a progress bar.
+
+## Notes
+
+- Pass `active={false}` while the screen is out of focus to stop the sweep.
+- A `Skeleton` outside a group runs its own sweep.
+- The group is announced as a busy progress bar; the blocks themselves are hidden from screen readers.

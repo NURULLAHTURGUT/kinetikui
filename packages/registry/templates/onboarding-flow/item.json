@@ -1,0 +1,30 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "onboarding-flow",
+  "title": "Onboarding Flow",
+  "description": "A paged welcome flow over an aurora: cascading titles, parallax illustrations, a stretching progress pill.",
+  "category": "screen",
+  "phase": 3,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-safe-area-context"],
+  "registryDependencies": [
+    "kinetik-tokens",
+    "aurora-veil",
+    "glint-card",
+    "press-jelly",
+    "scramble-text",
+    "tilt-deck",
+    "word-cascade"
+  ],
+  "files": ["onboarding-flow.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One shader background plus the visible slide. Paging, parallax and the progress pill are scroll-driven worklets; nothing runs on the JS thread while swiping.",
+    "measurements": []
+  },
+  "a11y": {
+    "reducedMotion": "Titles appear without cascading and the background holds still (handled by Word Cascade and Aurora Veil). Paging is user-driven, so it stays.",
+    "screenReader": "Only the current slide is exposed. The progress dots read as \"Step 2 of 3\". Skip is hidden on the last slide.",
+    "touchTarget": "Skip and the main button are at least 44 pt; the main button spans the width."
+  }
+}

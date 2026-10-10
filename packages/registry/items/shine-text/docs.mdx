@@ -1,0 +1,25 @@
+## Usage
+
+```tsx
+import { ShineText } from '@/components/kinetik/shine-text';
+
+<ShineText text="Unlock Pro" fontSize={40} />;
+```
+
+The sheen is a real gradient masked by the glyphs: drawn with Skia on iOS and Android and with CSS `background-clip: text` on the web.
+
+## When to use
+
+- One premium or celebratory phrase: an upgrade, a reward, a limited offer.
+- Short, single-line labels and headlines.
+
+## When not to use
+
+- Body text or several lines. ShineText draws a single line.
+- More than one shining element on screen; the effect only works when it is rare.
+
+## Notes
+
+- `fontFamily` defaults to the system sans-serif; pass a family that is installed on the device (or loaded in the app) for custom type.
+- Between sweeps (`pause`) nothing animates. Pass `active={false}` while off-screen.
+- If no matching font is available the component falls back to plain text.

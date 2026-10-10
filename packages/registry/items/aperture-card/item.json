@@ -1,0 +1,40 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "aperture-card",
+  "title": "Aperture Card",
+  "description": "A card closed by a camera-like iris whose blades turn open to reveal the content.",
+  "category": "card",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["aperture-card.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "While opening or closing, two small paths (blades and seams) are rebuilt on the UI thread each frame; nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-10",
+        "build": "release",
+        "frameMs": 69,
+        "p90Ms": 101,
+        "baselineMs": 65,
+        "jankyPercent": 85.28,
+        "atRest": "idle",
+        "memoryMb": 152
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The blades fade out instead of turning.",
+    "screenReader": "Button role with expanded state; the hidden content is not exposed until the card is open.",
+    "touchTarget": "The whole card (at least 200 pt tall)."
+  }
+}

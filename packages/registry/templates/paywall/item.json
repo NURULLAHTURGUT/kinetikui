@@ -1,0 +1,29 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "paywall",
+  "title": "Paywall",
+  "description": "A subscription screen with a drifting gradient hero, rolling plan prices and confetti on purchase.",
+  "category": "screen",
+  "phase": 3,
+  "version": "1.0.0",
+  "dependencies": ["react-native-safe-area-context"],
+  "registryDependencies": [
+    "kinetik-tokens",
+    "confetti-burst",
+    "grain-drift",
+    "odometer",
+    "press-jelly",
+    "shine-text"
+  ],
+  "files": ["paywall.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One shader hero (scrolls away with the content) and a looping sheen on the title. Price changes roll digits on the UI thread; confetti runs only for ~3 s after a purchase.",
+    "measurements": []
+  },
+  "a11y": {
+    "reducedMotion": "The hero and title sheen hold still, prices change without rolling and no confetti is drawn (handled by each component).",
+    "screenReader": "Plans are a radio group (\"Yearly, $39.99 per year, Save 44%, selected\"). The monthly price is read as one value. The button announces which plan it buys and its busy state.",
+    "touchTarget": "Plan cards are 72 pt tall; close, links and the main button are at least 44 pt."
+  }
+}
