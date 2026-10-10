@@ -208,6 +208,8 @@ const docs: ComponentDoc[] = items
 fs.mkdirSync(OUT, { recursive: true });
 fs.writeFileSync(path.join(OUT, 'components.json'), `${JSON.stringify(docs, null, 2)}\n`);
 fs.writeFileSync(path.join(OUT, 'tokens.css'), tokensCss());
+// Everything in public/ is generated and ignored, so a fresh clone has no folder.
+fs.mkdirSync(path.join(ROOT, 'apps', 'docs', 'public'), { recursive: true });
 fs.copyFileSync(
   path.join(ROOT, 'node_modules', 'canvaskit-wasm', 'bin', 'full', 'canvaskit.wasm'),
   path.join(ROOT, 'apps', 'docs', 'public', 'canvaskit.wasm'),
