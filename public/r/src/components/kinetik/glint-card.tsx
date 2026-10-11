@@ -160,8 +160,8 @@ export function GlintCard({
   const bandStart = useDerivedValue(() => vec(0, 0));
   const bandEnd = useDerivedValue(() => vec(size.get().width, size.get().height));
   const bandPositions = useDerivedValue(() => {
-    const t = Math.max(0.16, Math.min(0.84, 0.5 + lx.get() * 0.42 + ly.get() * 0.18));
-    return [0, t - 0.15, t - 0.03, t, t + 0.03, t + 0.15, 1];
+    const t = Math.max(0.2, Math.min(0.8, 0.5 + lx.get() * 0.42 + ly.get() * 0.18));
+    return [0, t - 0.18, t - 0.05, t - 0.012, t, t + 0.012, t + 0.05, t + 0.18, 1];
   });
 
   // Rim light: brighter on the edge facing the light.
@@ -182,7 +182,9 @@ export function GlintCard({
     clear,
     clear,
     withAlpha(light, 0.1 * k),
-    withAlpha(light, 0.26 * k),
+    withAlpha(light, 0.22 * k),
+    withAlpha(light, 0.4 * k),
+    withAlpha(light, 0.22 * k),
     withAlpha(light, 0.1 * k),
     clear,
     clear,
@@ -192,9 +194,11 @@ export function GlintCard({
   const shadeColors = [
     dim,
     dim,
-    withAlpha(shade, 0.025 * k),
+    withAlpha(shade, 0.03 * k),
+    withAlpha(shade, 0.01 * k),
     unlit,
-    withAlpha(shade, 0.025 * k),
+    withAlpha(shade, 0.01 * k),
+    withAlpha(shade, 0.03 * k),
     dim,
     dim,
   ];
@@ -217,59 +221,61 @@ export function GlintCard({
         ]}
       >
         <View style={[styles.content, { padding: theme.space[5] }, contentStyle]}>{children}</View>
-        <Canvas
-          style={StyleSheet.absoluteFill}
-          onSize={size}
+        {/* The wrapper lets touches through: on the web the canvas itself ignores pointerEvents. */}
+        <View
           pointerEvents="none"
+          style={StyleSheet.absoluteFill}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
         >
-          {paper ? (
-            <Group clip={clip} blendMode="multiply">
-              <RoundedRect rect={clip}>
-                <RadialGradient c={hotspotCenter} r={hotspotRadius} colors={[unlit, dim]} />
-              </RoundedRect>
-              <RoundedRect rect={clip}>
-                <LinearGradient
-                  start={bandStart}
-                  end={bandEnd}
-                  colors={shadeColors}
-                  positions={bandPositions}
-                />
-              </RoundedRect>
-            </Group>
-          ) : (
-            <Group clip={clip} blendMode="screen">
-              <RoundedRect rect={clip}>
-                <RadialGradient
-                  c={hotspotCenter}
-                  r={hotspotRadius}
-                  colors={[withAlpha(light, 0.16 * k), clear]}
-                />
-              </RoundedRect>
-              <RoundedRect rect={clip}>
-                <LinearGradient
-                  start={bandStart}
-                  end={bandEnd}
-                  colors={bandColors}
-                  positions={bandPositions}
-                />
-              </RoundedRect>
-            </Group>
-          )}
-          <RoundedRect rect={rimRect} style="stroke" strokeWidth={1}>
-            <LinearGradient
-              start={rimStart}
-              end={rimEnd}
-              colors={
-                paper
-                  ? // The edge facing away from the light falls into shadow.
-                    [withAlpha(shade, 0.02 * k), withAlpha(shade, 0.22 * k)]
-                  : [withAlpha(light, 0.55 * k), withAlpha(light, 0.04 * k)]
-              }
-            />
-          </RoundedRect>
-        </Canvas>
+          <Canvas style={StyleSheet.absoluteFill} onSize={size}>
+            {paper ? (
+              <Group clip={clip} blendMode="multiply">
+                <RoundedRect rect={clip}>
+                  <RadialGradient c={hotspotCenter} r={hotspotRadius} colors={[unlit, dim]} />
+                </RoundedRect>
+                <RoundedRect rect={clip}>
+                  <LinearGradient
+                    start={bandStart}
+                    end={bandEnd}
+                    colors={shadeColors}
+                    positions={bandPositions}
+                  />
+                </RoundedRect>
+              </Group>
+            ) : (
+              <Group clip={clip} blendMode="screen">
+                <RoundedRect rect={clip}>
+                  <RadialGradient
+                    c={hotspotCenter}
+                    r={hotspotRadius}
+                    colors={[withAlpha(light, 0.16 * k), clear]}
+                  />
+                </RoundedRect>
+                <RoundedRect rect={clip}>
+                  <LinearGradient
+                    start={bandStart}
+                    end={bandEnd}
+                    colors={bandColors}
+                    positions={bandPositions}
+                  />
+                </RoundedRect>
+              </Group>
+            )}
+            <RoundedRect rect={rimRect} style="stroke" strokeWidth={1}>
+              <LinearGradient
+                start={rimStart}
+                end={rimEnd}
+                colors={
+                  paper
+                    ? // The edge facing away from the light falls into shadow.
+                      [withAlpha(shade, 0.02 * k), withAlpha(shade, 0.22 * k)]
+                    : [withAlpha(light, 0.55 * k), withAlpha(light, 0.04 * k)]
+                }
+              />
+            </RoundedRect>
+          </Canvas>
+        </View>
         {live && followTilt && <TiltSensor target={tilt} />}
       </Animated.View>
     </GestureDetector>

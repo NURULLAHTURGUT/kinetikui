@@ -21,7 +21,8 @@ import { useHaptic } from '../../shared/hooks/use-haptic';
 import { useReduceMotion } from '../../shared/hooks/use-reduce-motion';
 import { spring } from '../../shared/motion/motion';
 import { useKinetikTheme } from '../../shared/tokens/theme';
-import { minTouchTarget } from '../../shared/tokens/tokens';
+import { gradient } from '../../shared/tokens/gradient';
+import { minTouchTarget, withAlpha } from '../../shared/tokens/tokens';
 
 export type DockItem = {
   key: string;
@@ -68,6 +69,7 @@ export function DockBar({
   const haptic = useHaptic(haptics);
   const mag = reduced ? 1 : Math.max(1, Math.min(2.2, magnification));
   const pad = theme.space[2];
+  const dark = theme.scheme === 'dark';
 
   const finger = useSharedValue(-1000);
   const touching = useSharedValue(0);
@@ -142,26 +144,31 @@ export function DockBar({
             styles.tooltip,
             {
               left: pad + (preview ?? 0) * step + itemSize / 2 - TOOLTIP_WIDTH / 2,
-              bottom: itemSize * mag + pad * 2 + 6,
+              bottom: itemSize * mag + pad * 2 + 4,
             },
           ]}
         >
           <View
             style={[
               styles.tooltipInner,
-              { backgroundColor: theme.colors.text, borderRadius: theme.radius.sm },
+              {
+                backgroundColor: theme.colors.text,
+                borderRadius: theme.radius.xs,
+                boxShadow: theme.shadow.md,
+              },
             ]}
           >
             <Text
               style={{
                 color: theme.colors.background,
                 fontSize: theme.font.size.xs,
-                fontWeight: theme.font.weight.bold,
+                fontWeight: theme.font.weight.semibold,
               }}
             >
               {previewItem.label}
             </Text>
           </View>
+          <View style={[styles.caret, { backgroundColor: theme.colors.text }]} />
         </View>
       ) : null}
       <GestureDetector gesture={pan}>
@@ -176,10 +183,11 @@ export function DockBar({
             style={[
               styles.backdrop,
               {
-                borderRadius: theme.radius.xl,
-                backgroundColor: theme.colors.surfaceRaised,
-                borderColor: theme.colors.border,
-                boxShadow: theme.shadow.lg,
+                borderRadius: itemSize / 2 + pad,
+                backgroundColor: withAlpha(theme.colors.surfaceRaised, dark ? 0.78 : 0.86),
+                borderColor: theme.colors.borderStrong,
+                // A soft drop shadow and a fine highlight along the top edge, like glass.
+                boxShadow: `${theme.shadow.lg}, inset 0px 1px 0px ${withAlpha(theme.colors.highlight, dark ? 0.1 : 0.9)}`,
               },
               backdrop,
             ]}
@@ -228,7 +236,8 @@ function DockSlot({
   touching: SharedValue<number>;
   onActivate: () => void;
 }) {
-  const { colors, radius } = useKinetikTheme();
+  const { colors, scheme } = useKinetikTheme();
+  const dark = scheme === 'dark';
   const center = pad + i * step + size / 2;
 
   // Gaussian falloff around the finger; items grow upward from the bar.
@@ -246,7 +255,17 @@ function DockSlot({
     if (e.nativeEvent.actionName === 'activate') onActivate();
   };
 
-  const tint = active ? colors.ember : colors.textMuted;
+  const tint = active ? colors.onEmber : colors.textMuted;
+  // Tiles are lit from above: a lighter top fading down, and a bright rim.
+  const tile = active
+    ? { backgroundColor: colors.ember, borderColor: colors.ember }
+    : {
+        backgroundColor: colors.surface,
+        borderColor: colors.border,
+        ...gradient(
+          `linear-gradient(180deg, ${withAlpha(colors.highlight, dark ? 0.09 : 1)} 0%, ${withAlpha(colors.highlight, dark ? 0.02 : 0.4)} 100%)`,
+        ),
+      };
 
   return (
     <Animated.View
@@ -261,18 +280,22 @@ function DockSlot({
       <Animated.View
         style={[
           styles.item,
+          tile,
           {
             width: size,
             height: size,
-            borderRadius: radius.md,
-            backgroundColor: active ? colors.emberSoft : colors.surface,
+            // Continuous-looking corners: about 30% of the side, as on app icons.
+            borderRadius: size * 0.3,
+            boxShadow: active
+              ? `0px 4px 14px ${withAlpha(colors.ember, dark ? 0.25 : 0.3)}`
+              : `inset 0px 1px 0px ${withAlpha(colors.highlight, dark ? 0.08 : 1)}`,
           },
           animated,
         ]}
       >
         {item.icon({ active, color: tint })}
       </Animated.View>
-      <View style={[styles.dot, { backgroundColor: active ? colors.ember : 'transparent' }]} />
+      <View style={[styles.dot, { backgroundColor: active ? colors.text : 'transparent' }]} />
     </Animated.View>
   );
 }
@@ -281,15 +304,16 @@ const styles = StyleSheet.create({
   wrap: { alignSelf: 'center' },
   bar: { flexDirection: 'row', alignItems: 'flex-end', minHeight: minTouchTarget },
   backdrop: { ...StyleSheet.absoluteFill, borderWidth: StyleSheet.hairlineWidth },
-  item: { alignItems: 'center', justifyContent: 'center' },
+  item: { alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth },
   dot: {
     position: 'absolute',
-    bottom: -6,
+    bottom: -5,
     alignSelf: 'center',
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
   },
   tooltip: { position: 'absolute', width: TOOLTIP_WIDTH, alignItems: 'center' },
   tooltipInner: { paddingHorizontal: 10, paddingVertical: 5 },
+  caret: { width: 8, height: 8, marginTop: -5, transform: [{ rotate: '45deg' }], zIndex: -1 },
 });

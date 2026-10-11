@@ -949,7 +949,7 @@ pre.shiki {
 .preview-screen {
   grid-template-columns: minmax(0, 1fr);
 }
-.preview-stage > .phone {
+.preview-stage > div.phone {
   flex: none;
   display: flex;
   width: 390px;

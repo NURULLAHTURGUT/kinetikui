@@ -111,6 +111,7 @@ export function ParallaxHeader({
       <Animated.ScrollView
         ref={ref}
         scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
         // Lets it scroll when embedded in another scroll view on Android.
         nestedScrollEnabled
         contentContainerStyle={contentContainerStyle}

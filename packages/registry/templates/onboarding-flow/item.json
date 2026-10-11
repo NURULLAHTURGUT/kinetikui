@@ -2,16 +2,16 @@
   "$schema": "../../schema/item.schema.json",
   "name": "onboarding-flow",
   "title": "Onboarding Flow",
-  "description": "A paged welcome flow over an aurora: cascading titles, parallax illustrations, a stretching progress pill.",
+  "description": "A paged welcome flow: spotlit illustrations that drift with the swipe, story-style progress, a button that grows.",
   "category": "screen",
   "phase": 3,
   "version": "1.0.0",
   "dependencies": ["react-native-reanimated", "react-native-safe-area-context"],
   "registryDependencies": [
     "kinetik-tokens",
+    "kinetik-motion",
     "aurora-veil",
     "glint-card",
-    "press-jelly",
     "scramble-text",
     "tilt-deck",
     "word-cascade"
@@ -19,12 +19,12 @@
   "files": ["onboarding-flow.tsx"],
   "web": "live",
   "perf": {
-    "budget": "One shader background plus the visible slide. Paging, parallax and the progress pill are scroll-driven worklets; nothing runs on the JS thread while swiping.",
+    "budget": "One shader background plus the visible slide. Paging, parallax, the progress bars and the growing button are scroll-driven worklets; nothing runs on the JS thread while swiping.",
     "measurements": []
   },
   "a11y": {
     "reducedMotion": "Titles appear without cascading and the background holds still (handled by Word Cascade and Aurora Veil). Paging is user-driven, so it stays.",
-    "screenReader": "Only the current slide is exposed. The progress dots read as \"Step 2 of 3\". Skip is hidden on the last slide.",
-    "touchTarget": "Skip and the main button are at least 44 pt; the main button spans the width."
+    "screenReader": "Only the current slide is exposed. The progress bars read as \"Step 2 of 3\". The round button is named Continue, then Get started. Skip is hidden on the last slide.",
+    "touchTarget": "Skip is at least 44 pt; the round button is 56 pt and spans the width on the last slide."
   }
 }

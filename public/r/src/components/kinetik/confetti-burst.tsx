@@ -96,12 +96,12 @@ export function ConfettiBurst({
   const tick = useSharedValue(0);
   const alive = useSharedValue(0);
 
+  // The highlight is left out: it is white in both schemes and vanishes on a light ground.
   const palette = colors ?? [
     theme.colors.ember,
     theme.colors.ice,
     theme.colors.textMuted,
     theme.colors.textSubtle,
-    theme.colors.highlight,
   ];
   const paletteKey = palette.join('|');
   // Keyed on the colours' text so a new array with the same colours is free.
@@ -216,21 +216,23 @@ export function ConfettiBurst({
   return (
     <View style={[styles.root, style]}>
       {children}
-      <Canvas
-        style={StyleSheet.absoluteFill}
-        onSize={size}
+      {/* The wrapper lets touches through: on the web the canvas itself ignores pointerEvents. */}
+      <View
         pointerEvents="none"
+        style={StyleSheet.absoluteFill}
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
       >
-        <Atlas
-          image={texture}
-          sprites={sprites}
-          transforms={transforms}
-          colors={tints}
-          colorBlendMode="modulate"
-        />
-      </Canvas>
+        <Canvas style={StyleSheet.absoluteFill} onSize={size}>
+          <Atlas
+            image={texture}
+            sprites={sprites}
+            transforms={transforms}
+            colors={tints}
+            colorBlendMode="modulate"
+          />
+        </Canvas>
+      </View>
     </View>
   );
 }

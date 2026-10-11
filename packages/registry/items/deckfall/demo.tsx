@@ -22,15 +22,15 @@ export const controls = defineControls({
 type Place = { name: string; city: string; note: string; tone: 'ember' | 'ice' };
 const PLACES: Place[] = [
   {
-    name: 'Kuzguncuk Steps',
-    city: 'Istanbul',
-    note: 'Pastel houses, quiet mornings',
+    name: 'Harbour Lights',
+    city: 'Lisbon',
+    note: 'Trams, tiles and the river at dusk',
     tone: 'ember',
   },
-  { name: 'Moda Pier', city: 'Istanbul', note: 'Sunset over the Marmara', tone: 'ice' },
-  { name: 'Alaçatı Lanes', city: 'İzmir', note: 'Stone streets and windmills', tone: 'ember' },
-  { name: 'Uzungöl', city: 'Trabzon', note: 'A lake folded into the hills', tone: 'ice' },
-  { name: 'Kaleiçi', city: 'Antalya', note: 'Old harbour, older walls', tone: 'ember' },
+  { name: 'Glass Lake', city: 'Banff', note: 'Still water under the peaks', tone: 'ice' },
+  { name: 'Old Quarter', city: 'Prague', note: 'Cobbled lanes and copper roofs', tone: 'ember' },
+  { name: 'Salt Flats', city: 'Utah', note: 'A mirror as far as you can see', tone: 'ice' },
+  { name: 'Cliff Walk', city: 'Cornwall', note: 'Wild coast, quiet coves', tone: 'ember' },
 ];
 
 export default function DeckfallDemo({ visible, threshold }: ControlValues<typeof controls>) {

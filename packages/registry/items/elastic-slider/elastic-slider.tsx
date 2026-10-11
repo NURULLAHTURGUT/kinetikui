@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   StyleSheet,
   Text,
@@ -8,12 +8,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  useAnimatedStyle,
-  useDerivedValue,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { useHaptic } from '../../shared/hooks/use-haptic';
@@ -40,6 +35,10 @@ export type ElasticSliderProps = {
   showLabel?: boolean;
   /** Formats the value for the label, bubble and screen readers. */
   formatValue?: (value: number) => string;
+  /** Icon before the track, e.g. a quiet speaker. Nudged outward when the track is pulled past its start. */
+  leading?: ReactNode;
+  /** Icon after the track, e.g. a loud speaker. Nudged outward when the track is pulled past its end. */
+  trailing?: ReactNode;
   /** Fill colour. Defaults to the theme ember. */
   color?: string;
   disabled?: boolean;
@@ -48,8 +47,9 @@ export type ElasticSliderProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-const THUMB = 26;
+/** Track thickness at rest and while held. */
 const TRACK = 8;
+const TRACK_ACTIVE = 16;
 
 /** Rubber-band resistance: the further past the end, the harder it pulls back. */
 function rubber(distance: number, dimension: number) {
@@ -65,9 +65,10 @@ const decimalsOf = (n: number) => {
 };
 
 /**
- * A slider with spring physics. Pulling past either end stretches the track
- * like rubber and it snaps back on release; the thumb swells while held and a
- * bubble shows the value under the finger.
+ * A slider in the style of the iOS media controls: a slim track that swells
+ * while held and fills from the left, with no thumb to aim for. Pulling past
+ * either end stretches it like rubber, nudges the icon on that side, and it
+ * springs back on release.
  */
 export function ElasticSlider({
   value,
@@ -79,12 +80,14 @@ export function ElasticSlider({
   label,
   showLabel = true,
   formatValue,
+  leading,
+  trailing,
   color,
   disabled = false,
   haptics = true,
   style,
 }: ElasticSliderProps) {
-  const { colors, font, space, radius, shadow } = useKinetikTheme();
+  const { colors, font, space, radius } = useKinetikTheme();
   const reduced = useReduceMotion();
   const haptic = useHaptic(haptics);
   const fill = color ?? colors.ember;
@@ -172,36 +175,37 @@ export function ElasticSlider({
       release();
     });
 
-  // Layout values for the track and thumb, in px.
-  const geometry = useDerivedValue(() => {
-    const w = width.get();
-    const s = stretch.get();
-    return { w, s, thumbX: progress.get() * w + s };
-  });
-
   const trackStyle = useAnimatedStyle(() => {
-    const { w, s } = geometry.get();
-    const grow = w === 0 ? 1 : (w + Math.abs(s)) / w;
+    const w = width.get();
+    const st = stretch.get();
+    const grow = w === 0 ? 1 : (w + Math.abs(st)) / w;
     return {
-      height: TRACK + active.get() * 4,
-      transform: [{ translateX: s / 2 }, { scaleX: grow }],
+      height: TRACK + active.get() * (TRACK_ACTIVE - TRACK),
+      // Stretched rubber gets longer and a little thinner.
+      transform: [
+        { translateX: st / 2 },
+        { scaleX: grow },
+        { scaleY: 1 - Math.min(0.35, (grow - 1) * 1.6) },
+      ],
     };
   });
   const fillStyle = useAnimatedStyle(() => ({ width: `${progress.get() * 100}%` }));
-  const thumbStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: geometry.get().thumbX - THUMB / 2 },
-      { scale: 1 + active.get() * 0.18 },
-    ],
-  }));
-  const bubbleStyle = useAnimatedStyle(() => ({
-    opacity: active.get(),
-    transform: [
-      { translateX: geometry.get().thumbX },
-      { translateY: (1 - active.get()) * 6 },
-      { scale: 0.8 + active.get() * 0.2 },
-    ],
-  }));
+  // The whole control leans in a touch while held.
+  const rowStyle = useAnimatedStyle(() => ({ transform: [{ scale: 1 + active.get() * 0.02 }] }));
+  const leadingStyle = useAnimatedStyle(() => {
+    const st = Math.min(0, stretch.get());
+    return {
+      opacity: 0.6 + active.get() * 0.4,
+      transform: [{ translateX: st * 0.6 }, { scale: 1 + Math.min(0.25, -st / 160) }],
+    };
+  });
+  const trailingStyle = useAnimatedStyle(() => {
+    const st = Math.max(0, stretch.get());
+    return {
+      opacity: 0.6 + active.get() * 0.4,
+      transform: [{ translateX: st * 0.6 }, { scale: 1 + Math.min(0.25, st / 160) }],
+    };
+  });
 
   const onAccessibilityAction = (e: AccessibilityActionEvent) => {
     if (disabled) return;
@@ -237,78 +241,51 @@ export function ElasticSlider({
           </Text>
         </View>
       )}
-      <GestureDetector gesture={Gesture.Race(pan, tap)}>
-        <View
-          collapsable={false}
-          accessible
-          accessibilityRole="adjustable"
-          accessibilityLabel={label}
-          accessibilityValue={{ min, max, now: bubble, text: format(bubble) }}
-          accessibilityState={{ disabled }}
-          accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
-          onAccessibilityAction={onAccessibilityAction}
-          onLayout={(e) => width.set(e.nativeEvent.layout.width)}
-          style={[styles.hit, { height: Math.max(minTouchTarget, THUMB + 16) }]}
-        >
-          <Animated.View
-            style={[
-              styles.track,
-              { backgroundColor: colors.track, borderRadius: radius.pill },
-              trackStyle,
-            ]}
-          >
-            <Animated.View style={[styles.fill, { backgroundColor: fill }, fillStyle]} />
+      <Animated.View style={[styles.row, { gap: space[3] }, rowStyle]}>
+        {leading ? (
+          <Animated.View style={[styles.icon, leadingStyle]} pointerEvents="none">
+            {leading}
           </Animated.View>
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              styles.thumb,
-              { backgroundColor: colors.highlight, borderColor: fill, boxShadow: shadow.md },
-              thumbStyle,
-            ]}
-          />
-          <Animated.View pointerEvents="none" style={[styles.bubbleAnchor, bubbleStyle]}>
-            <View
+        ) : null}
+        <GestureDetector gesture={Gesture.Race(pan, tap)}>
+          <View
+            collapsable={false}
+            accessible
+            accessibilityRole="adjustable"
+            accessibilityLabel={label}
+            accessibilityValue={{ min, max, now: bubble, text: format(bubble) }}
+            accessibilityState={{ disabled }}
+            accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+            onAccessibilityAction={onAccessibilityAction}
+            onLayout={(e) => width.set(e.nativeEvent.layout.width)}
+            style={[styles.hit, { height: minTouchTarget }]}
+          >
+            <Animated.View
               style={[
-                styles.bubble,
-                {
-                  backgroundColor: colors.text,
-                  borderRadius: radius.sm,
-                  paddingHorizontal: space[2],
-                },
+                styles.track,
+                { backgroundColor: colors.track, borderRadius: radius.pill },
+                trackStyle,
               ]}
             >
-              <Text
-                style={{
-                  color: colors.background,
-                  fontSize: font.size.xs,
-                  fontWeight: font.weight.bold,
-                  fontVariant: ['tabular-nums'],
-                }}
-              >
-                {format(bubble)}
-              </Text>
-            </View>
+              <Animated.View style={[styles.fill, { backgroundColor: fill }, fillStyle]} />
+            </Animated.View>
+          </View>
+        </GestureDetector>
+        {trailing ? (
+          <Animated.View style={[styles.icon, trailingStyle]} pointerEvents="none">
+            {trailing}
           </Animated.View>
-        </View>
-      </GestureDetector>
+        ) : null}
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  hit: { justifyContent: 'center' },
+  row: { flexDirection: 'row', alignItems: 'center' },
+  icon: { minWidth: 20, alignItems: 'center', justifyContent: 'center' },
+  hit: { flex: 1, justifyContent: 'center' },
   track: { overflow: 'hidden' },
   fill: { height: '100%' },
-  thumb: {
-    position: 'absolute',
-    left: 0,
-    width: THUMB,
-    height: THUMB,
-    borderRadius: THUMB / 2,
-    borderWidth: 3,
-  },
-  bubbleAnchor: { position: 'absolute', left: 0, bottom: '100%', alignItems: 'center', width: 0 },
-  bubble: { paddingVertical: 4, minWidth: 36, alignItems: 'center' },
 });

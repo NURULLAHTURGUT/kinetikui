@@ -1,4 +1,13 @@
-import { Canvas, Path, RadialGradient, Skia, vec, type SkSize } from '@shopify/react-native-skia';
+import {
+  Canvas,
+  Group,
+  Path,
+  RadialGradient,
+  Skia,
+  vec,
+  type SkPath,
+  type SkSize,
+} from '@shopify/react-native-skia';
 import { useEffect, useState, type ReactNode } from 'react';
 import {
   StyleSheet,
@@ -14,6 +23,7 @@ import Animated, {
   useSharedValue,
   withSpring,
   withTiming,
+  type SharedValue,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
@@ -103,58 +113,37 @@ export function ApertureCard({
       if (success) scheduleOnRN(toggle);
     });
 
-  // The blades: the whole card minus a rotating polygon that grows with
-  // progress, plus a seam along each blade edge.
-  const blade = useDerivedValue(() => {
+  // Shared geometry of the iris: centre, aperture radius and how far the blades
+  // have turned. Fully open, the aperture's inscribed circle covers the corners.
+  const iris = useDerivedValue<Iris>(() => {
     const { width, height } = size.get();
     const p = reduced ? 0 : progress.get();
     const cx = width / 2;
     const cy = height / 2;
-    const reach = Math.sqrt(cx * cx + cy * cy) * 1.25;
-    const radiusNow = p * reach;
-    const turn = (1 - p) * (Math.PI / 2.2);
+    const reach = Math.sqrt(cx * cx + cy * cy) / Math.cos(Math.PI / n) + 2;
+    return { cx, cy, rho: p * reach, turn: (1 - p) * TURN, far: reach * 1.7 + 16, width, height };
+  });
+
+  // Everything the blades cover: the card minus the aperture polygon.
+  const covered = useDerivedValue(() => {
+    const { cx, cy, rho, turn, width, height } = iris.get();
     const path = Skia.Path.Make();
     path.addRect({ x: 0, y: 0, width, height });
-    for (let i = 0; i < n; i++) {
-      const a = turn + (i / n) * Math.PI * 2;
-      const x = cx + Math.cos(a) * radiusNow;
-      const y = cy + Math.sin(a) * radiusNow;
-      if (i === 0) path.moveTo(x, y);
-      else path.lineTo(x, y);
-    }
-    path.close();
+    path.addPath(aperturePath(cx, cy, rho, turn, n));
     path.setFillType(1); // EvenOdd: rect minus the aperture
     return path;
   });
-
-  const seams = useDerivedValue(() => {
-    const { width, height } = size.get();
-    const p = reduced ? 0 : progress.get();
-    const cx = width / 2;
-    const cy = height / 2;
-    const reach = Math.sqrt(cx * cx + cy * cy) * 1.25;
-    const radiusNow = Math.max(2, p * reach);
-    const turn = (1 - p) * (Math.PI / 2.2);
-    const path = Skia.Path.Make();
-    for (let i = 0; i < n; i++) {
-      const a = turn + (i / n) * Math.PI * 2;
-      const b = turn + ((i + 1) / n) * Math.PI * 2;
-      const x0 = cx + Math.cos(a) * radiusNow;
-      const y0 = cy + Math.sin(a) * radiusNow;
-      // Each seam runs along the polygon edge and on past the corner.
-      const dx = Math.cos(b) * radiusNow + cx - x0;
-      const dy = Math.sin(b) * radiusNow + cy - y0;
-      const len = Math.sqrt(dx * dx + dy * dy) || 1;
-      path.moveTo(x0, y0);
-      path.lineTo(x0 + (dx / len) * reach * 2, y0 + (dy / len) * reach * 2);
-    }
-    return path;
+  const rim = useDerivedValue(() => {
+    const { cx, cy, rho, turn } = iris.get();
+    return aperturePath(cx, cy, rho, turn, n);
   });
 
-  const center = useDerivedValue(() => vec(size.get().width / 2, size.get().height / 2));
-  const shadeRadius = useDerivedValue(() =>
-    Math.max(1, Math.max(size.get().width, size.get().height) * 0.75),
-  );
+  // The blades darken towards the opening, as if it falls away into the lens.
+  const center = useDerivedValue(() => vec(iris.get().cx, iris.get().cy));
+  const depth = useDerivedValue(() => {
+    const { rho, width, height } = iris.get();
+    return Math.max(1, rho + Math.min(width, height) * 0.55);
+  });
 
   const canvasStyle = useAnimatedStyle(() => ({
     // Reduced motion: the blades fade instead of turning.
@@ -162,14 +151,17 @@ export function ApertureCard({
   }));
   const coverStyle = useAnimatedStyle(() => ({
     opacity: Math.max(0, 1 - progress.get() * 3),
-    transform: [{ scale: 1 - progress.get() * 0.15 }],
+    transform: [{ scale: 1 - progress.get() * 0.08 }],
   }));
+
+  // Blade shading: black ink in both schemes and the theme's white highlight.
+  const dark = theme.scheme === 'dark';
+  const ink = dark ? theme.colors.background : theme.colors.text;
+  const light = theme.colors.highlight;
 
   const onAccessibilityAction = (e: AccessibilityActionEvent) => {
     if (e.nativeEvent.actionName === 'activate' && toggleOnPress) toggle();
   };
-
-  const bladeColor = theme.colors.surfaceRaised;
 
   return (
     <GestureDetector gesture={tap}>
@@ -204,23 +196,33 @@ export function ApertureCard({
         </View>
         <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, canvasStyle]}>
           <Canvas style={StyleSheet.absoluteFill} onSize={size}>
-            {/* Opaque blades, then a soft shade so they read as curved metal. */}
-            <Path path={blade} color={bladeColor} />
-            <Path path={blade}>
+            <Path path={covered} color={theme.colors.surfaceRaised} />
+            {Array.from({ length: n }, (_, i) => (
+              <Blade
+                key={i}
+                index={i}
+                n={n}
+                iris={iris}
+                ink={ink}
+                light={light}
+                lift={dark ? 0.13 : 0.5}
+                shade={dark ? 0.55 : 0.16}
+                seam={dark ? 0.55 : 0.18}
+              />
+            ))}
+            <Path path={covered}>
               <RadialGradient
                 c={center}
-                r={shadeRadius}
-                colors={[
-                  withAlpha(theme.colors.highlight, 0.06),
-                  withAlpha(theme.colors.surfaceSunken, 0.85),
-                ]}
+                r={depth}
+                colors={[withAlpha(ink, dark ? 0.7 : 0.22), withAlpha(ink, 0)]}
               />
             </Path>
             <Path
-              path={seams}
+              path={rim}
               style="stroke"
-              strokeWidth={1.25}
-              color={withAlpha(theme.colors.highlight, 0.14)}
+              strokeWidth={1.5}
+              strokeJoin="round"
+              color={withAlpha(light, dark ? 0.35 : 0.9)}
             />
           </Canvas>
         </Animated.View>
@@ -231,6 +233,122 @@ export function ApertureCard({
         ) : null}
       </View>
     </GestureDetector>
+  );
+}
+
+type Iris = {
+  cx: number;
+  cy: number;
+  /** Radius of the aperture polygon. */
+  rho: number;
+  /** Rotation of the blades, in radians; they turn as the iris opens. */
+  turn: number;
+  /** A distance past the card's corners, where blade edges end. */
+  far: number;
+  width: number;
+  height: number;
+};
+
+/** How far the blades turn between closed and open. */
+const TURN = Math.PI / 2.4;
+/** How far each blade edge curls between the aperture and the card's edge. */
+const CURL = 0.55;
+/** Direction the light comes from: top left. */
+const LIGHT = -Math.PI * 0.72;
+
+function aperturePath(cx: number, cy: number, rho: number, turn: number, n: number): SkPath {
+  'worklet';
+  const path = Skia.Path.Make();
+  for (let i = 0; i < n; i++) {
+    const a = turn + (i / n) * Math.PI * 2;
+    const x = cx + Math.cos(a) * rho;
+    const y = cy + Math.sin(a) * rho;
+    if (i === 0) path.moveTo(x, y);
+    else path.lineTo(x, y);
+  }
+  path.close();
+  return path;
+}
+
+/**
+ * One iris blade: the band between two neighbouring edges of the aperture,
+ * each extended past its corner to beyond the card. Lit by its angle to the
+ * light, with a bevel along its edges.
+ */
+function Blade({
+  index,
+  n,
+  iris,
+  ink,
+  light,
+  lift,
+  shade,
+  seam,
+}: {
+  index: number;
+  n: number;
+  iris: SharedValue<Iris>;
+  ink: string;
+  light: string;
+  lift: number;
+  shade: number;
+  /** Opacity of the dark gap between blades. */
+  seam: number;
+}) {
+  const path = useDerivedValue(() => {
+    const { cx, cy, rho, turn, far } = iris.get();
+    const step = (Math.PI * 2) / n;
+    const a0 = turn + index * step;
+    const a1 = a0 + step;
+    const x0 = cx + Math.cos(a0) * rho;
+    const y0 = cy + Math.sin(a0) * rho;
+    const x1 = cx + Math.cos(a1) * rho;
+    const y1 = cy + Math.sin(a1) * rho;
+    // Directions of this blade's edge and the previous one. Taken from the
+    // angles, so they stay defined when the aperture closes to a point.
+    const out = a0 + step / 2 + Math.PI / 2;
+    const back = a0 - step / 2 + Math.PI / 2;
+    // Each edge leaves the aperture straight and curls as it goes, like the
+    // curved blades of a real lens. Neighbours share the same curve.
+    const blade = Skia.Path.Make();
+    blade.moveTo(x0, y0);
+    blade.lineTo(x1, y1);
+    blade.quadTo(
+      x1 + Math.cos(out) * far * 0.5,
+      y1 + Math.sin(out) * far * 0.5,
+      x1 + Math.cos(out + CURL) * far,
+      y1 + Math.sin(out + CURL) * far,
+    );
+    blade.lineTo(x0 + Math.cos(back + CURL) * far, y0 + Math.sin(back + CURL) * far);
+    blade.quadTo(x0 + Math.cos(back) * far * 0.5, y0 + Math.sin(back) * far * 0.5, x0, y0);
+    blade.close();
+    return blade;
+  });
+
+  // 1 when the blade faces the light, 0 when it faces away.
+  const facing = useDerivedValue(() => {
+    const a = iris.get().turn + (index + 0.5) * ((Math.PI * 2) / n) + Math.PI / 2;
+    return 0.5 + 0.5 * Math.cos(a - LIGHT);
+  });
+  const lit = useDerivedValue(() => facing.get() * lift);
+  const unlit = useDerivedValue(() => (1 - facing.get()) * shade);
+
+  return (
+    <Group>
+      <Path path={path} color={light} opacity={lit} />
+      <Path path={path} color={ink} opacity={unlit} />
+      {/* Bevel: a light lip inside the blade, then the dark gap between blades. */}
+      <Group clip={path}>
+        <Path path={path} style="stroke" strokeWidth={3} color={withAlpha(light, 0.1)} />
+      </Group>
+      <Path
+        path={path}
+        style="stroke"
+        strokeWidth={1}
+        strokeJoin="round"
+        color={withAlpha(ink, seam)}
+      />
+    </Group>
   );
 }
 
