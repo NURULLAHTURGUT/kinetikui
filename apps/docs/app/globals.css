@@ -22,67 +22,16 @@
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
-/*
- * The site's own palette: black, white and greys. It overrides the component
- * tokens for the site chrome only; live previews keep their own colours.
- */
+/* Soft light behind the hero mark and the closing call to action. */
 :root,
 [data-theme='dark'] {
-  --k-background: #000000;
-  --k-surface: #0a0a0a;
-  --k-surface-raised: #141414;
-  --k-surface-sunken: #050505;
-  --k-border: rgba(255, 255, 255, 0.08);
-  --k-border-strong: rgba(255, 255, 255, 0.15);
-  --k-text: #ededed;
-  --k-text-muted: #a1a1a1;
-  --k-text-subtle: #6b6b6b;
-  --k-ember: #ffffff;
-  --k-ember-soft: rgba(255, 255, 255, 0.07);
-  --k-on-ember: #000000;
-  --k-ice: #a1a1a1;
-  --k-ice-soft: rgba(255, 255, 255, 0.05);
-  --k-success: #d4d4d4;
-  --k-track: rgba(255, 255, 255, 0.1);
   --site-glow: rgba(255, 255, 255, 0.09);
 }
 [data-theme='light'] {
-  --k-background: #ffffff;
-  --k-surface: #fafafa;
-  --k-surface-raised: #ffffff;
-  --k-surface-sunken: #f4f4f4;
-  --k-border: rgba(0, 0, 0, 0.08);
-  --k-border-strong: rgba(0, 0, 0, 0.15);
-  --k-text: #0a0a0a;
-  --k-text-muted: #555555;
-  --k-text-subtle: #8f8f8f;
-  --k-ember: #000000;
-  --k-ember-soft: rgba(0, 0, 0, 0.05);
-  --k-on-ember: #ffffff;
-  --k-ice: #555555;
-  --k-ice-soft: rgba(0, 0, 0, 0.04);
-  --k-success: #2b2b2b;
-  --k-track: rgba(0, 0, 0, 0.08);
   --site-glow: rgba(0, 0, 0, 0.03);
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme='dark']) {
-    --k-background: #ffffff;
-    --k-surface: #fafafa;
-    --k-surface-raised: #ffffff;
-    --k-surface-sunken: #f4f4f4;
-    --k-border: rgba(0, 0, 0, 0.08);
-    --k-border-strong: rgba(0, 0, 0, 0.15);
-    --k-text: #0a0a0a;
-    --k-text-muted: #555555;
-    --k-text-subtle: #8f8f8f;
-    --k-ember: #000000;
-    --k-ember-soft: rgba(0, 0, 0, 0.05);
-    --k-on-ember: #ffffff;
-    --k-ice: #555555;
-    --k-ice-soft: rgba(0, 0, 0, 0.04);
-    --k-success: #2b2b2b;
-    --k-track: rgba(0, 0, 0, 0.08);
     --site-glow: rgba(0, 0, 0, 0.03);
   }
 }
@@ -266,9 +215,6 @@ a {
 }
 .theme-light {
   background: transparent;
-}
-.theme-system {
-  background: linear-gradient(90deg, currentColor 50%, transparent 50%);
 }
 
 .link {
@@ -885,22 +831,6 @@ details.source .shiki {
 }
 .footer-links a:hover {
   color: var(--k-text);
-}
-.footer-mark {
-  max-width: var(--max);
-  margin: 0 auto;
-  padding: 0 var(--gutter);
-  height: clamp(90px, 18vw, 240px);
-  overflow: hidden;
-  color: var(--k-text-subtle);
-  opacity: 0.35;
-  mask-image: linear-gradient(to bottom, #000, transparent 95%);
-  -webkit-mask-image: linear-gradient(to bottom, #000, transparent 95%);
-}
-.footer-mark svg {
-  display: block;
-  width: 100%;
-  height: auto;
 }
 .footer-fine {
   max-width: var(--max);

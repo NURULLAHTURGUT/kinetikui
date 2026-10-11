@@ -258,7 +258,7 @@ const COLS = [0, 1, 2];
 
 function Grid({ seed }: { seed: number }) {
   const { colors, space, radius } = useKinetikTheme();
-  const tones = [colors.ember, colors.ice, colors.success, colors.warning];
+  const tones = [colors.ember, colors.ice, colors.textMuted, colors.textSubtle];
   return (
     <View style={{ gap: space[2] }}>
       {ROWS.map((row) => (

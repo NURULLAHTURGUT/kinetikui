@@ -90,9 +90,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               </div>
             </nav>
           </div>
-          <div className="footer-mark" aria-hidden>
-            <LogoMark width={1200} />
-          </div>
           <div className="footer-fine">
             <span className="muted">
               Requires the React Native New Architecture (Reanimated 4).

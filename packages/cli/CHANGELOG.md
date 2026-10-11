@@ -10,7 +10,7 @@
 
   **Screen templates (4).** Onboarding Flow, Paywall, Profile Hero and Player Sheet, built only from Kinetik components and tokens. They install into `components/kinetik/screens/`.
 
-  **Design system.** Shared tokens (dark and light palettes, spacing, radius, type, shadows) and three springs and three durations. `<KinetikProvider>` brands colours, forces a scheme, forces reduced motion or turns off haptics.
+  **Design system.** Shared tokens (monochrome dark and light palettes, spacing, radius, type, shadows) and three springs and three durations. `<KinetikProvider>` brands colours, forces a scheme, forces reduced motion or turns off haptics.
 
   **Accessibility.** Every component has a reduced-motion version, roles and labels, and 44 pt touch targets, checked by an automated audit and on an Android accessibility tree.
 

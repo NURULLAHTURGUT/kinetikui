@@ -99,8 +99,8 @@ export function ConfettiBurst({
   const palette = colors ?? [
     theme.colors.ember,
     theme.colors.ice,
-    theme.colors.success,
-    theme.colors.warning,
+    theme.colors.textMuted,
+    theme.colors.textSubtle,
     theme.colors.highlight,
   ];
   const paletteKey = palette.join('|');

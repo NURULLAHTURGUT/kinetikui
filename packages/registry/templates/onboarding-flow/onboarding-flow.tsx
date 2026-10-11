@@ -370,7 +370,7 @@ function useDefaultSlides(): OnboardingSlide[] {
           ]}
         >
           <View style={[styles.passRow, { gap: space[1.5], justifyContent: 'flex-start' }]}>
-            {[colors.danger, colors.warning, colors.success].map((c) => (
+            {[colors.textSubtle, colors.textMuted, colors.text].map((c) => (
               <View key={c} style={[styles.light, { backgroundColor: withAlpha(c, 0.8) }]} />
             ))}
           </View>
@@ -378,7 +378,7 @@ function useDefaultSlides(): OnboardingSlide[] {
             text="npx kinetik-ui add glint-card"
             style={{ color: colors.text, fontSize: font.size.sm, fontFamily: MONO }}
           />
-          <Text style={{ color: colors.success, fontSize: font.size.sm, fontFamily: MONO }}>
+          <Text style={{ color: colors.textMuted, fontSize: font.size.sm, fontFamily: MONO }}>
             ✓ components/kinetik/glint-card.tsx
           </Text>
         </View>

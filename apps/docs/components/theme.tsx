@@ -52,22 +52,22 @@ export function useSiteTheme(): 'dark' | 'light' {
   return pref === 'system' ? system : pref;
 }
 
-const ORDER: SitePreference[] = ['system', 'dark', 'light'];
-const LABEL: Record<SitePreference, string> = { system: 'System', dark: 'Dark', light: 'Light' };
+const LABEL = { dark: 'Dark', light: 'Light' } as const;
 
+/** Two states only: the scheme in effect, and the other one. */
 export function ThemeToggle() {
-  const pref = usePreference();
-  const next = ORDER[(ORDER.indexOf(pref) + 1) % ORDER.length]!;
+  const scheme = useSiteTheme();
+  const next = scheme === 'dark' ? 'light' : 'dark';
   const onClick = useCallback(() => setPreference(next), [next]);
   return (
     <button
       type="button"
       className="chip"
       onClick={onClick}
-      aria-label={`Theme: ${LABEL[pref]}. Switch to ${LABEL[next]}.`}
+      aria-label={`Theme: ${LABEL[scheme]}. Switch to ${LABEL[next]}.`}
     >
-      <span aria-hidden className={`theme-glyph theme-${pref}`} />
-      {LABEL[pref]}
+      <span aria-hidden className={`theme-glyph theme-${scheme}`} />
+      {LABEL[scheme]}
     </button>
   );
 }

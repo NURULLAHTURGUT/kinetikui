@@ -127,9 +127,14 @@ void main() {
   float r = length(gl_PointCoord - 0.5);
   float a = smoothstep(0.5, 0.05, r) * vAlpha;
   if (a < 0.003) discard;
-  vec3 color = mix(uInk, uMuted, vTone);
-  // Dark: additive light (premultiplied). Light: plain alpha over the page.
-  outColor = uLight > 0.5 ? vec4(color, min(1.0, a * 1.4)) : vec4(color * a, a);
+  // Dark: additive light (premultiplied); dust is a dimmer grey.
+  // Light: everything is ink over the page, dust boosted to stay visible.
+  if (uLight > 0.5) {
+    outColor = vec4(uInk, min(1.0, a * mix(1.4, 2.6, vTone)));
+  } else {
+    vec3 color = mix(uInk, uMuted, vTone);
+    outColor = vec4(color * a, a);
+  }
 }`;
 
 const UNIFORMS = [

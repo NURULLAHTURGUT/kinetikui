@@ -12,7 +12,7 @@ import { AURORA_SHADER } from './aurora-veil.shader';
 export type AuroraVeilProps = {
   /** Content drawn on top of the aurora. */
   children?: ReactNode;
-  /** Ribbon colours, back to front. Defaults to ice, success and ember from the theme. */
+  /** Ribbon colours, back to front. Defaults to ice, textSubtle and ember from the theme. */
   colors?: [string, string, string];
   /** Ground colour behind the ribbons. Defaults to the theme background. */
   baseColor?: string;
@@ -51,7 +51,7 @@ export function AuroraVeil({
   // Still frames start a few seconds in, where the ribbons are well formed.
   const time = useShaderClock({ running: active && !still, speed, frameRate, start: 4 });
 
-  const [a, b, c] = colors ?? [theme.colors.ice, theme.colors.success, theme.colors.ember];
+  const [a, b, c] = colors ?? [theme.colors.ice, theme.colors.textSubtle, theme.colors.ember];
   const base = colorUniform(baseColor ?? theme.colors.background);
   const c0 = colorUniform(a);
   const c1 = colorUniform(b);

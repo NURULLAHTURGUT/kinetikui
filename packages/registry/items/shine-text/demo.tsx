@@ -23,8 +23,8 @@ export default function ShineTextDemo({
         text="Limited edition · 48 h left"
         fontSize={16}
         fontWeight="600"
-        color={colors.ember}
-        shineColor={colors.warning}
+        color={colors.textMuted}
+        shineColor={colors.ember}
         duration={duration}
         pause={pause}
       />

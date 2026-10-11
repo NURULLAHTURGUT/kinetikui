@@ -5,8 +5,11 @@
  * comes from this file. Components never hard-code a hex value; they read the
  * active palette through `useKinetikTheme()`.
  *
- * Palette: ink ground, ember accent, ice accent. Dark is the primary theme;
- * light is held to the same bar (contrast is checked in the token tests).
+ * Palette: monochrome. Black and white grounds, the primary accent (`ember`)
+ * is the strongest ink and the secondary accent (`ice`) a mid grey. Status
+ * colours keep their hue because they carry meaning. Brand it by overriding
+ * `ember` / `ice` on the provider. Dark is the primary theme; light is held to
+ * the same bar (contrast is checked in the token tests).
  */
 
 export type ColorScheme = 'dark' | 'light';
@@ -30,13 +33,13 @@ export type Palette = {
   textMuted: string;
   /** Tertiary text, placeholders, disabled. */
   textSubtle: string;
-  /** Warm primary accent. */
+  /** Primary accent. */
   ember: string;
   /** Ember used for fills behind content (tinted backgrounds). */
   emberSoft: string;
   /** Text and icons placed on an ember fill. */
   onEmber: string;
-  /** Cool secondary accent. */
+  /** Secondary accent. */
   ice: string;
   /** Ice used for fills behind content. */
   iceSoft: string;
@@ -56,70 +59,68 @@ export type Palette = {
   scrim: string;
 };
 
-const ink = {
-  950: '#07080B',
-  900: '#0B0D12',
-  850: '#10131A',
-  800: '#151922',
-  700: '#1E2330',
-  600: '#2A3142',
-  400: '#5F6878',
-  300: '#8C95A6',
-  200: '#B9C0CC',
-  100: '#E4E7ED',
-  50: '#F4F5F7',
+const grey = {
+  1000: '#000000',
+  950: '#050505',
+  900: '#0A0A0A',
+  850: '#141414',
+  800: '#1C1C1C',
+  400: '#707070',
+  300: '#A1A1A1',
+  100: '#EDEDED',
+  50: '#FAFAFA',
 } as const;
 
 export const palettes: Record<ColorScheme, Palette> = {
   dark: {
-    background: ink[900],
-    surface: ink[850],
-    surfaceRaised: ink[700],
-    surfaceSunken: ink[950],
-    border: 'rgba(228, 231, 237, 0.08)',
-    borderStrong: 'rgba(228, 231, 237, 0.18)',
-    text: '#F2F4F8',
-    textMuted: ink[300],
-    textSubtle: ink[400],
-    ember: '#FF6A3D',
-    emberSoft: 'rgba(255, 106, 61, 0.14)',
-    onEmber: '#1C0A03',
-    ice: '#8FD8FF',
-    iceSoft: 'rgba(143, 216, 255, 0.12)',
-    onIce: '#04131D',
+    background: grey[1000],
+    surface: grey[900],
+    surfaceRaised: grey[800],
+    surfaceSunken: grey[950],
+    border: 'rgba(255, 255, 255, 0.08)',
+    borderStrong: 'rgba(255, 255, 255, 0.16)',
+    text: grey[100],
+    textMuted: grey[300],
+    textSubtle: grey[400],
+    ember: '#FFFFFF',
+    emberSoft: 'rgba(255, 255, 255, 0.10)',
+    onEmber: '#000000',
+    ice: '#A3A3A3',
+    iceSoft: 'rgba(255, 255, 255, 0.06)',
+    onIce: '#000000',
     success: '#5BE49B',
     warning: '#FFC857',
     danger: '#FF6B7A',
-    track: 'rgba(228, 231, 237, 0.12)',
-    skeleton: ink[800],
-    skeletonHighlight: ink[700],
+    track: 'rgba(255, 255, 255, 0.12)',
+    skeleton: grey[850],
+    skeletonHighlight: grey[800],
     highlight: '#FFFFFF',
-    scrim: 'rgba(7, 8, 11, 0.62)',
+    scrim: 'rgba(0, 0, 0, 0.62)',
   },
   light: {
-    background: '#F6F5F2',
-    surface: '#FFFFFF',
+    background: '#FFFFFF',
+    surface: grey[50],
     surfaceRaised: '#FFFFFF',
-    surfaceSunken: '#ECEBE6',
-    border: 'rgba(11, 13, 18, 0.08)',
-    borderStrong: 'rgba(11, 13, 18, 0.18)',
-    text: ink[900],
-    textMuted: '#525B6B',
-    textSubtle: '#7C8494',
-    ember: '#F0541F',
-    emberSoft: 'rgba(240, 84, 31, 0.10)',
-    onEmber: '#1C0A03',
-    ice: '#1279B8',
-    iceSoft: 'rgba(18, 121, 184, 0.10)',
+    surfaceSunken: '#F0F0F0',
+    border: 'rgba(0, 0, 0, 0.08)',
+    borderStrong: 'rgba(0, 0, 0, 0.16)',
+    text: grey[900],
+    textMuted: '#555555',
+    textSubtle: '#8A8A8A',
+    ember: '#000000',
+    emberSoft: 'rgba(0, 0, 0, 0.06)',
+    onEmber: '#FFFFFF',
+    ice: '#6B6B6B',
+    iceSoft: 'rgba(0, 0, 0, 0.05)',
     onIce: '#FFFFFF',
     success: '#13965A',
     warning: '#B97A00',
     danger: '#D63649',
-    track: 'rgba(11, 13, 18, 0.10)',
-    skeleton: '#E9E8E3',
-    skeletonHighlight: '#F7F6F3',
+    track: 'rgba(0, 0, 0, 0.10)',
+    skeleton: '#EDEDED',
+    skeletonHighlight: '#F7F7F7',
     highlight: '#FFFFFF',
-    scrim: 'rgba(11, 13, 18, 0.36)',
+    scrim: 'rgba(0, 0, 0, 0.36)',
   },
 };
 

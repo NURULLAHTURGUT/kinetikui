@@ -262,42 +262,47 @@ export default function Home() {
         <header className="block-head" data-reveal>
           <span className="overline">Catalogue</span>
           <h2 id="components-title">
-            <Words text="Everything in the box." />
+            <Words text="Seven kinds of motion." />
           </h2>
           <p>
             {componentCount} components and {screenCount} screen templates, each with a live demo, a
             props table and notes on when not to use it.
           </p>
         </header>
-        {byCategory().map((group) => (
-          <div className="group" key={group.key} data-reveal>
-            <div className="group-head">
-              <span className="overline">{CATEGORY_TITLE[group.key]}</span>
-              <span className="group-count">{group.items.length}</span>
-            </div>
-            <div className="cards">
-              {group.items.map((c) => (
-                <Link key={c.name} href={`/components/${c.name}`} className="card spot">
-                  <h3>{c.title}</h3>
-                  <p>{c.description}</p>
-                  <div className="tags">
-                    {c.dependencies.includes('@shopify/react-native-skia') && (
-                      <span className="tag tag-ice">Skia</span>
-                    )}
-                    {c.dependencies.includes('react-native-gesture-handler') && (
-                      <span className="tag">Gesture</span>
-                    )}
-                    {c.web === 'device-only' && <span className="tag tag-ember">Device only</span>}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        ))}
+        <div className="categories">
+          {byCategory().map((group, i) => (
+            <Link
+              key={group.key}
+              href={`/components/${group.items[0]!.name}`}
+              className="category spot"
+              data-reveal
+              style={delay(i)}
+            >
+              <span className="category-index">{String(i + 1).padStart(2, '0')}</span>
+              <span className="category-title">{CATEGORY_TITLE[group.key]}</span>
+              <span className="category-names">
+                {group.items
+                  .slice(0, 3)
+                  .map((c) => c.title)
+                  .join(' · ')}
+                {group.items.length > 3 ? ' …' : ''}
+              </span>
+              <span className="category-foot">
+                <span>{group.items.length}</span>
+                <span className="category-arrow" aria-hidden>
+                  →
+                </span>
+              </span>
+            </Link>
+          ))}
+        </div>
       </section>
 
       <section className="cta" aria-labelledby="cta-title" data-reveal>
         <div className="cta-glow" aria-hidden />
+        <div className="cta-mark" aria-hidden>
+          <LogoMark width={1200} />
+        </div>
         <h2 id="cta-title">
           <Words text="Make your app" />{' '}
           <span className="hero-second">
