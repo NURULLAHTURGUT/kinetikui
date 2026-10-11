@@ -133,19 +133,21 @@ export function LiquidTabs({
       ]}
     >
       {segment > 0 && (
-        <Canvas style={StyleSheet.absoluteFill} pointerEvents="none">
-          <Group
-            layer={
-              <Paint>
-                <Blur blur={goo ? 5 : 0} />
-                <ColorMatrix matrix={goo ? GOO : IDENTITY} />
-              </Paint>
-            }
-          >
-            <RoundedRect rect={body} color={fill} />
-            {goo && <Circle cx={dropX} cy={HEIGHT / 2} r={dropR} color={fill} />}
-          </Group>
-        </Canvas>
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+          <Canvas style={StyleSheet.absoluteFill}>
+            <Group
+              layer={
+                <Paint>
+                  <Blur blur={goo ? 5 : 0} />
+                  <ColorMatrix matrix={goo ? GOO : IDENTITY} />
+                </Paint>
+              }
+            >
+              <RoundedRect rect={body} color={fill} />
+              {goo && <Circle cx={dropX} cy={HEIGHT / 2} r={dropR} color={fill} />}
+            </Group>
+          </Canvas>
+        </View>
       )}
       {tabs.map((tab, i) => (
         <TabLabel

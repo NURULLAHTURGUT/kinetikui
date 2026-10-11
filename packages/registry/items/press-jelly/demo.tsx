@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 
+import { DemoIcon } from '../../demo-kit/icons';
 import { defineControls, type ControlValues } from '../../demo-kit/types';
 import { useKinetikTheme } from '../../shared/tokens/theme';
 import { PressJelly } from './press-jelly';
@@ -24,14 +25,28 @@ export default function PressJellyDemo({
 
   return (
     <View style={{ gap: space[4], alignItems: 'center' }}>
-      <PressJelly {...common} block>
+      <PressJelly
+        {...common}
+        block
+        leading={<DemoIcon name="send" color={colors.onEmber} size={20} strokeWidth={2} />}
+      >
         Continue
       </PressJelly>
       <View style={{ flexDirection: 'row', gap: space[3], alignSelf: 'stretch' }}>
-        <PressJelly {...common} variant="ice" style={{ flex: 1 }}>
+        <PressJelly
+          {...common}
+          variant="ice"
+          style={{ flex: 1 }}
+          leading={<DemoIcon name="userPlus" color={colors.onIce} size={20} strokeWidth={2} />}
+        >
           Join
         </PressJelly>
-        <PressJelly {...common} variant="surface" style={{ flex: 1 }}>
+        <PressJelly
+          {...common}
+          variant="surface"
+          style={{ flex: 1 }}
+          leading={<DemoIcon name="clock" color={colors.text} size={20} strokeWidth={2} />}
+        >
           Later
         </PressJelly>
       </View>

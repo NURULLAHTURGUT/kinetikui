@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { DemoIcon, type DemoIconName } from '../../demo-kit/icons';
 import { defineControls, type ControlValues } from '../../demo-kit/types';
 import { useKinetikTheme } from '../../shared/tokens/theme';
 import { gradient } from '../../shared/tokens/gradient';
@@ -87,11 +88,13 @@ export default function DeckfallDemo({ visible, threshold }: ControlValues<typeo
       <View style={[styles.row, { gap: space[3] }]}>
         <DeckButton
           label="Skip"
+          icon="close"
           accent={colors.danger}
           onPress={() => deck.current?.swipe('left')}
         />
         <DeckButton
           label="Save"
+          icon="heart"
           accent={colors.success}
           onPress={() => deck.current?.swipe('right')}
         />
@@ -105,10 +108,12 @@ export default function DeckfallDemo({ visible, threshold }: ControlValues<typeo
 
 function DeckButton({
   label,
+  icon,
   accent,
   onPress,
 }: {
   label: string;
+  icon: DemoIconName;
   accent: string;
   onPress: () => void;
 }) {
@@ -126,6 +131,7 @@ function DeckButton({
         },
       ]}
     >
+      <DemoIcon name={icon} color={accent} size={20} strokeWidth={2} />
       <Text style={{ color: accent, fontWeight: font.weight.bold, fontSize: font.size.md }}>
         {label}
       </Text>
@@ -138,6 +144,8 @@ const styles = StyleSheet.create({
   art: { flex: 1 },
   row: { flexDirection: 'row', justifyContent: 'center' },
   button: {
+    flexDirection: 'row',
+    gap: 8,
     minWidth: 120,
     height: 48,
     alignItems: 'center',

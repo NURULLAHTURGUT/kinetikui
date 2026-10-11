@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 
+import { DemoIcon } from '../../demo-kit/icons';
 import { defineControls, type ControlValues } from '../../demo-kit/types';
 import { useKinetikTheme } from '../../shared/tokens/theme';
 import { MagnetButton } from './magnet-button';
@@ -21,8 +22,14 @@ export default function MagnetButtonDemo(props: ControlValues<typeof controls>) 
         {...props}
         style={{ alignSelf: 'center' }}
         onPress={() => setLast('Get started')}
+        accessibilityLabel="Get started"
       >
-        Get started
+        <Text
+          style={{ color: colors.onEmber, fontSize: font.size.md, fontWeight: font.weight.bold }}
+        >
+          Get started
+        </Text>
+        <DemoIcon name="arrowRight" color={colors.onEmber} size={20} strokeWidth={2} />
       </MagnetButton>
       <MagnetButton
         {...props}

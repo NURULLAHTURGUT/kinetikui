@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { DemoIcon, type DemoIconName } from '../../demo-kit/icons';
 import { defineControls, type ControlValues } from '../../demo-kit/types';
 import { useKinetikTheme } from '../../shared/tokens/theme';
 import { withAlpha } from '../../shared/tokens/tokens';
@@ -12,6 +13,14 @@ export const controls = defineControls({
 });
 
 const PHOTOS = ['Harbour', 'Ridge', 'Market', 'Orchard', 'Tower', 'Dunes'];
+
+const OPTIONS: { label: string; icon: DemoIconName }[] = [
+  { label: 'Message', icon: 'message' },
+  { label: 'Copy link', icon: 'link' },
+  { label: 'Save to album', icon: 'savePhoto' },
+  { label: 'Print', icon: 'print' },
+  { label: 'Add to story', icon: 'addCircle' },
+];
 
 export default function MorphSheetDemo({ blur, haptics }: ControlValues<typeof controls>) {
   const { colors, font, space, radius } = useKinetikTheme();
@@ -38,11 +47,12 @@ export default function MorphSheetDemo({ blur, haptics }: ControlValues<typeof c
             <Text style={{ color: colors.textMuted, fontSize: font.size.sm }}>
               {stop === 0 ? 'Drag up for more options' : 'All options'}
             </Text>
-            {['Message', 'Copy link', 'Save to album', 'Print', 'Add to story'].map((label) => (
+            {OPTIONS.map(({ label, icon }) => (
               <View
                 key={label}
                 style={[styles.option, { borderColor: colors.border, borderRadius: radius.md }]}
               >
+                <DemoIcon name={icon} color={colors.textMuted} size={20} />
                 <Text style={{ color: colors.text, fontSize: font.size.md }}>{label}</Text>
               </View>
             ))}
@@ -98,7 +108,9 @@ const styles = StyleSheet.create({
   open: { alignSelf: 'center', paddingHorizontal: 28, height: 48, justifyContent: 'center' },
   option: {
     height: 48,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
     paddingHorizontal: 14,
     borderWidth: StyleSheet.hairlineWidth,
   },

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { byCategory } from '../lib/data';
+import { DocsNav } from './docs-nav';
 
 /** The docs navigation: guides first, then every component by category. */
 export function DocsSidebar({ current }: { current: string }) {
@@ -12,7 +13,7 @@ export function DocsSidebar({ current }: { current: string }) {
     </li>
   );
   return (
-    <nav className="docs-nav" aria-label="Documentation">
+    <DocsNav>
       <div className="docs-nav-inner">
         <div className="docs-nav-group">
           <span className="docs-nav-title">Get started</span>
@@ -25,6 +26,6 @@ export function DocsSidebar({ current }: { current: string }) {
           </div>
         ))}
       </div>
-    </nav>
+    </DocsNav>
   );
 }

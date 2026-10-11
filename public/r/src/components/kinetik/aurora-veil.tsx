@@ -70,17 +70,19 @@ export function AuroraVeil({
 
   return (
     <View style={[styles.root, style]}>
-      <Canvas
-        style={StyleSheet.absoluteFill}
-        onSize={size}
+      {/* Hidden from touch and screen readers on the wrapper: on the web the canvas ignores these props. */}
+      <View
         pointerEvents="none"
+        style={StyleSheet.absoluteFill}
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
       >
-        <Fill>
-          <Shader source={runtimeEffect(AURORA_SHADER)} uniforms={uniforms} />
-        </Fill>
-      </Canvas>
+        <Canvas style={StyleSheet.absoluteFill} onSize={size}>
+          <Fill>
+            <Shader source={runtimeEffect(AURORA_SHADER)} uniforms={uniforms} />
+          </Fill>
+        </Canvas>
+      </View>
       {children}
     </View>
   );

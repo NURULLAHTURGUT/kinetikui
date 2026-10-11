@@ -142,22 +142,25 @@ function ShineTextNative({
       accessibilityLabel={text}
       style={[{ width, height }, style]}
     >
-      <Canvas
+      <View
+        pointerEvents="none"
         style={StyleSheet.absoluteFill}
         accessibilityElementsHidden
-        importantForAccessibility="no"
+        importantForAccessibility="no-hide-descendants"
       >
-        <SkiaText x={0} y={ascent + 1} text={text} font={font} color={base}>
-          {!reduced && (
-            <LinearGradient
-              start={start}
-              end={end}
-              colors={[base, base, shine, base, base]}
-              positions={[0, 0.35, 0.5, 0.65, 1]}
-            />
-          )}
-        </SkiaText>
-      </Canvas>
+        <Canvas style={StyleSheet.absoluteFill}>
+          <SkiaText x={0} y={ascent + 1} text={text} font={font} color={base}>
+            {!reduced && (
+              <LinearGradient
+                start={start}
+                end={end}
+                colors={[base, base, shine, base, base]}
+                positions={[0, 0.35, 0.5, 0.65, 1]}
+              />
+            )}
+          </SkiaText>
+        </Canvas>
+      </View>
     </View>
   );
 }

@@ -4,6 +4,7 @@ import {
   AccessibilityInfo,
   StyleSheet,
   Text,
+  View,
   type AccessibilityActionEvent,
   type StyleProp,
   type ViewStyle,
@@ -189,36 +190,43 @@ export function HoldToConfirm({
           pointerEvents="none"
           style={[styles.flood, { backgroundColor: withAlpha(accent, 0.22) }, floodStyle]}
         />
-        <Canvas style={styles.ring} accessibilityElementsHidden importantForAccessibility="no">
-          <Path
-            path={RING_PATH}
-            style="stroke"
-            strokeWidth={STROKE}
-            color={withAlpha(accent, 0.25)}
-            start={0}
-            end={1}
-          />
-          <Path
-            path={RING_PATH}
-            style="stroke"
-            strokeWidth={STROKE}
-            strokeCap="round"
-            color={accent}
-            start={0}
-            end={ringEnd}
-            opacity={ringOpacity}
-          />
-          <Path
-            path={CHECK_PATH}
-            style="stroke"
-            strokeWidth={2.5}
-            strokeCap="round"
-            strokeJoin="round"
-            color={accent}
-            start={0}
-            end={checkEnd}
-          />
-        </Canvas>
+        <View
+          pointerEvents="none"
+          style={styles.ring}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          <Canvas style={StyleSheet.absoluteFill}>
+            <Path
+              path={RING_PATH}
+              style="stroke"
+              strokeWidth={STROKE}
+              color={withAlpha(accent, 0.25)}
+              start={0}
+              end={1}
+            />
+            <Path
+              path={RING_PATH}
+              style="stroke"
+              strokeWidth={STROKE}
+              strokeCap="round"
+              color={accent}
+              start={0}
+              end={ringEnd}
+              opacity={ringOpacity}
+            />
+            <Path
+              path={CHECK_PATH}
+              style="stroke"
+              strokeWidth={2.5}
+              strokeCap="round"
+              strokeJoin="round"
+              color={accent}
+              start={0}
+              end={checkEnd}
+            />
+          </Canvas>
+        </View>
         <Text
           numberOfLines={1}
           style={{ color: colors.text, fontSize: font.size.md, fontWeight: font.weight.semibold }}

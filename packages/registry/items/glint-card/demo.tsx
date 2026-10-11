@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { DemoIcon } from '../../demo-kit/icons';
 import { defineControls, type ControlValues } from '../../demo-kit/types';
 import { gradient } from '../../shared/tokens/gradient';
 import { useKinetikTheme } from '../../shared/tokens/theme';
@@ -58,7 +59,10 @@ export default function GlintCardDemo(props: ControlValues<typeof controls>) {
             </View>
             <Text style={[styles.wordmark, { color: INK }]}>KINETIK</Text>
           </View>
-          <Contactless />
+          {/* The contactless mark: radio waves turned on their side. */}
+          <View style={styles.contactless}>
+            <DemoIcon name="wifi" color={withAlpha(INK, 0.75)} size={24} />
+          </View>
         </View>
 
         <View style={[styles.chip, gradient(CHIP)]}>
@@ -85,23 +89,6 @@ export default function GlintCardDemo(props: ControlValues<typeof controls>) {
       <Text style={{ color: colors.textMuted, fontSize: font.size.sm }}>
         Drag across the card or tilt your phone
       </Text>
-    </View>
-  );
-}
-
-/** Three arcs of the contactless symbol, drawn from bordered circles. */
-function Contactless() {
-  return (
-    <View style={styles.wave}>
-      {[8, 14, 20].map((r) => (
-        <View
-          key={r}
-          style={[
-            styles.arc,
-            { width: r * 2, height: r * 2, borderRadius: r, right: 20 - r, top: 10 - r },
-          ]}
-        />
-      ))}
     </View>
   );
 }
@@ -137,15 +124,7 @@ const styles = StyleSheet.create({
   },
   markDot: { position: 'absolute', left: 10, width: 16, height: 16, borderRadius: 8 },
   wordmark: { fontSize: 13, fontWeight: '800', letterSpacing: 3 },
-  wave: { width: 24, height: 20 },
-  arc: {
-    position: 'absolute',
-    borderWidth: 0,
-    borderRightWidth: 2,
-    borderColor: 'transparent',
-    borderRightColor: 'rgba(245, 245, 245, 0.7)',
-    transform: [{ scaleY: 0.9 }],
-  },
+  contactless: { transform: [{ rotate: '90deg' }] },
   chip: {
     width: 46,
     height: 34,
