@@ -38,6 +38,6 @@ These are installed into your app when you add a component that uses them.
 | [qrcode](https://github.com/soldair/node-qrcode)                                                          | MIT          |
 | [expo-router](https://github.com/expo/expo/tree/main/packages/expo-router)                                | MIT          |
 
-The CanvasKit BSD-3-Clause license requires its copyright notice to accompany redistributed binaries. The docs site serves the unmodified `canvaskit.wasm` together with its license at `/canvaskit-LICENSE.txt` (copied by `scripts/build-docs.ts`) and credits it in the site footer.
+The CanvasKit BSD-3-Clause license requires its copyright notice to accompany redistributed binaries. The docs site serves the unmodified `canvaskit.wasm` together with its license at `/canvaskit-LICENSE.txt` (copied by `scripts/build-docs.ts`) and credits it in the site footer. The CDN copy at `cdn.kinetik-ui.dev` sits next to its `LICENSE` (copied by `scripts/build-cdn.ts`).
 
 Versions are pinned by the Expo SDK through `npx expo install`. Run `pnpm licenses list` for the complete transitive list.

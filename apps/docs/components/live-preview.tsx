@@ -15,10 +15,25 @@ import { useSiteTheme } from './theme';
 // demos (which import Skia) may only be imported after CanvasKit has loaded.
 let runtime: Promise<DemoEntry[]> | null = null;
 function loadRuntime() {
-  runtime ??= LoadSkiaWeb({ locateFile: () => '/canvaskit.wasm' })
+  runtime ??= canvasKitUrl()
+    .then((url) => LoadSkiaWeb({ locateFile: () => url }))
     .then(() => import('@kinetik/registry/demos.generated'))
     .then((m) => m.demos);
   return runtime;
+}
+
+// Production loads CanvasKit from the CDN and falls back to this site's copy if
+// the CDN is unreachable (Skia caches a failed load, so the check comes first).
+async function canvasKitUrl() {
+  const cdn = process.env.NEXT_PUBLIC_CANVASKIT_URL;
+  if (process.env.NODE_ENV !== 'production' || !cdn) return '/canvaskit.wasm';
+  try {
+    const res = await fetch(cdn, { method: 'HEAD' });
+    if (res.ok) return cdn;
+  } catch {
+    // Network or CORS failure: use the local copy.
+  }
+  return '/canvaskit.wasm';
 }
 
 export function LivePreview({

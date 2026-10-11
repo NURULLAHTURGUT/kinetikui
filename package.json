@@ -13,6 +13,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "build:registry": "tsx scripts/build-registry.ts",
+    "cdn:build": "tsx scripts/build-cdn.ts",
+    "cdn:deploy": "pnpm cdn:build && npx wrangler@4.136.3 deploy --config cdn/wrangler.jsonc",
     "check:registry": "tsx scripts/build-registry.ts --check",
     "test:integrity": "node --import tsx --test tests/*.test.ts",
     "verify": "pnpm check:registry && pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:integrity",

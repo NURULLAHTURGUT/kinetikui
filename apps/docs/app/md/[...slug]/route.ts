@@ -1,6 +1,6 @@
 import { MARKDOWN_HEADERS, markdownFor, markdownPaths } from '../../../lib/llm';
 
-/** Markdown twins of the pages. proxy.ts routes `*.md` and `Accept: text/markdown` here. */
+/** Markdown twins of the pages. The rewrites in next.config.mjs route `*.md` and `Accept: text/markdown` here. */
 export const dynamic = 'force-static';
 export const dynamicParams = false;
 

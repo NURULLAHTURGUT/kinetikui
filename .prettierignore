@@ -12,3 +12,4 @@ packages/registry/demos.generated.ts
 registry.json
 tmp
 apps/docs/public/r
+cdn/dist

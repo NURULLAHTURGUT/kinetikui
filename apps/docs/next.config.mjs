@@ -1,11 +1,37 @@
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
+
+// CanvasKit is served from the Cloudflare CDN (see cdn/), under a versioned path
+// so it can be cached forever. /canvaskit.wasm on this site is the fallback.
+const canvasKitVersion = require('canvaskit-wasm/package.json').version;
+const canvasKitUrl =
+  process.env.CANVASKIT_URL ??
+  `https://cdn.kinetik-ui.dev/canvaskit/${canvasKitVersion}/canvaskit.wasm`;
+
+// Agents get the markdown twin of a page for `*.md` or `Accept: text/markdown`.
+// Rewrites run in Vercel's routing layer, so pages stay static and cached.
+const acceptsMarkdown = [{ type: 'header', key: 'accept', value: '(.*)text/markdown(.*)' }];
 
 /** @type {import('next').NextConfig} */
 const config = {
   reactStrictMode: true,
+  env: { NEXT_PUBLIC_CANVASKIT_URL: canvasKitUrl },
+  async rewrites() {
+    return {
+      beforeFiles: [
+        { source: '/index.md', destination: '/md/index' },
+        { source: '/docs/:slug.md', destination: '/md/docs/:slug' },
+        { source: '/components/:name.md', destination: '/md/components/:name' },
+        { source: '/', has: acceptsMarkdown, destination: '/md/index' },
+        { source: '/docs/:slug', has: acceptsMarkdown, destination: '/md/docs/:slug' },
+        { source: '/components/:name', has: acceptsMarkdown, destination: '/md/components/:name' },
+      ],
+    };
+  },
   // Registry sources and React Native libraries ship untranspiled TS/JSX/Flow.
   transpilePackages: [
     '@kinetik/registry',
