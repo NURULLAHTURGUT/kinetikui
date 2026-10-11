@@ -651,6 +651,7 @@ a {
   position: relative;
   height: 46px;
   padding: 0 12px;
+  white-space: nowrap;
   border: 0;
   background: none;
   color: var(--k-text-subtle);

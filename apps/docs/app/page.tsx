@@ -7,7 +7,8 @@ import { ArrowDownIcon, ArrowRightIcon } from '../components/icons';
 import { KineticField } from '../components/kinetic-field';
 import { LogoMark } from '../components/logo';
 import { ShowcasePreview } from '../components/showcase';
-import { Terminal } from '../components/terminal';
+import { TabsCard } from '../components/tabs';
+import { Terminal, type TerminalLine } from '../components/terminal';
 import './home.css';
 import { allComponents, componentCount, byCategory, getComponent, screenCount } from '../lib/data';
 
@@ -25,6 +26,51 @@ const CATEGORY_TITLE: Record<string, string> = {
 const FEATURED = ['glint-card', 'liquid-tabs', 'odometer', 'press-jelly', 'aurora-veil'] as const;
 
 const INSTALL = 'npx kinetik-ui add glint-card';
+
+/** What an agent session with the MCP server looks like (landing demo). */
+const AGENT_SCRIPT: TerminalLine[] = [
+  { kind: 'ask', text: 'Add a liquid tab bar to my home screen' },
+  { kind: 'tool', text: 'kinetik-ui · search_components("tab bar")' },
+  { kind: 'out', text: 'liquid-tabs, dock-bar' },
+  { kind: 'tool', text: 'kinetik-ui · get_install_plan(["liquid-tabs"])' },
+  { kind: 'cmd', text: 'npx kinetik-ui add liquid-tabs' },
+  { kind: 'ok', text: 'components/kinetik/liquid-tabs.tsx' },
+  {
+    kind: 'say',
+    text: 'Added <LiquidTabs> to your home screen. It reads your theme and respects reduced motion.',
+  },
+];
+
+const MCP_SERVER = '{ "command": "npx", "args": ["-y", "kinetik-ui", "mcp"] }';
+
+const MCP_CLIENTS = [
+  {
+    id: 'claude-code',
+    title: 'Claude Code',
+    where: 'Terminal',
+    config: 'claude mcp add kinetik-ui -- npx -y kinetik-ui mcp',
+  },
+  {
+    id: 'cursor',
+    title: 'Cursor',
+    where: '.cursor/mcp.json',
+    config: `{\n  "mcpServers": {\n    "kinetik-ui": ${MCP_SERVER}\n  }\n}`,
+  },
+  {
+    id: 'other',
+    title: 'Other clients',
+    where: 'Your MCP config (Claude Desktop, Windsurf, …)',
+    config: `{\n  "mcpServers": {\n    "kinetik-ui": ${MCP_SERVER}\n  }\n}`,
+  },
+];
+
+const MCP_TOOLS = [
+  { name: 'list_components', does: 'Every component and screen template, by category.' },
+  { name: 'search_components', does: 'Find components by what they do: "swipe cards", "loading".' },
+  { name: 'get_component', does: 'Usage guide, accessibility notes, dependencies and source.' },
+  { name: 'get_install_plan', does: 'The exact commands and setup notes for your project.' },
+  { name: 'get_tokens', does: 'Palettes, spacing, type, shadows and the motion presets.' },
+];
 
 /** Stagger index for entrance animations (read by CSS as --d). */
 const delay = (d: number) => ({ '--d': d }) as CSSProperties;
@@ -221,6 +267,56 @@ export default function Home() {
         <div data-reveal style={delay(1)}>
           <Terminal />
         </div>
+      </section>
+
+      <section className="block agents" id="mcp" aria-labelledby="agents-title">
+        <div className="agents-copy" data-reveal>
+          <span className="overline">MCP server</span>
+          <h2 id="agents-title">
+            <Words text="Built for AI agents." />
+          </h2>
+          <p>
+            Kinetik ships a Model Context Protocol server. Claude, Cursor and any MCP client can
+            search the catalogue, read the source and plan the install, then add components the
+            right way: SDK-matched dependencies, your theme, reduced motion intact.
+          </p>
+          <TabsCard
+            className="agents-config"
+            label={<span className="mono">Add the server</span>}
+            tabs={MCP_CLIENTS.map((client) => ({
+              id: client.id,
+              title: client.title,
+              content: (
+                <div className="snippet">
+                  <span className="snippet-where">{client.where}</span>
+                  <pre>
+                    <code>{client.config}</code>
+                  </pre>
+                  <CopyButton text={client.config} />
+                </div>
+              ),
+            }))}
+          />
+          <p className="agents-more">
+            Also for agents: <a href="/llms.txt">/llms.txt</a>, a Markdown version of every page,
+            and <code>npx kinetik-ui agents</code> to teach your project&apos;s AGENTS.md.
+          </p>
+        </div>
+        <div data-reveal style={delay(1)}>
+          <Terminal
+            script={AGENT_SCRIPT}
+            title="agent · my-expo-app"
+            label="An AI agent using the Kinetik MCP server to add a tab bar"
+          />
+        </div>
+        <ul className="tools" aria-label="MCP tools">
+          {MCP_TOOLS.map((tool, i) => (
+            <li key={tool.name} className="tool spot" data-reveal style={delay(i)}>
+              <code>{tool.name}</code>
+              <span>{tool.does}</span>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="block" id="components" aria-labelledby="components-title">

@@ -59,6 +59,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <nav aria-label="Primary" className="topnav">
               <Link href={componentsHref}>Components</Link>
               <Link href="/docs/getting-started">Docs</Link>
+              <Link href="/#mcp">MCP</Link>
             </nav>
             <div className="topbar-end">
               <GitHubLink />
