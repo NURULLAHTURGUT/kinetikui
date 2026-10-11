@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+import { CheckIcon, CopyIcon } from './icons';
+
 export function CopyButton({ text, label = 'Copy' }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false);
   useEffect(() => {
@@ -21,6 +23,7 @@ export function CopyButton({ text, label = 'Copy' }: { text: string; label?: str
         );
       }}
     >
+      {copied ? <CheckIcon size={13} /> : <CopyIcon size={13} />}
       {copied ? 'Copied' : label}
     </button>
   );

@@ -39,6 +39,11 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* The page scrolls without a visible scrollbar. */
+  scrollbar-width: none;
+}
+html::-webkit-scrollbar {
+  display: none;
 }
 
 body {
@@ -174,7 +179,79 @@ a {
 .topbar-end {
   display: flex;
   align-items: center;
+  gap: 6px;
+}
+.topbar-divider {
+  width: 1px;
+  height: 18px;
+  margin: 0 6px;
+  background: var(--k-border-strong);
+}
+.icon-button,
+.gh-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: 8px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--k-text-muted);
+  font: 500 14px/1 var(--font);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color 160ms var(--ease),
+    background 160ms var(--ease);
+}
+.icon-button:hover,
+.gh-link:hover {
+  color: var(--k-text);
+  background: var(--k-surface-raised);
+}
+.gh-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--k-text);
+  font-variant-numeric: tabular-nums;
+}
+/* Sun and moon swap with a turn. */
+.theme-toggle {
+  position: relative;
+  width: 36px;
+}
+.theme-icon {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transition:
+    transform 500ms var(--ease-out),
+    opacity 300ms var(--ease);
+}
+.theme-icon[data-on='false'] {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.6);
+}
+.built-by {
+  padding: 0 6px;
+  font-size: 13.5px;
+  color: var(--k-text-subtle);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 160ms var(--ease);
+}
+.built-by span {
+  color: var(--k-text-muted);
+  transition: color 160ms var(--ease);
+}
+.built-by:hover,
+.built-by:hover span {
+  color: var(--k-text);
 }
 
 /* ---------- Buttons & chips ---------- */
@@ -204,19 +281,6 @@ a {
   border-color: var(--k-ember);
   background: var(--k-ember-soft);
 }
-.theme-glyph {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 1.5px solid currentColor;
-}
-.theme-dark {
-  background: currentColor;
-}
-.theme-light {
-  background: transparent;
-}
-
 .link {
   background: none;
   border: 0;
@@ -299,6 +363,9 @@ a {
 }
 
 .copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border: 1px solid var(--k-border);
   background: var(--k-surface-raised);
   color: var(--k-text-muted);
@@ -1216,7 +1283,8 @@ details.source .shiki {
   .topnav {
     display: none;
   }
-  .topbar-end .chip {
+  .built-by,
+  .topbar-divider:last-of-type {
     display: none;
   }
   .topbar-inner {

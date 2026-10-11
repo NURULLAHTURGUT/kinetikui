@@ -2,6 +2,8 @@
 
 import { useCallback, useLayoutEffect, useSyncExternalStore } from 'react';
 
+import { MoonIcon, SunIcon } from './icons';
+
 export type SitePreference = 'system' | 'dark' | 'light';
 const KEY = 'kinetik-theme';
 const listeners = new Set<() => void>();
@@ -52,9 +54,7 @@ export function useSiteTheme(): 'dark' | 'light' {
   return pref === 'system' ? system : pref;
 }
 
-const LABEL = { dark: 'Dark', light: 'Light' } as const;
-
-/** Two states only: the scheme in effect, and the other one. */
+/** Two states only: shows the theme you switch to (sun in dark, moon in light). */
 export function ThemeToggle() {
   const scheme = useSiteTheme();
   const next = scheme === 'dark' ? 'light' : 'dark';
@@ -62,12 +62,17 @@ export function ThemeToggle() {
   return (
     <button
       type="button"
-      className="chip"
+      className="icon-button theme-toggle"
       onClick={onClick}
-      aria-label={`Theme: ${LABEL[scheme]}. Switch to ${LABEL[next]}.`}
+      aria-label={`Switch to ${next} theme`}
+      title={`Switch to ${next} theme`}
     >
-      <span aria-hidden className={`theme-glyph theme-${scheme}`} />
-      {LABEL[scheme]}
+      <span className="theme-icon" data-on={scheme === 'dark'}>
+        <SunIcon size={18} />
+      </span>
+      <span className="theme-icon" data-on={scheme === 'light'}>
+        <MoonIcon size={18} />
+      </span>
     </button>
   );
 }

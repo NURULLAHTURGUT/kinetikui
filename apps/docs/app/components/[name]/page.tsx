@@ -8,6 +8,7 @@ import type { Controls } from '@kinetik/registry/demo-kit/types';
 import { CopyButton } from '../../../components/copy-button';
 import { CopyPage } from '../../../components/copy-page';
 import { DocsSidebar } from '../../../components/docs-sidebar';
+import { CodeIcon } from '../../../components/icons';
 import { PreviewSlot } from '../../../components/preview-slot';
 import { TabsCard } from '../../../components/tabs';
 import { Toc } from '../../../components/toc';
@@ -110,7 +111,7 @@ export default async function ComponentPage({ params }: { params: Promise<Params
           className="doc-preview"
           label={
             <>
-              <CodeGlyph /> Component preview
+              <CodeIcon size={15} /> Component preview
             </>
           }
           tabs={[
@@ -302,21 +303,6 @@ export default async function ComponentPage({ params }: { params: Promise<Params
 
       <Toc items={toc} />
     </div>
-  );
-}
-
-function CodeGlyph() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden>
-      <path
-        d="M5.5 4 1.5 8l4 4M10.5 4l4 4-4 4"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }
 

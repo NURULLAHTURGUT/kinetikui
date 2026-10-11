@@ -28,16 +28,17 @@ These are installed into your app when you add a component that uses them.
 
 ## Docs site and playground (not shipped to users' apps)
 
-| Package                                                                                                        | License      |
-| -------------------------------------------------------------------------------------------------------------- | ------------ |
-| [next](https://github.com/vercel/next.js)                                                                      | MIT          |
-| [react-native-web](https://github.com/necolas/react-native-web)                                                | MIT          |
-| [canvaskit-wasm](https://github.com/google/skia/tree/main/modules/canvaskit) (served as `canvaskit.wasm`)      | BSD-3-Clause |
-| [shiki](https://github.com/shikijs/shiki)                                                                      | MIT          |
-| [Geist and Geist Mono](https://github.com/vercel/geist-font) (via `@fontsource-variable`), served as web fonts | OFL-1.1      |
-| [marked](https://github.com/markedjs/marked)                                                                   | MIT          |
-| [qrcode](https://github.com/soldair/node-qrcode)                                                               | MIT          |
-| [expo-router](https://github.com/expo/expo/tree/main/packages/expo-router)                                     | MIT          |
+| Package                                                                                                         | License      |
+| --------------------------------------------------------------------------------------------------------------- | ------------ |
+| [next](https://github.com/vercel/next.js)                                                                       | MIT          |
+| [react-native-web](https://github.com/necolas/react-native-web)                                                 | MIT          |
+| [canvaskit-wasm](https://github.com/google/skia/tree/main/modules/canvaskit) (served as `canvaskit.wasm`)       | BSD-3-Clause |
+| [shiki](https://github.com/shikijs/shiki)                                                                       | MIT          |
+| [Tabler Icons](https://github.com/tabler/tabler-icons) (SVG paths embedded in `apps/docs/components/icons.tsx`) | MIT          |
+| [Geist and Geist Mono](https://github.com/vercel/geist-font) (via `@fontsource-variable`), served as web fonts  | OFL-1.1      |
+| [marked](https://github.com/markedjs/marked)                                                                    | MIT          |
+| [qrcode](https://github.com/soldair/node-qrcode)                                                                | MIT          |
+| [expo-router](https://github.com/expo/expo/tree/main/packages/expo-router)                                      | MIT          |
 
 The CanvasKit BSD-3-Clause license requires its copyright notice to accompany redistributed binaries. The docs site serves the unmodified `canvaskit.wasm` together with its license at `/canvaskit-LICENSE.txt` (copied by `scripts/build-docs.ts`) and credits it in the site footer. The CDN copy at `cdn.kinetik-ui.dev` sits next to its `LICENSE` (copied by `scripts/build-cdn.ts`).
 

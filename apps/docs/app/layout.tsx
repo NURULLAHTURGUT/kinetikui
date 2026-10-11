@@ -7,6 +7,7 @@ import '@fontsource-variable/geist-mono';
 import '../generated/tokens.css';
 import './globals.css';
 import { Effects } from '../components/effects';
+import { GitHubLink } from '../components/github-link';
 import { LogoMark } from '../components/logo';
 import { ThemeSync, ThemeToggle, themeBootScript } from '../components/theme';
 import { navOrder, SITE } from '../lib/data';
@@ -60,10 +61,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <Link href="/docs/getting-started">Docs</Link>
             </nav>
             <div className="topbar-end">
+              <GitHubLink />
+              <span className="topbar-divider" aria-hidden />
               <ThemeToggle />
-              <Link href="/docs/getting-started" className="button button-small">
-                Get started
-              </Link>
+              <span className="topbar-divider" aria-hidden />
+              <a className="built-by" href="https://github.com/NURULLAHTURGUT">
+                Built by <span>@NURULLAHTURGUT</span>
+              </a>
             </div>
           </div>
         </header>

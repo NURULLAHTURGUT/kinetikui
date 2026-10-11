@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+import { CheckIcon, CopyIcon } from './icons';
+
 /** Copies the page's markdown twin, ready to paste into an AI chat or notes. */
 export function CopyPage({ href }: { href: string }) {
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
@@ -20,24 +22,7 @@ export function CopyPage({ href }: { href: string }) {
   return (
     <div className="copy-page">
       <button type="button" className="chip" onClick={copy}>
-        <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden>
-          <rect
-            x="5"
-            y="5"
-            width="8.5"
-            height="8.5"
-            rx="1.5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.4"
-          />
-          <path
-            d="M10.5 3.5V3A1.5 1.5 0 0 0 9 1.5H3A1.5 1.5 0 0 0 1.5 3v6A1.5 1.5 0 0 0 3 10.5h.5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.4"
-          />
-        </svg>
+        {state === 'copied' ? <CheckIcon size={14} /> : <CopyIcon size={14} />}
         <span aria-live="polite">
           {state === 'copied' ? 'Copied' : state === 'failed' ? 'Copy failed' : 'Copy page'}
         </span>

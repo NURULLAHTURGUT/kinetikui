@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { CSSProperties } from 'react';
 
 import { CopyButton } from '../components/copy-button';
+import { ArrowDownIcon, ArrowRightIcon } from '../components/icons';
 import { KineticField } from '../components/kinetic-field';
 import { LogoMark } from '../components/logo';
 import { ShowcasePreview } from '../components/showcase';
@@ -38,21 +39,6 @@ function Words({ text, start = 0 }: { text: string; start?: number }) {
   ));
 }
 
-function ArrowDown() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden className="button-icon">
-      <path
-        d="M8 2.5v11M3.5 9 8 13.5 12.5 9"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 export default function Home() {
   const featured = FEATURED.map((name) => getComponent(name)).filter((c) => c !== undefined);
 
@@ -79,7 +65,7 @@ export default function Home() {
           <div className="hero-actions rise" style={delay(4)}>
             <Link className="button button-primary" href="#components">
               Browse components
-              <ArrowDown />
+              <ArrowDownIcon className="button-icon" />
             </Link>
             <Link className="button button-secondary" href="/docs/getting-started">
               Docs
@@ -134,7 +120,7 @@ export default function Home() {
                   className="bento-link"
                   aria-label={`${c.title} docs`}
                 >
-                  →
+                  <ArrowRightIcon size={18} />
                 </Link>
               </footer>
             </article>
@@ -269,7 +255,7 @@ export default function Home() {
               <span className="category-foot">
                 <span>{group.items.length}</span>
                 <span className="category-arrow" aria-hidden>
-                  →
+                  <ArrowRightIcon size={16} />
                 </span>
               </span>
             </Link>
