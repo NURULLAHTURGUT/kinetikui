@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
+import { assertItemName } from './safety';
 import { CliError } from './ui';
 
 export const DEFAULT_REGISTRY = 'https://kinetik-ui.dev/r';
@@ -79,6 +80,12 @@ export class Registry {
   }
 
   item(name: string): Promise<RegistryItem> {
+    // Names become file paths and URLs: no `../`, slashes or odd characters.
+    try {
+      assertItemName(name);
+    } catch (error) {
+      return Promise.reject(error as Error);
+    }
     let pending = this.cache.get(name);
     if (!pending) {
       pending = this.read(`${name}.json`) as Promise<RegistryItem>;

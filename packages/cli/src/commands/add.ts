@@ -1,6 +1,7 @@
 import { expoInstall, planInstall, writeFiles } from '../install';
 import { findProject, writeConfig } from '../project';
 import { DEFAULT_REGISTRY, Registry } from '../registry';
+import { assertItemName } from '../safety';
 import { CliError, c, log } from '../ui';
 import { assertSupportedProject, init } from './init';
 
@@ -18,8 +19,14 @@ export async function add(options: AddOptions): Promise<void> {
     throw new CliError('Name at least one component.', 'Example: npx kinetik-ui add glint-card');
   }
 
+  // Check the names and fetch everything before touching the project, so a
+  // typo or a bad name fails without running init or writing anything.
+  options.names.forEach(assertItemName);
   let project = findProject(options.cwd);
   assertSupportedProject(project.root);
+  const registry = new Registry(options.registry ?? project.config?.registry ?? DEFAULT_REGISTRY);
+  const items = await registry.resolve(options.names);
+
   if (!project.config && !options.dryRun) {
     log.step('No kinetik.json yet; running init first.');
     await init({
@@ -39,8 +46,6 @@ export async function add(options: AddOptions): Promise<void> {
   };
   if (options.registry) config.registry = options.registry;
 
-  const registry = new Registry(config.registry);
-  const items = await registry.resolve(options.names);
   const plan = planInstall(project, config, items);
 
   if (options.dryRun) {

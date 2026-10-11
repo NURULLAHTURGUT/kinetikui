@@ -16,10 +16,50 @@ const canvasKitUrl =
 // Rewrites run in Vercel's routing layer, so pages stay static and cached.
 const acceptsMarkdown = [{ type: 'header', key: 'accept', value: '(.*)text/markdown(.*)' }];
 
+/*
+ * Security headers. The site is static, so the policy only allows what it
+ * uses: its own scripts (Next.js inlines a few, plus the theme boot script),
+ * WebAssembly for the Skia previews, inline styles from react-native-web, the
+ * GitHub API for the star count and the CanvasKit CDN. Development needs eval
+ * for hot reload, so the policy is production-only.
+ */
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self' data:",
+  `connect-src 'self' https://api.github.com ${new URL(canvasKitUrl).origin}`,
+  "worker-src 'self' blob:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  'upgrade-insecure-requests',
+].join('; ');
+
+const securityHeaders = [
+  ...(process.env.NODE_ENV === 'production'
+    ? [{ key: 'Content-Security-Policy', value: contentSecurityPolicy }]
+    : []),
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'X-Frame-Options', value: 'DENY' },
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+  {
+    key: 'Permissions-Policy',
+    value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()',
+  },
+];
+
 /** @type {import('next').NextConfig} */
 const config = {
   reactStrictMode: true,
   env: { NEXT_PUBLIC_CANVASKIT_URL: canvasKitUrl },
+  poweredByHeader: false,
+  async headers() {
+    return [{ source: '/:path*', headers: securityHeaders }];
+  },
   async rewrites() {
     return {
       beforeFiles: [

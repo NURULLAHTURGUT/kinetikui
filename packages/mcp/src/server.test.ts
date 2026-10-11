@@ -109,6 +109,31 @@ describe('kinetik MCP server', () => {
     assert.ok(plan.files.some((f: { target: string }) => f.target.endsWith('deckfall.tsx')));
   });
 
+  it('refuses install plans for invalid names or unsafe dependencies', async () => {
+    const bad = await call('get_install_plan', { components: ['../secret'] });
+    assert.equal(bad.result.isError, true);
+    assert.match(bad.text, /not a valid component name/);
+
+    const tampered = createServer({
+      registry: {
+        ...registry,
+        resolve: async () => [
+          { name: 'x', type: 'registry:item', dependencies: ['ok & calc'], files: [] },
+        ],
+      },
+      installed: async () => ({}),
+    });
+    const [c, s] = InMemoryTransport.createLinkedPair();
+    const other = new Client({ name: 'test-client', version: '1.0.0' });
+    await Promise.all([tampered.connect(s), other.connect(c)]);
+    const res = (await other.callTool({
+      name: 'get_install_plan',
+      arguments: { components: ['x'] },
+    })) as TextResult;
+    assert.equal(res.isError, true);
+    assert.match(res.content[0]!.text, /invalid package name/);
+  });
+
   it('returns tokens and motion source', async () => {
     const tokens = (await call('get_tokens')).json();
     const targets = tokens.files.map((f: { target: string }) => f.target).join(' ');

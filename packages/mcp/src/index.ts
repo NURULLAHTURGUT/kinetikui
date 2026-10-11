@@ -102,15 +102,28 @@ export function scoreItem(item: RegistryItem, query: string): number {
   return total;
 }
 
+/**
+ * npm package names (optional version range) without spaces or shell
+ * characters. The plan's commands get run by an agent in a shell, so a
+ * registry that declares anything else is refused rather than echoed.
+ */
+const PACKAGE_SPEC = /^(@[a-z0-9][a-z0-9._~-]*\/)?[a-z0-9][a-z0-9._~-]*(@[a-z0-9.^~*+-]+)?$/;
+const ITEM_NAME = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+
 /** Commands and notes to install components into an Expo project. */
 export async function installPlan(
   registry: RegistrySource,
   names: string[],
   installed: Record<string, string> = {},
 ) {
+  const badName = names.find((n) => !ITEM_NAME.test(n));
+  if (badName) throw new Error(`"${badName}" is not a valid component name.`);
   const items = await registry.resolve(names);
   const components = items.filter((i) => i.meta?.kind !== 'shared');
   const dependencies = [...new Set(items.flatMap((i) => i.dependencies ?? []))].sort();
+  const badDep = dependencies.find((d) => !PACKAGE_SPEC.test(d));
+  if (badDep)
+    throw new Error(`The registry declares an invalid package name: ${JSON.stringify(badDep)}`);
   const missing = names.filter((n) => !installed[n]);
   const needsInit = Object.keys(installed).length === 0;
   const notes: string[] = [];

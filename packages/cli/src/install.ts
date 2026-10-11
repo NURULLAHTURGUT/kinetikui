@@ -5,6 +5,7 @@ import path from 'node:path';
 import type { KinetikConfig, Project } from './project';
 import { dependencyVersion } from './project';
 import type { RegistryItem } from './registry';
+import { assertPackageSpecs, resolveInside } from './safety';
 import { mapTarget, rewriteImports } from './transform';
 import { CliError, c, log } from './ui';
 
@@ -31,12 +32,13 @@ export function planInstall(
   const knownTargets = items.flatMap((i) => i.files.map((f) => f.target));
   const files: PlannedFile[] = [];
   for (const item of items) {
+    assertPackageSpecs(item.dependencies ?? [], `Registry item "${item.name}"`);
     for (const file of item.files) {
       if (file.content === undefined)
         throw new CliError(`Registry item "${item.name}" has no file contents for ${file.path}.`);
       const rel = mapTarget(file.target, config);
       const content = rewriteImports(file.content, file.target, config, knownTargets);
-      const abs = path.join(project.root, rel);
+      const abs = resolveInside(project.root, rel);
       let status: PlannedFile['status'] = 'create';
       if (fs.existsSync(abs)) {
         status =
@@ -61,7 +63,7 @@ export function writeFiles(
   for (const file of files) {
     if (file.status === 'identical') continue;
     if (file.status === 'conflict' && !overwrite) continue;
-    const abs = path.join(project.root, file.path);
+    const abs = resolveInside(project.root, file.path);
     fs.mkdirSync(path.dirname(abs), { recursive: true });
     fs.writeFileSync(abs, file.content);
     written.push(file);
@@ -76,6 +78,8 @@ export function writeFiles(
  */
 export function expoInstall(root: string, deps: string[]): Promise<void> {
   if (deps.length === 0) return Promise.resolve();
+  // Checked again right before the shell sees them (`shell: true` on Windows).
+  assertPackageSpecs(deps, 'The install plan');
   log.step(`Installing ${deps.map((d) => c.cyan(d)).join(', ')} with ${c.bold('expo install')}`);
   return new Promise((resolve, reject) => {
     const child = spawn('npx', ['expo', 'install', ...deps], {
