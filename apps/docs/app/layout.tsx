@@ -9,7 +9,10 @@ import './globals.css';
 import { Effects } from '../components/effects';
 import { LogoMark } from '../components/logo';
 import { ThemeSync, ThemeToggle, themeBootScript } from '../components/theme';
-import { SITE } from '../lib/data';
+import { navOrder, SITE } from '../lib/data';
+
+/** "Components" opens the first component's page. */
+const componentsHref = `/components/${navOrder()[0]?.name ?? ''}`;
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://kinetik-ui.dev'),
@@ -53,7 +56,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               </span>
             </Link>
             <nav aria-label="Primary" className="topnav">
-              <Link href="/#components">Components</Link>
+              <Link href={componentsHref}>Components</Link>
               <Link href="/docs/getting-started">Docs</Link>
             </nav>
             <div className="topbar-end">
@@ -79,7 +82,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <nav className="footer-links" aria-label="Footer">
               <div>
                 <span className="overline">Library</span>
-                <Link href="/#components">Components</Link>
+                <Link href={componentsHref}>Components</Link>
                 <Link href="/docs/getting-started">Getting started</Link>
               </div>
               <div>

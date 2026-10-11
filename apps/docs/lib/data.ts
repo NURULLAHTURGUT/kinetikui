@@ -30,6 +30,11 @@ export function byCategory() {
   })).filter((g) => g.items.length > 0);
 }
 
+/** Every component and template in navigation order (by category, as the sidebar lists them). */
+export function navOrder() {
+  return byCategory().flatMap((g) => g.items);
+}
+
 export const SITE = {
   name: 'Kinetik UI',
   tagline: 'Motion parts for Expo.',

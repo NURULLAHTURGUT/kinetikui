@@ -6,11 +6,15 @@ import QRCode from 'qrcode';
 import type { Controls } from '@kinetik/registry/demo-kit/types';
 
 import { CopyButton } from '../../../components/copy-button';
+import { CopyPage } from '../../../components/copy-page';
+import { DocsSidebar } from '../../../components/docs-sidebar';
 import { PreviewSlot } from '../../../components/preview-slot';
+import { TabsCard } from '../../../components/tabs';
+import { Toc } from '../../../components/toc';
 import {
   allComponents,
-  byCategory,
   getComponent,
+  navOrder,
   describeMeasurement,
   SITE,
   type PropsTable,
@@ -50,41 +54,51 @@ export default async function ComponentPage({ params }: { params: Promise<Params
   const main = sources.find((s) => s.path.endsWith(`/${c.name}.tsx`));
   const shared = sources.filter((s) => s !== main);
 
-  return (
-    <div className="page">
-      <nav className="sidebar" aria-label="Components">
-        {byCategory().map((g) => (
-          <div key={g.key}>
-            <span className="overline">{g.items[0]?.categoryTitle}</span>
-            <ul>
-              {g.items.map((item) => (
-                <li key={item.name}>
-                  <Link
-                    href={`/components/${item.name}`}
-                    aria-current={item.name === c.name ? 'page' : undefined}
-                  >
-                    {item.title}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </nav>
+  const order = navOrder();
+  const index = order.findIndex((x) => x.name === c.name);
+  const prev = index > 0 ? order[index - 1] : undefined;
+  const next = index < order.length - 1 ? order[index + 1] : undefined;
+  const deps = c.dependencies;
+  const install = c.install.cli.replace(/^npx /, '');
+  const managers = [
+    { id: 'npm', title: 'npm', command: `npx ${install}` },
+    { id: 'pnpm', title: 'pnpm', command: `pnpm dlx ${install}` },
+    { id: 'bun', title: 'bun', command: `bunx ${install}` },
+    { id: 'yarn', title: 'yarn', command: `yarn dlx ${install}` },
+  ];
+  const toc = [
+    { id: 'installation', label: 'Installation' },
+    { id: 'manual', label: 'Install manually' },
+    { id: 'usage', label: 'Usage' },
+    { id: 'props', label: 'Props' },
+    { id: 'quality', label: 'Performance and accessibility' },
+    { id: 'device', label: 'Try it on a device' },
+    { id: 'source', label: 'Source files' },
+  ];
 
-      <article className="article">
-        <header className="article-head">
-          <span className="overline">{c.categoryTitle}</span>
-          <h1>{c.title}</h1>
+  return (
+    <div className="docs">
+      <DocsSidebar current={`/components/${c.name}`} />
+
+      <article className="doc">
+        <nav className="crumbs" aria-label="Breadcrumb">
+          <Link href="/docs/getting-started">Docs</Link>
+          <span aria-hidden>/</span>
+          <span>{c.categoryTitle}</span>
+          <span aria-hidden>/</span>
+          <span aria-current="page">{c.title}</span>
+        </nav>
+
+        <header className="doc-head">
+          <div className="doc-title">
+            <h1>{c.title}</h1>
+            <CopyPage href={`/components/${c.name}.md`} />
+          </div>
           <p>{c.description}</p>
-          <div className="tags">
+          <div className="doc-meta">
             <span className="tag">v{c.version}</span>
-            {c.web === 'live' ? (
-              <span className="tag tag-ice">Live on web</span>
-            ) : (
-              <span className="tag tag-ember">Device only</span>
-            )}
-            {c.dependencies.map((d) => (
+            <span className="tag">{c.web === 'live' ? 'Live on web' : 'Device only'}</span>
+            {deps.map((d) => (
               <span key={d} className="tag mono">
                 {d}
               </span>
@@ -92,62 +106,107 @@ export default async function ComponentPage({ params }: { params: Promise<Params
           </div>
         </header>
 
-        {c.web === 'live' ? (
-          <PreviewSlot
-            name={c.name}
-            controls={c.controls as Controls}
-            screen={c.category === 'screen'}
-          />
-        ) : (
-          <div className="note">
-            <h3>Preview on a device</h3>
-            <p className="muted">
-              {c.webNote ?? 'This effect needs native APIs the browser preview cannot emulate.'}
-            </p>
-          </div>
-        )}
+        <TabsCard
+          className="doc-preview"
+          label={
+            <>
+              <CodeGlyph /> Component preview
+            </>
+          }
+          tabs={[
+            {
+              id: 'preview',
+              title: 'Preview',
+              content:
+                c.web === 'live' ? (
+                  <PreviewSlot
+                    name={c.name}
+                    controls={c.controls as Controls}
+                    screen={c.category === 'screen'}
+                  />
+                ) : (
+                  <p className="preview-note">
+                    {c.webNote ??
+                      'This effect needs native APIs the browser preview cannot emulate.'}
+                  </p>
+                ),
+            },
+            {
+              id: 'code',
+              title: 'Code',
+              content: main ? (
+                <div className="doc-code" dangerouslySetInnerHTML={{ __html: main.html }} />
+              ) : null,
+            },
+          ]}
+        />
 
-        <section className="section" aria-labelledby="install">
-          <h2 id="install">Install</h2>
-          <div className="install">
-            <span className="install-label">
-              Kinetik CLI (recommended: installs SDK-matched versions with expo install)
-            </span>
-            <div className="command">
-              <code>
-                <span className="prompt">$ </span>
-                {c.install.cli}
-              </code>
-              <CopyButton text={c.install.cli} />
-            </div>
-            <span className="install-label">
-              shadcn CLI (copies the same files; check versions with npx expo install --check)
-            </span>
-            <div className="command">
-              <code>
-                <span className="prompt">$ </span>
-                {c.install.shadcn}
-              </code>
-              <CopyButton text={c.install.shadcn} />
-            </div>
-          </div>
+        <section className="doc-section" id="installation">
+          <h2>Installation</h2>
+          <TabsCard
+            className="doc-install"
+            label={<span className="mono">Kinetik CLI</span>}
+            tabs={managers.map((m) => ({
+              id: m.id,
+              title: m.title,
+              content: (
+                <div className="command command-flat">
+                  <code>{m.command}</code>
+                  <CopyButton text={m.command} />
+                </div>
+              ),
+            }))}
+          />
+          <p className="doc-hint">
+            The CLI copies the source and installs native dependencies with{' '}
+            <code>npx expo install</code>, so versions match your Expo SDK. With shadcn:{' '}
+            <code>{c.install.shadcn}</code>
+          </p>
+        </section>
+
+        <section className="doc-section" id="manual">
+          <h2>Install manually</h2>
+          <ol className="steps-list">
+            {deps.length > 0 && (
+              <li>
+                <span className="steps-title">Install dependencies</span>
+                <div className="command command-flat">
+                  <code>npx expo install {deps.join(' ')}</code>
+                  <CopyButton text={`npx expo install ${deps.join(' ')}`} />
+                </div>
+              </li>
+            )}
+            <li>
+              <span className="steps-title">Copy the source files</span>
+              <ul className="file-list">
+                {sources.map((f) => (
+                  <li key={f.path}>
+                    <code>{f.path}</code>
+                  </li>
+                ))}
+              </ul>
+              <a className="button button-secondary button-compact" href="#source">
+                View source files
+              </a>
+            </li>
+          </ol>
         </section>
 
         <section
-          className="section prose"
-          aria-label="Documentation"
+          className="doc-section prose"
+          id="usage"
           dangerouslySetInnerHTML={{ __html: docsHtml }}
         />
 
-        <section className="section" aria-labelledby="props">
-          <h2 id="props">Props</h2>
+        <section className="doc-section" id="props">
+          <h2>Props</h2>
           {c.propsTables.map((t) => (
             <PropsTableView key={t.name} table={t} />
           ))}
         </section>
 
-        <section className="section" aria-labelledby="quality">
-          <h2 id="quality">Performance and accessibility</h2>
+        <section className="doc-section" id="quality">
+          <h2>Performance and accessibility</h2>
           <div className="notes">
             <div className="note">
               <h3>Performance</h3>
@@ -189,8 +248,8 @@ export default async function ComponentPage({ params }: { params: Promise<Params
           </div>
         </section>
 
-        <section className="section" aria-labelledby="device">
-          <h2 id="device">Try it on a device</h2>
+        <section className="doc-section" id="device">
+          <h2>Try it on a device</h2>
           <div className="note device">
             <div
               className="qr"
@@ -198,21 +257,16 @@ export default async function ComponentPage({ params }: { params: Promise<Params
               aria-label={`QR code that opens ${c.title} in the Kinetik playground`}
               dangerouslySetInnerHTML={{ __html: qr }}
             />
-            <div>
-              <p style={{ margin: '0 0 8px' }}>
-                Scan with a phone that has the Kinetik playground installed to open this demo with
-                real haptics and sensors.
-              </p>
-              <p className="muted" style={{ margin: 0, fontSize: 14 }}>
-                Demo video: pending real-device recording.
-              </p>
-            </div>
+            <p className="muted">
+              Scan with a phone that has the Kinetik playground installed to open this demo with
+              real haptics and sensors.
+            </p>
           </div>
         </section>
 
-        <section className="section" aria-labelledby="source">
-          <h2 id="source">Source</h2>
-          <div style={{ display: 'grid', gap: 10 }}>
+        <section className="doc-section" id="source">
+          <h2>Source files</h2>
+          <div className="source-list">
             {main && (
               <details className="source" open>
                 <summary>{main.path}</summary>
@@ -227,8 +281,42 @@ export default async function ComponentPage({ params }: { params: Promise<Params
             ))}
           </div>
         </section>
+
+        <nav className="pager" aria-label="More components">
+          {prev ? (
+            <Link href={`/components/${prev.name}`} className="pager-link">
+              <span>Previous</span>
+              {prev.title}
+            </Link>
+          ) : (
+            <span />
+          )}
+          {next && (
+            <Link href={`/components/${next.name}`} className="pager-link pager-next">
+              <span>Next</span>
+              {next.title}
+            </Link>
+          )}
+        </nav>
       </article>
+
+      <Toc items={toc} />
     </div>
+  );
+}
+
+function CodeGlyph() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden>
+      <path
+        d="M5.5 4 1.5 8l4 4M10.5 4l4 4-4 4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
