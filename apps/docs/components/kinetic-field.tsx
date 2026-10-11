@@ -79,8 +79,8 @@ void main() {
     pos.y += sin(3.14159 * clamp(e, 0.0, 1.0)) * (aSeed.z - 0.5) * 2.4;
 
     pos *= 1.0 + uScroll * 0.25;
-    alpha = (c > 1.5 ? 0.42 : 0.62) * cover * smoothstep(0.0, 0.2, t);
-    size = c > 1.5 ? mix(1.1, 2.0, aSeed.z) : mix(1.0, 1.9, fract(aSeed.y * 7.0));
+    alpha = (c > 1.5 ? 0.6 : 0.85) * cover * smoothstep(0.0, 0.2, t);
+    size = c > 1.5 ? mix(1.6, 2.7, aSeed.z) : mix(1.7, 2.9, fract(aSeed.y * 7.0));
     vTone = 0.0;
   } else {
     // Dust: a loose elliptical orbit band around the mark plus sparse motes.
@@ -100,8 +100,8 @@ void main() {
     vec2 d = pos - vec2(front, 0.0);
     float wake = exp(-dot(d, d) / 2.2) * (1.0 - smoothstep(0.6, 1.0, uIntro));
     pos.y += sign(d.y + 1e-4) * wake * 1.6;
-    alpha = mix(0.12, 0.38, aSeed.z) * smoothstep(0.0, 0.5, uIntro);
-    size = mix(0.8, 1.8, aSeed.z);
+    alpha = mix(0.3, 0.75, aSeed.z) * smoothstep(0.0, 0.5, uIntro);
+    size = mix(1.5, 3.0, aSeed.z);
     vTone = 1.0;
   }
 
@@ -113,7 +113,10 @@ void main() {
   px += normalize(dp + 1e-4) * near * 26.0;
 
   // Thin the field behind the headline and buttons so they stay readable.
-  float clear = mix(0.16, 1.0, smoothstep(0.6, 1.25, length((px - uTextC) / uTextR)));
+  // A rounded box (superellipse) around the copy block, so its corners are covered too.
+  vec2 q = abs((px - uTextC) / uTextR);
+  float box = pow(pow(q.x, 4.0) + pow(q.y, 4.0), 0.25);
+  float clear = mix(0.1, 1.0, smoothstep(0.9, 1.4, box));
 
   gl_Position = vec4(px / (uRes * 0.5), 0.0, 1.0);
   gl_PointSize = size * uDpr * (1.0 + near * 0.8);
@@ -130,12 +133,12 @@ uniform float uLight;
 out vec4 outColor;
 void main() {
   float r = length(gl_PointCoord - 0.5);
-  float a = smoothstep(0.5, 0.05, r) * vAlpha;
+  float a = smoothstep(0.5, 0.25, r) * vAlpha;
   if (a < 0.003) discard;
   // Dark: additive light (premultiplied); dust is a dimmer grey.
   // Light: everything is ink over the page, dust boosted to stay visible.
   if (uLight > 0.5) {
-    outColor = vec4(uInk, min(1.0, a * mix(1.4, 2.6, vTone)));
+    outColor = vec4(uInk, min(1.0, a * mix(1.8, 1.6, vTone)));
   } else {
     vec3 color = mix(uInk, uMuted, vTone);
     outColor = vec4(color * a, a);
