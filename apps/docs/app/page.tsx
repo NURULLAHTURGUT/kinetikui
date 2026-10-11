@@ -4,10 +4,18 @@ import type { CSSProperties } from 'react';
 
 import { CopyButton } from '../components/copy-button';
 import { KineticField } from '../components/kinetic-field';
+import { LogoMark } from '../components/logo';
 import { ShowcasePreview } from '../components/showcase';
 import { Terminal } from '../components/terminal';
 import './home.css';
-import { componentCount, byCategory, getComponent, SITE, screenCount } from '../lib/data';
+import {
+  allComponents,
+  componentCount,
+  byCategory,
+  getComponent,
+  SITE,
+  screenCount,
+} from '../lib/data';
 
 const CATEGORY_TITLE: Record<string, string> = {
   background: 'Backgrounds',
@@ -27,6 +35,31 @@ const INSTALL = 'npx kinetik-ui add glint-card';
 /** Stagger index for entrance animations (read by CSS as --d). */
 const delay = (d: number) => ({ '--d': d }) as CSSProperties;
 
+/** Splits a heading into words that blur and rise in one after another. */
+function Words({ text, start = 0 }: { text: string; start?: number }) {
+  return text.split(' ').map((word, i) => (
+    <span key={i} className="word" style={{ '--w': start + i } as CSSProperties}>
+      {word}
+      {i < text.split(' ').length - 1 ? ' ' : ''}
+    </span>
+  ));
+}
+
+function ArrowDown() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden className="button-icon">
+      <path
+        d="M8 2.5v11M3.5 9 8 13.5 12.5 9"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function Home() {
   const featured = FEATURED.map((name) => getComponent(name)).filter((c) => c !== undefined);
 
@@ -37,6 +70,9 @@ export default function Home() {
           <KineticField />
         </div>
         <div className="hero-content">
+          <div className="hero-mark" aria-hidden>
+            <LogoMark width={420} className="hero-mark-fallback" />
+          </div>
           <Link href="#components" className="pill rise" style={delay(0)}>
             <span className="pill-dot" aria-hidden />
             {componentCount} components · {screenCount} screen templates
@@ -44,23 +80,26 @@ export default function Home() {
               →
             </span>
           </Link>
-          <h1 id="hero-title" className="rise" style={delay(1)}>
-            Motion parts
+          <h1 id="hero-title" className="words-in">
+            <Words text="Motion parts" />
             <br />
-            <span className="gradient-text">for Expo.</span>
+            <span className="hero-second">
+              <Words text="for Expo." start={2} />
+            </span>
           </h1>
-          <p className="hero-lede rise" style={delay(2)}>
+          <p className="hero-lede rise" style={delay(3)}>
             {SITE.description}
           </p>
-          <div className="hero-actions rise" style={delay(3)}>
+          <div className="hero-actions rise" style={delay(4)}>
             <Link className="button button-primary" href="#components">
               Browse components
+              <ArrowDown />
             </Link>
-            <Link className="button button-ghost" href="/docs/getting-started">
-              Get started
+            <Link className="button button-secondary" href="/docs/getting-started">
+              Docs
             </Link>
           </div>
-          <div className="command hero-command rise" style={delay(4)}>
+          <div className="command hero-command rise" style={delay(5)}>
             <code>
               <span className="prompt">$ </span>
               {INSTALL}
@@ -68,21 +107,30 @@ export default function Home() {
             <CopyButton text={INSTALL} />
           </div>
         </div>
-        <div className="hero-stack rise" style={delay(5)}>
-          <span>Reanimated 4</span>
-          <span aria-hidden>·</span>
-          <span>Gesture Handler</span>
-          <span aria-hidden>·</span>
-          <span>Skia</span>
-          <span aria-hidden>·</span>
-          <span>Expo SDK 54+</span>
-        </div>
       </section>
+
+      <div className="marquee" aria-label="Components">
+        <div className="marquee-track">
+          {[0, 1].map((copy) => (
+            <ul key={copy} aria-hidden={copy === 1}>
+              {allComponents.map((c) => (
+                <li key={c.name}>
+                  <Link href={`/components/${c.name}`} tabIndex={copy === 1 ? -1 : undefined}>
+                    {c.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ))}
+        </div>
+      </div>
 
       <section className="block" aria-labelledby="showcase-title">
         <header className="block-head" data-reveal>
           <span className="overline">Live</span>
-          <h2 id="showcase-title">See it move.</h2>
+          <h2 id="showcase-title">
+            <Words text="See it move." />
+          </h2>
           <p>
             Every tile below is the real component running in your browser. Touch it, drag it, tap
             it.
@@ -118,7 +166,9 @@ export default function Home() {
       <section className="block" aria-labelledby="principles-title">
         <header className="block-head" data-reveal>
           <span className="overline">Principles</span>
-          <h2 id="principles-title">Built like the rest of your app.</h2>
+          <h2 id="principles-title">
+            <Words text="Built like the rest of your app." />
+          </h2>
           <p>Native motion primitives, your own source files, and the details done for you.</p>
         </header>
         <div className="principles">
@@ -179,7 +229,9 @@ export default function Home() {
       <section className="block how" aria-labelledby="how-title">
         <div className="how-copy" data-reveal>
           <span className="overline">How it works</span>
-          <h2 id="how-title">Two commands to motion.</h2>
+          <h2 id="how-title">
+            <Words text="Two commands to motion." />
+          </h2>
           <ol className="steps">
             <li>
               <strong>Init</strong>
@@ -197,7 +249,7 @@ export default function Home() {
               <span>It is your code now. Restyle it, rename it, ship it.</span>
             </li>
           </ol>
-          <Link className="button button-ghost" href="/docs/getting-started">
+          <Link className="button button-secondary" href="/docs/getting-started">
             Read the guide
           </Link>
         </div>
@@ -209,7 +261,9 @@ export default function Home() {
       <section className="block" id="components" aria-labelledby="components-title">
         <header className="block-head" data-reveal>
           <span className="overline">Catalogue</span>
-          <h2 id="components-title">Everything in the box.</h2>
+          <h2 id="components-title">
+            <Words text="Everything in the box." />
+          </h2>
           <p>
             {componentCount} components and {screenCount} screen templates, each with a live demo, a
             props table and notes on when not to use it.
@@ -245,7 +299,10 @@ export default function Home() {
       <section className="cta" aria-labelledby="cta-title" data-reveal>
         <div className="cta-glow" aria-hidden />
         <h2 id="cta-title">
-          Make your app <span className="gradient-text">move.</span>
+          <Words text="Make your app" />{' '}
+          <span className="hero-second">
+            <Words text="move." start={3} />
+          </span>
         </h2>
         <p>Copy the first component in under a minute.</p>
         <div className="command cta-command">

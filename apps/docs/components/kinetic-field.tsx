@@ -5,11 +5,16 @@ import { useEffect, useRef } from 'react';
 import { useSiteTheme } from './theme';
 
 /**
- * The landing backdrop: a few thousand particles on three counter-rotating,
- * tilted orbits. On load they spring out of the centre (with overshoot), a
- * travelling wave keeps the orbits breathing, and the pointer pushes particles
- * aside before they settle back. Every position is computed in the vertex
- * shader from a per-particle seed, so a frame costs one draw call.
+ * The landing backdrop. Particles sweep in from the left on curved paths and
+ * spring into the Kinetik mark: a thin ring, a bold ring and a solid disc,
+ * each overlapping the next. While the mark arrives, the dust orbiting around
+ * it bends out of the way. At rest the particles keep flowing around their
+ * circles and the pointer pushes them aside. Everything is computed in the
+ * vertex shader from per-particle seeds: one draw call per frame.
+ *
+ * The mark is placed over `.hero-mark` (its size and position come from that
+ * element), so the layout stays in CSS. Without WebGL 2 the hero gets
+ * `data-field="none"` and shows the static SVG mark instead.
  */
 
 const VERTEX = `#version 300 es
@@ -17,104 +22,130 @@ precision highp float;
 in vec4 aSeed;
 uniform float uTime;
 uniform float uIntro;
+uniform vec2 uRes;
+uniform vec2 uCenter;
+uniform float uUnit;
 uniform vec2 uPointer;
 uniform float uPush;
-uniform float uAspect;
 uniform float uScroll;
 uniform float uDpr;
-uniform vec3 uColorA;
-uniform vec3 uColorB;
-out vec3 vColor;
 out float vAlpha;
+out float vTone;
 
 const float TAU = 6.2831853;
+const float R = 0.875;
 
-mat3 rotX(float a) { float c = cos(a), s = sin(a); return mat3(1., 0., 0., 0., c, s, 0., -s, c); }
-mat3 rotY(float a) { float c = cos(a), s = sin(a); return mat3(c, 0., -s, 0., 1., 0., s, 0., c); }
-mat3 rotZ(float a) { float c = cos(a), s = sin(a); return mat3(c, s, 0., -s, c, 0., 0., 0., 1.); }
+float springOut(float t) {
+  return 1.0 - exp(-6.0 * t) * cos(8.5 * t);
+}
 
 void main() {
-  float dust = step(0.84, aSeed.w);
-  float lane = floor(aSeed.x * 3.0);
-  float dir = mod(lane, 2.0) < 0.5 ? 1.0 : -1.0;
-  float angle = aSeed.y * TAU + uTime * (0.07 + lane * 0.025) * dir;
+  bool logo = aSeed.w < 0.7;
+  vec2 pos;
+  float alpha;
+  float size;
 
-  // Orbit radius with a gaussian-ish thickness and a travelling spring wave.
-  float thickness = (aSeed.z - 0.5) * (0.05 + lane * 0.025);
-  float radius = 0.62 + lane * 0.19 + thickness;
-  radius *= 1.0 + 0.055 * sin(3.0 * angle + uTime * 0.9 + lane * 2.1);
-  vec3 p = vec3(cos(angle) * radius, sin(angle) * radius, 0.16 * sin(2.0 * angle - uTime * 0.6 + lane * 1.3));
+  if (logo) {
+    float c = aSeed.x < 0.2 ? 0.0 : (aSeed.x < 0.45 ? 1.0 : 2.0);
+    vec2 centre = vec2(c - 1.0, 0.0);
+    float breathe = 1.0 + 0.012 * sin(uTime * 1.3 + c * 1.7);
+    float angle;
+    float radius;
+    if (c < 1.5) {
+      // Rings: the left one thin, the middle one bold.
+      float width = c < 0.5 ? 0.018 : 0.034;
+      radius = (R + (aSeed.z - 0.5) * width) * breathe;
+      angle = aSeed.y * TAU + uTime * (c < 0.5 ? 0.11 : -0.08);
+    } else {
+      // The solid disc turns like a slow vortex, faster near the centre.
+      radius = R * sqrt(aSeed.z) * breathe;
+      angle = aSeed.y * TAU + uTime * 0.05 / (0.35 + aSeed.z);
+    }
+    vec2 home = centre + vec2(cos(angle), sin(angle)) * radius;
 
-  // Dust: a loose shell that drifts slowly around the orbits.
-  vec3 shell = normalize(vec3(cos(aSeed.y * TAU), sin(aSeed.y * TAU), aSeed.z * 2.0 - 1.0));
-  shell *= 0.35 + aSeed.x * 1.25;
-  shell = rotZ(uTime * 0.02 * (aSeed.z - 0.5)) * shell;
-  p = mix(p, shell, dust);
+    // Each circle is drawn over the one to its left: hide what it covers.
+    float cover = 1.0;
+    if (c < 0.5) cover = smoothstep(R * 0.97, R * 1.03, distance(home, vec2(0.0)));
+    if (c > 0.5 && c < 1.5) cover = smoothstep(R * 0.97, R * 1.03, distance(home, vec2(1.0, 0.0)));
 
-  // Portrait screens get a rounder, smaller orbit so it frames the copy.
-  float portrait = 1.0 - clamp((uAspect - 0.5) / 0.7, 0.0, 1.0);
-  float tilt = mix(1.18, 0.8, portrait) - uScroll * 0.55;
-  p = rotZ(0.38) * rotY(0.22 * sin(uTime * 0.13)) * rotX(tilt) * p;
-  p *= mix(1.0, 0.62, portrait);
+    // Intro: from off-screen left along a bent path, the solid disc first.
+    float delay = (2.0 - c) * 0.12 + aSeed.w * 0.5;
+    float t = clamp(uIntro * 1.7 - delay, 0.0, 1.0);
+    float e = springOut(t);
+    vec2 start = home + vec2(-6.5 - aSeed.z * 3.0, (aSeed.y - 0.5) * 3.2);
+    pos = mix(start, home, e);
+    pos.y += sin(3.14159 * clamp(e, 0.0, 1.0)) * (aSeed.z - 0.5) * 2.4;
 
-  // Intro: each particle springs out of the centre with a little overshoot.
-  float t = clamp(uIntro * 1.5 - aSeed.w * 0.5, 0.0, 1.0);
-  float spring = 1.0 - exp(-6.5 * t) * cos(9.0 * t);
-  p *= spring;
+    pos *= 1.0 + uScroll * 0.25;
+    alpha = (c > 1.5 ? 0.55 : 0.7) * cover * smoothstep(0.0, 0.2, t);
+    size = c > 1.5 ? mix(1.1, 2.0, aSeed.z) : mix(1.0, 1.9, fract(aSeed.y * 7.0));
+    vTone = 0.0;
+  } else {
+    // Dust: a loose elliptical orbit band around the mark plus sparse motes.
+    float k = (aSeed.w - 0.7) / 0.3;
+    if (k < 0.65) {
+      float dir = aSeed.x < 0.5 ? 1.0 : -1.0;
+      float angle = aSeed.y * TAU + uTime * (0.025 + aSeed.z * 0.02) * dir;
+      float radius = mix(2.3, 6.0, aSeed.z * aSeed.z);
+      pos = vec2(cos(angle) * radius, sin(angle) * radius * 0.42);
+      pos = mat2(cos(0.18), sin(0.18), -sin(0.18), cos(0.18)) * pos;
+    } else {
+      vec2 span = uRes / uUnit;
+      pos = (vec2(aSeed.x, fract(aSeed.y + uTime * 0.004 * (0.5 + aSeed.z))) - 0.5) * span - uCenter / uUnit;
+    }
+    // The mark's arrival pushes the dust aside like a wake.
+    float front = mix(-7.0, 1.5, 1.0 - pow(1.0 - clamp(uIntro, 0.0, 1.0), 3.0));
+    vec2 d = pos - vec2(front, 0.0);
+    float wake = exp(-dot(d, d) / 2.2) * (1.0 - smoothstep(0.6, 1.0, uIntro));
+    pos.y += sign(d.y + 1e-4) * wake * 1.6;
+    alpha = mix(0.12, 0.38, aSeed.z) * smoothstep(0.0, 0.5, uIntro);
+    size = mix(0.8, 1.8, aSeed.z);
+    vTone = 1.0;
+  }
 
-  float depth = 2.7 - p.z;
-  vec2 screen = p.xy * (2.9 / depth);
-  screen.x /= uAspect;
+  vec2 px = uCenter + pos * uUnit;
 
-  // Pointer: push away within a soft radius (aspect-corrected distance).
-  vec2 d = screen - uPointer;
-  d.x *= uAspect;
-  float near = exp(-dot(d, d) / 0.035) * uPush;
-  screen += normalize(d + 1e-5) * near * 0.11 * vec2(1.0 / uAspect, 1.0);
+  // Pointer: push away within a soft radius, in pixels.
+  vec2 dp = px - uPointer;
+  float near = exp(-dot(dp, dp) / (130.0 * 130.0)) * uPush;
+  px += normalize(dp + 1e-4) * near * 26.0;
 
-  gl_Position = vec4(screen, 0.0, 1.0);
-
-  // Thin the field behind the copy so the headline and text stay readable.
-  vec2 fromCentre = screen * vec2(uAspect * 0.62, 1.15);
-  float clear = mix(0.2, 1.0, smoothstep(0.25, 0.8, length(fromCentre)));
-
-  float front = smoothstep(-0.9, 0.9, p.z);
-  float size = mix(1.3, 3.0, aSeed.z) * mix(0.7, 1.35, front) * (dust > 0.5 ? 0.75 : 1.0);
-  gl_PointSize = size * uDpr * (1.0 + near * 1.5);
-
-  float hue = 0.5 + 0.5 * sin(angle + lane * 1.7 + uTime * 0.05);
-  vColor = mix(uColorA, uColorB, hue);
-  vColor = mix(vColor, vec3(1.0), step(0.985, aSeed.z) * 0.6);
-  vAlpha = (dust > 0.5 ? 0.35 : mix(0.35, 1.0, front)) * smoothstep(0.0, 0.25, t) * (1.0 - uScroll * 0.7) * clear;
+  gl_Position = vec4(px / (uRes * 0.5), 0.0, 1.0);
+  gl_PointSize = size * uDpr * (1.0 + near * 0.8);
+  vAlpha = alpha * (1.0 - uScroll * 0.8);
 }`;
 
 const FRAGMENT = `#version 300 es
 precision mediump float;
-in vec3 vColor;
 in float vAlpha;
+in float vTone;
+uniform vec3 uInk;
+uniform vec3 uMuted;
 uniform float uLight;
 out vec4 outColor;
 void main() {
   float r = length(gl_PointCoord - 0.5);
-  float a = smoothstep(0.5, 0.0, r) * vAlpha;
+  float a = smoothstep(0.5, 0.05, r) * vAlpha;
   if (a < 0.003) discard;
+  vec3 color = mix(uInk, uMuted, vTone);
   // Dark: additive light (premultiplied). Light: plain alpha over the page.
-  outColor = uLight > 0.5 ? vec4(vColor * 0.85, min(1.0, a * 1.5)) : vec4(vColor * a, a);
+  outColor = uLight > 0.5 ? vec4(color, min(1.0, a * 1.4)) : vec4(color * a, a);
 }`;
 
-type Uniforms = Record<
-  | 'uTime'
-  | 'uIntro'
-  | 'uPointer'
-  | 'uPush'
-  | 'uAspect'
-  | 'uScroll'
-  | 'uDpr'
-  | 'uColorA'
-  | 'uColorB'
-  | 'uLight',
-  WebGLUniformLocation | null
->;
+const UNIFORMS = [
+  'uTime',
+  'uIntro',
+  'uRes',
+  'uCenter',
+  'uUnit',
+  'uPointer',
+  'uPush',
+  'uScroll',
+  'uDpr',
+  'uInk',
+  'uMuted',
+  'uLight',
+] as const;
 
 function compile(gl: WebGL2RenderingContext, type: number, source: string) {
   const shader = gl.createShader(type);
@@ -139,8 +170,15 @@ export function KineticField() {
 
   useEffect(() => {
     const canvas = ref.current;
+    const hero = canvas?.closest<HTMLElement>('.hero');
+    const slot = hero?.querySelector<HTMLElement>('.hero-mark');
     const gl = canvas?.getContext('webgl2', { antialias: false, premultipliedAlpha: true });
-    if (!canvas || !gl) return;
+    if (!canvas || !hero || !slot) return;
+    if (!gl) {
+      // No WebGL 2: show the static mark instead.
+      hero.setAttribute('data-field', 'none');
+      return;
+    }
 
     const vs = compile(gl, gl.VERTEX_SHADER, VERTEX);
     const fs = compile(gl, gl.FRAGMENT_SHADER, FRAGMENT);
@@ -151,34 +189,33 @@ export function KineticField() {
     gl.linkProgram(program);
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
     gl.useProgram(program);
-
     const u = Object.fromEntries(
-      [
-        'uTime',
-        'uIntro',
-        'uPointer',
-        'uPush',
-        'uAspect',
-        'uScroll',
-        'uDpr',
-        'uColorA',
-        'uColorB',
-        'uLight',
-      ].map((n) => [n, gl.getUniformLocation(program, n)]),
-    ) as Uniforms;
+      UNIFORMS.map((n) => [n, gl.getUniformLocation(program, n)]),
+    ) as Record<(typeof UNIFORMS)[number], WebGLUniformLocation | null>;
 
     const light = scheme === 'light';
-    gl.uniform3fv(u.uColorA, cssColor('--k-ember'));
-    gl.uniform3fv(u.uColorB, cssColor('--k-ice'));
+    gl.uniform3fv(u.uInk, cssColor('--k-text'));
+    gl.uniform3fv(u.uMuted, cssColor('--k-text-muted'));
     gl.uniform1f(u.uLight, light ? 1 : 0);
     gl.enable(gl.BLEND);
     if (light) gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     else gl.blendFunc(gl.ONE, gl.ONE);
 
-    const rect = canvas.getBoundingClientRect();
-    const count = Math.round(Math.min(24000, Math.max(7000, (rect.width * rect.height) / 50)));
+    // Particle budget scales with the mark's size (logo) and the hero's area (dust).
+    const first = canvas.getBoundingClientRect();
+    const unit0 = (slot.getBoundingClientRect().width * 48) / 200;
+    const logoCount = Math.round(Math.min(15000, Math.max(5000, unit0 * 110)));
+    const dustCount = Math.round(
+      Math.min(7000, Math.max(2000, (first.width * first.height) / 200)),
+    );
+    const count = logoCount + dustCount;
     const seeds = new Float32Array(count * 4);
-    for (let i = 0; i < seeds.length; i++) seeds[i] = Math.random();
+    for (let i = 0; i < count; i++) {
+      seeds[i * 4] = Math.random();
+      seeds[i * 4 + 1] = Math.random();
+      seeds[i * 4 + 2] = Math.random();
+      seeds[i * 4 + 3] = i < logoCount ? Math.random() * 0.7 : 0.7 + Math.random() * 0.3;
+    }
     const buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, seeds, gl.STATIC_DRAW);
@@ -188,32 +225,44 @@ export function KineticField() {
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let rect = first;
 
-    function resize() {
-      const r = canvas!.getBoundingClientRect();
-      canvas!.width = Math.max(1, Math.round(r.width * dpr));
-      canvas!.height = Math.max(1, Math.round(r.height * dpr));
+    // Canvas size and the mark's centre/unit in pixels from the canvas centre (y up).
+    function layout() {
+      rect = canvas!.getBoundingClientRect();
+      const s = slot!.getBoundingClientRect();
+      canvas!.width = Math.max(1, Math.round(rect.width * dpr));
+      canvas!.height = Math.max(1, Math.round(rect.height * dpr));
       gl!.viewport(0, 0, canvas!.width, canvas!.height);
-      gl!.uniform1f(u.uAspect, r.width / Math.max(1, r.height));
+      gl!.uniform2f(u.uRes, rect.width, rect.height);
+      gl!.uniform2f(
+        u.uCenter,
+        s.left + s.width / 2 - (rect.left + rect.width / 2),
+        rect.top + rect.height / 2 - (s.top + s.height / 2),
+      );
+      gl!.uniform1f(u.uUnit, (s.width * 48) / 200);
       gl!.uniform1f(u.uDpr, dpr);
     }
 
-    // Pointer target and a damped spring that follows it.
-    const pointer = { x: 0, y: 0, vx: 0, vy: 0, tx: 0, ty: 0, push: 0, pushTarget: 0 };
+    // Pointer target and a critically damped spring that follows it.
+    const pointer = { x: -1e4, y: -1e4, vx: 0, vy: 0, tx: -1e4, ty: -1e4, push: 0, target: 0 };
     function onMove(e: PointerEvent) {
-      const r = canvas!.getBoundingClientRect();
-      pointer.tx = ((e.clientX - r.left) / r.width) * 2 - 1;
-      pointer.ty = -(((e.clientY - r.top) / r.height) * 2 - 1);
-      pointer.pushTarget = 1;
+      pointer.tx = e.clientX - (rect.left + rect.width / 2);
+      pointer.ty = rect.top + rect.height / 2 - e.clientY;
+      if (pointer.x < -9e3) {
+        pointer.x = pointer.tx;
+        pointer.y = pointer.ty;
+      }
+      pointer.target = 1;
     }
     function onLeave() {
-      pointer.pushTarget = 0;
+      pointer.target = 0;
     }
 
     let scroll = 0;
     function onScroll() {
-      const r = canvas!.getBoundingClientRect();
-      scroll = Math.min(1, Math.max(0, -r.top / Math.max(1, r.height)));
+      rect = canvas!.getBoundingClientRect();
+      scroll = Math.min(1, Math.max(0, -rect.top / Math.max(1, rect.height)));
     }
 
     function draw(time: number, intro: number) {
@@ -227,14 +276,14 @@ export function KineticField() {
       gl!.drawArrays(gl!.POINTS, 0, count);
     }
 
-    resize();
+    layout();
     onScroll();
 
     if (reduced) {
-      draw(12, 1);
+      draw(8, 1);
       const onResize = () => {
-        resize();
-        draw(12, 1);
+        layout();
+        draw(8, 1);
       };
       window.addEventListener('resize', onResize);
       return () => window.removeEventListener('resize', onResize);
@@ -244,21 +293,21 @@ export function KineticField() {
     let visible = true;
     let last = performance.now();
     let elapsed = 0;
+    let intro = 0;
     const start = last;
 
     function tick(now: number) {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       elapsed += dt;
-      // Critically damped follow for the pointer and its strength.
-      const k = 90;
+      intro = Math.min(1, (now - start) / 2800);
+      const k = 80;
       const c = 2 * Math.sqrt(k);
       pointer.vx += (k * (pointer.tx - pointer.x) - c * pointer.vx) * dt;
       pointer.vy += (k * (pointer.ty - pointer.y) - c * pointer.vy) * dt;
       pointer.x += pointer.vx * dt;
       pointer.y += pointer.vy * dt;
-      pointer.push += (pointer.pushTarget - pointer.push) * Math.min(1, dt * 4);
-      const intro = Math.min(1, (now - start) / 2600);
+      pointer.push += (pointer.target - pointer.push) * Math.min(1, dt * 4);
       draw(elapsed, intro);
       frame = visible && !document.hidden ? requestAnimationFrame(tick) : 0;
     }
@@ -275,8 +324,10 @@ export function KineticField() {
       resume();
     });
     io.observe(canvas);
+    const ro = new ResizeObserver(layout);
+    ro.observe(canvas);
+    ro.observe(slot);
 
-    window.addEventListener('resize', resize);
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('pointermove', onMove, { passive: true });
     document.documentElement.addEventListener('pointerleave', onLeave);
@@ -286,7 +337,7 @@ export function KineticField() {
     return () => {
       cancelAnimationFrame(frame);
       io.disconnect();
-      window.removeEventListener('resize', resize);
+      ro.disconnect();
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('pointermove', onMove);
       document.documentElement.removeEventListener('pointerleave', onLeave);

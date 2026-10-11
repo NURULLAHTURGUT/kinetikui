@@ -6,7 +6,7 @@
 
 .rise {
   animation: rise 900ms var(--ease-out) both;
-  animation-delay: calc(var(--d, 0) * 90ms + 250ms);
+  animation-delay: calc(var(--d, 0) * 90ms + 900ms);
 }
 @keyframes rise {
   from {
@@ -29,23 +29,36 @@
   transform: none;
 }
 
-.gradient-text {
-  background: linear-gradient(
-    100deg,
-    var(--k-ember) 10%,
-    color-mix(in srgb, var(--k-ember) 40%, var(--k-ice)) 55%,
-    var(--k-ice) 95%
-  );
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: sheen 9s ease-in-out infinite alternate;
+/* Headings arrive word by word: blur, rise, settle. */
+.word {
+  display: inline-block;
+  white-space: pre;
 }
-@keyframes sheen {
-  to {
-    background-position: 100% 0;
+.words-in .word {
+  animation: word-in 1000ms var(--ease-out) both;
+  animation-delay: calc(var(--w, 0) * 110ms + 900ms);
+}
+@keyframes word-in {
+  from {
+    opacity: 0;
+    transform: translateY(35%);
+    filter: blur(10px);
   }
+}
+[data-reveal] .word {
+  opacity: 0;
+  transform: translateY(35%);
+  filter: blur(8px);
+  transition:
+    opacity 800ms var(--ease-out),
+    transform 800ms var(--ease-out),
+    filter 800ms var(--ease-out);
+  transition-delay: calc(var(--w, 0) * 70ms + 80ms);
+}
+[data-reveal][data-shown] .word {
+  opacity: 1;
+  transform: none;
+  filter: none;
 }
 
 /* ---------- Hero ---------- */
@@ -67,17 +80,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(
-      40% 32% at 50% 48%,
-      color-mix(in srgb, var(--k-ember) 14%, transparent),
-      transparent 70%
-    ),
-    radial-gradient(
-      60% 45% at 50% 55%,
-      color-mix(in srgb, var(--k-ice) 8%, transparent),
-      transparent 75%
-    );
+  background: radial-gradient(42% 36% at 50% 38%, var(--site-glow), transparent 70%);
 }
 .hero-backdrop::after {
   /* Keeps the copy readable and fades the field into the page. */
@@ -103,20 +106,39 @@
   align-self: center;
   justify-self: center;
   max-width: 920px;
-  padding: 72px var(--gutter) 40px;
+  padding: 48px var(--gutter) 56px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 26px;
+  gap: 22px;
+}
+/* The particle field draws the mark over this box; the SVG is the no-WebGL fallback. */
+.hero-mark {
+  width: clamp(220px, 30vw, 380px);
+  aspect-ratio: 2 / 1;
+  margin-bottom: 8px;
+  color: var(--k-text);
+}
+.hero-mark-fallback {
+  display: block;
+  width: 100%;
+  height: auto;
+  opacity: 0;
+}
+.hero[data-field='none'] .hero-mark-fallback {
+  opacity: 1;
 }
 .hero h1 {
   margin: 0;
-  font-size: clamp(48px, 9.5vw, 116px);
-  line-height: 0.95;
-  letter-spacing: -0.055em;
-  font-weight: 650;
+  font-size: clamp(44px, 8vw, 96px);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+  font-weight: 600;
   text-wrap: balance;
+}
+.hero-second {
+  color: var(--k-text-subtle);
 }
 .hero-lede {
   margin: 0;
@@ -138,24 +160,13 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
-.hero-stack {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px 14px;
-  padding: 0 var(--gutter) 36px;
-  font-size: 13px;
-  color: var(--k-text-subtle);
-  letter-spacing: 0.01em;
-}
-
 .pill {
   display: inline-flex;
   align-items: center;
   gap: 10px;
   min-height: 34px;
   padding: 0 14px 0 12px;
-  border-radius: 999px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--k-border-strong);
   background: color-mix(in srgb, var(--k-surface) 60%, transparent);
   backdrop-filter: blur(10px);
@@ -211,10 +222,65 @@
 .cta h2 {
   margin: 0;
   font-size: clamp(32px, 5vw, 56px);
-  line-height: 1.02;
+  line-height: 1.04;
   letter-spacing: -0.045em;
-  font-weight: 650;
+  font-weight: 600;
   text-wrap: balance;
+}
+.cta .hero-second {
+  color: var(--k-text-subtle);
+}
+
+/* ---------- Marquee ---------- */
+
+.marquee {
+  overflow: hidden;
+  border-block: 1px solid var(--k-border);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 60s linear infinite;
+}
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+.marquee ul {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.marquee li {
+  display: flex;
+  align-items: center;
+}
+.marquee li::after {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  border: 1px solid var(--k-text-subtle);
+}
+.marquee a {
+  display: block;
+  padding: 18px 28px;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--k-text-subtle);
+  text-decoration: none;
+  transition: color 200ms var(--ease);
+}
+.marquee a:hover {
+  color: var(--k-text);
+}
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
 }
 .block-head p {
   margin: 0;
@@ -243,6 +309,31 @@
   z-index: -1;
 }
 .spot:hover::before {
+  opacity: 1;
+}
+.spot::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  border-radius: inherit;
+  background: radial-gradient(
+    260px circle at var(--mx, 50%) var(--my, -200px),
+    color-mix(in srgb, var(--k-text) 45%, transparent),
+    transparent 70%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  opacity: 0;
+  transition: opacity 300ms var(--ease);
+  pointer-events: none;
+}
+.spot:hover::after {
   opacity: 1;
 }
 
@@ -534,17 +625,16 @@
 @keyframes brand {
   0%,
   100% {
-    background: var(--k-ember);
-    border-radius: 12px;
+    background: var(--k-text);
+    border-radius: 8px;
   }
   33% {
-    /* The violet from the code sample next to it. */
-    background: #7c5cff;
+    background: var(--k-text-muted);
     border-radius: 50%;
   }
   66% {
-    background: var(--k-ice);
-    border-radius: 6px;
+    background: var(--k-text-subtle);
+    border-radius: 4px;
   }
 }
 
@@ -737,17 +827,7 @@
   position: absolute;
   inset: 0;
   z-index: -1;
-  background:
-    radial-gradient(
-      45% 60% at 50% 100%,
-      color-mix(in srgb, var(--k-ember) 16%, transparent),
-      transparent 70%
-    ),
-    radial-gradient(
-      30% 40% at 65% 90%,
-      color-mix(in srgb, var(--k-ice) 10%, transparent),
-      transparent 70%
-    );
+  background: radial-gradient(45% 60% at 50% 100%, var(--site-glow), transparent 70%);
   filter: blur(10px);
 }
 .cta-command {
@@ -785,16 +865,19 @@
 
 @media (prefers-reduced-motion: reduce) {
   .rise,
-  .gradient-text,
+  .words-in .word,
+  .marquee-track,
   .pill-dot,
   .art *,
   .art-motion .switch-art::after,
   .t-caret {
     animation: none !important;
   }
-  [data-reveal] {
+  [data-reveal],
+  [data-reveal] .word {
     opacity: 1;
     transform: none;
+    filter: none;
     transition: none;
   }
 }

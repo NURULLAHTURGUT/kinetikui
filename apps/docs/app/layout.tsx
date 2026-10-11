@@ -7,6 +7,7 @@ import '@fontsource-variable/geist-mono';
 import '../generated/tokens.css';
 import './globals.css';
 import { Effects } from '../components/effects';
+import { LogoMark } from '../components/logo';
 import { ThemeSync, ThemeToggle, themeBootScript } from '../components/theme';
 import { SITE } from '../lib/data';
 
@@ -26,8 +27,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: dark)', color: '#0B0D12' },
-    { media: '(prefers-color-scheme: light)', color: '#F6F5F2' },
+    { media: '(prefers-color-scheme: dark)', color: '#000000' },
+    { media: '(prefers-color-scheme: light)', color: '#FFFFFF' },
   ],
 };
 
@@ -46,10 +47,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <header className="topbar">
           <div className="topbar-inner">
             <Link href="/" className="brand" aria-label={`${SITE.name} home`}>
-              <span className="brand-mark" aria-hidden>
-                <span />
+              <LogoMark width={40} className="brand-logo" />
+              <span>
+                Kinetik <span className="brand-sub">UI</span>
               </span>
-              Kinetik
             </Link>
             <nav aria-label="Primary" className="topnav">
               <Link href="/#components">Components</Link>
@@ -68,10 +69,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <div className="footer-inner">
             <div className="footer-brand">
               <Link href="/" className="brand" aria-label={`${SITE.name} home`}>
-                <span className="brand-mark" aria-hidden>
-                  <span />
+                <LogoMark width={40} className="brand-logo" />
+                <span>
+                  Kinetik <span className="brand-sub">UI</span>
                 </span>
-                Kinetik
               </Link>
               <p className="muted">{SITE.tagline} MIT licensed.</p>
             </div>
@@ -88,6 +89,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 <a href="/r/registry.json">Registry</a>
               </div>
             </nav>
+          </div>
+          <div className="footer-mark" aria-hidden>
+            <LogoMark width={1200} />
           </div>
           <div className="footer-fine">
             <span className="muted">
