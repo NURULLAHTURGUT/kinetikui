@@ -8,14 +8,7 @@ import { LogoMark } from '../components/logo';
 import { ShowcasePreview } from '../components/showcase';
 import { Terminal } from '../components/terminal';
 import './home.css';
-import {
-  allComponents,
-  componentCount,
-  byCategory,
-  getComponent,
-  SITE,
-  screenCount,
-} from '../lib/data';
+import { allComponents, componentCount, byCategory, getComponent, screenCount } from '../lib/data';
 
 const CATEGORY_TITLE: Record<string, string> = {
   background: 'Backgrounds',
@@ -69,17 +62,10 @@ export default function Home() {
         <div className="hero-backdrop" aria-hidden>
           <KineticField />
         </div>
+        <div className="hero-mark" aria-hidden>
+          <LogoMark width={1200} className="hero-mark-fallback" />
+        </div>
         <div className="hero-content">
-          <div className="hero-mark" aria-hidden>
-            <LogoMark width={420} className="hero-mark-fallback" />
-          </div>
-          <Link href="#components" className="pill rise" style={delay(0)}>
-            <span className="pill-dot" aria-hidden />
-            {componentCount} components · {screenCount} screen templates
-            <span className="pill-arrow" aria-hidden>
-              →
-            </span>
-          </Link>
           <h1 id="hero-title" className="words-in">
             <Words text="Motion parts" />
             <br />
@@ -88,7 +74,7 @@ export default function Home() {
             </span>
           </h1>
           <p className="hero-lede rise" style={delay(3)}>
-            {SITE.description}
+            Animated components you copy into your app with one command.
           </p>
           <div className="hero-actions rise" style={delay(4)}>
             <Link className="button button-primary" href="#components">
@@ -98,13 +84,6 @@ export default function Home() {
             <Link className="button button-secondary" href="/docs/getting-started">
               Docs
             </Link>
-          </div>
-          <div className="command hero-command rise" style={delay(5)}>
-            <code>
-              <span className="prompt">$ </span>
-              {INSTALL}
-            </code>
-            <CopyButton text={INSTALL} />
           </div>
         </div>
       </section>

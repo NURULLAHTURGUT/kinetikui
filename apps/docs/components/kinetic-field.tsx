@@ -29,6 +29,8 @@ uniform vec2 uPointer;
 uniform float uPush;
 uniform float uScroll;
 uniform float uDpr;
+uniform vec2 uTextC;
+uniform vec2 uTextR;
 out float vAlpha;
 out float vTone;
 
@@ -77,7 +79,7 @@ void main() {
     pos.y += sin(3.14159 * clamp(e, 0.0, 1.0)) * (aSeed.z - 0.5) * 2.4;
 
     pos *= 1.0 + uScroll * 0.25;
-    alpha = (c > 1.5 ? 0.55 : 0.7) * cover * smoothstep(0.0, 0.2, t);
+    alpha = (c > 1.5 ? 0.42 : 0.62) * cover * smoothstep(0.0, 0.2, t);
     size = c > 1.5 ? mix(1.1, 2.0, aSeed.z) : mix(1.0, 1.9, fract(aSeed.y * 7.0));
     vTone = 0.0;
   } else {
@@ -110,9 +112,12 @@ void main() {
   float near = exp(-dot(dp, dp) / (130.0 * 130.0)) * uPush;
   px += normalize(dp + 1e-4) * near * 26.0;
 
+  // Thin the field behind the headline and buttons so they stay readable.
+  float clear = mix(0.16, 1.0, smoothstep(0.6, 1.25, length((px - uTextC) / uTextR)));
+
   gl_Position = vec4(px / (uRes * 0.5), 0.0, 1.0);
   gl_PointSize = size * uDpr * (1.0 + near * 0.8);
-  vAlpha = alpha * (1.0 - uScroll * 0.8);
+  vAlpha = alpha * clear * (1.0 - uScroll * 0.8);
 }`;
 
 const FRAGMENT = `#version 300 es
@@ -147,6 +152,8 @@ const UNIFORMS = [
   'uPush',
   'uScroll',
   'uDpr',
+  'uTextC',
+  'uTextR',
   'uInk',
   'uMuted',
   'uLight',
@@ -177,8 +184,9 @@ export function KineticField() {
     const canvas = ref.current;
     const hero = canvas?.closest<HTMLElement>('.hero');
     const slot = hero?.querySelector<HTMLElement>('.hero-mark');
+    const copy = hero?.querySelector<HTMLElement>('.hero-content');
     const gl = canvas?.getContext('webgl2', { antialias: false, premultipliedAlpha: true });
-    if (!canvas || !hero || !slot) return;
+    if (!canvas || !hero || !slot || !copy) return;
     if (!gl) {
       // No WebGL 2: show the static mark instead.
       hero.setAttribute('data-field', 'none');
@@ -209,7 +217,7 @@ export function KineticField() {
     // Particle budget scales with the mark's size (logo) and the hero's area (dust).
     const first = canvas.getBoundingClientRect();
     const unit0 = (slot.getBoundingClientRect().width * 48) / 200;
-    const logoCount = Math.round(Math.min(15000, Math.max(5000, unit0 * 110)));
+    const logoCount = Math.round(Math.min(26000, Math.max(6000, unit0 * 80)));
     const dustCount = Math.round(
       Math.min(7000, Math.max(2000, (first.width * first.height) / 200)),
     );
@@ -246,6 +254,13 @@ export function KineticField() {
         rect.top + rect.height / 2 - (s.top + s.height / 2),
       );
       gl!.uniform1f(u.uUnit, (s.width * 48) / 200);
+      const t = copy!.getBoundingClientRect();
+      gl!.uniform2f(
+        u.uTextC,
+        t.left + t.width / 2 - (rect.left + rect.width / 2),
+        rect.top + rect.height / 2 - (t.top + t.height / 2),
+      );
+      gl!.uniform2f(u.uTextR, Math.max(1, t.width * 0.5), Math.max(1, t.height * 0.5));
       gl!.uniform1f(u.uDpr, dpr);
     }
 
@@ -332,6 +347,7 @@ export function KineticField() {
     const ro = new ResizeObserver(layout);
     ro.observe(canvas);
     ro.observe(slot);
+    ro.observe(copy);
 
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('pointermove', onMove, { passive: true });
