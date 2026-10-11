@@ -8,8 +8,9 @@
 
 :root {
   --font:
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --mono: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+    'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --mono:
+    'Geist Mono Variable', ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 20px;
@@ -17,6 +18,8 @@
   --max: 1180px;
   --gutter: clamp(16px, 4vw, 32px);
   --ease: cubic-bezier(0.2, 0, 0, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 html {
@@ -101,17 +104,55 @@ a {
   text-decoration: none;
   font-size: 17px;
 }
-.brand-dot {
-  width: 10px;
-  height: 10px;
+.brand-mark {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in srgb, var(--k-ember) 55%, transparent);
+}
+.brand-mark span {
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
   border-radius: 50%;
   background: var(--k-ember);
-  box-shadow: 0 0 14px color-mix(in srgb, var(--k-ember) 80%, transparent);
+  box-shadow: 0 0 10px var(--k-ember);
+  transform-origin: 3px 12px;
+  animation: orbit 6s linear infinite;
+}
+@keyframes orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand-mark span {
+    animation: none;
+  }
 }
 .topnav {
   display: flex;
-  gap: 20px;
+  gap: 4px;
   margin-right: auto;
+}
+.topnav a {
+  padding: 8px 12px;
+  border-radius: 999px;
+  transition:
+    color 160ms var(--ease),
+    background 160ms var(--ease);
+}
+.topnav a:hover {
+  background: var(--k-surface-raised);
+}
+.topbar-end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 .topnav a {
   color: var(--k-text-muted);
@@ -191,6 +232,13 @@ a {
 .button:active {
   transform: scale(0.97);
 }
+.button-small {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+  background: var(--k-text);
+  color: var(--k-background);
+}
 .button-primary {
   background: var(--k-ember);
   color: var(--k-on-ember);
@@ -199,6 +247,15 @@ a {
 .button-ghost {
   border: 1px solid var(--k-border-strong);
   color: var(--k-text);
+  background: color-mix(in srgb, var(--k-surface) 50%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.button-ghost:hover {
+  border-color: var(--k-text-subtle);
+}
+.button-primary:hover {
+  box-shadow: 0 10px 34px color-mix(in srgb, var(--k-ember) 50%, transparent);
 }
 
 .copy {
@@ -244,129 +301,7 @@ a {
   user-select: none;
 }
 
-/* ---------- Landing ---------- */
-
-.hero {
-  max-width: var(--max);
-  margin: 0 auto;
-  padding: clamp(48px, 9vw, 112px) var(--gutter) 40px;
-  display: grid;
-  gap: 28px;
-}
-.hero h1 {
-  margin: 0;
-  font-size: clamp(42px, 7.5vw, 84px);
-  line-height: 0.98;
-  letter-spacing: -0.045em;
-  font-weight: 850;
-  max-width: 12ch;
-}
-.hero h1 em {
-  font-style: normal;
-  color: var(--k-ember);
-}
-.hero p {
-  margin: 0;
-  max-width: 56ch;
-  font-size: clamp(17px, 2.2vw, 20px);
-  color: var(--k-text-muted);
-}
-.hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-}
-.hero .command {
-  max-width: 460px;
-}
-
-.features {
-  max-width: var(--max);
-  margin: 0 auto;
-  padding: 24px var(--gutter) 56px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px;
-}
-.feature {
-  border: 1px solid var(--k-border);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  background: var(--k-surface);
-}
-.feature h3 {
-  margin: 0 0 6px;
-  font-size: 16px;
-}
-.feature p {
-  margin: 0;
-  font-size: 14px;
-  color: var(--k-text-muted);
-}
-
-.catalog {
-  max-width: var(--max);
-  margin: 0 auto;
-  padding: 0 var(--gutter) 96px;
-}
-.catalog-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin: 24px 0 8px;
-}
-.catalog h2 {
-  margin: 0;
-  font-size: clamp(26px, 3.5vw, 34px);
-  letter-spacing: -0.03em;
-}
-.group {
-  margin-top: 32px;
-}
-.group .overline {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-.cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 12px;
-}
-.card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 18px 18px 16px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--k-border);
-  background: var(--k-surface);
-  text-decoration: none;
-  transition:
-    transform 220ms var(--ease),
-    border-color 220ms var(--ease),
-    box-shadow 220ms var(--ease);
-  min-height: 132px;
-}
-.card:hover {
-  transform: translateY(-2px);
-  border-color: var(--k-border-strong);
-  box-shadow: 0 12px 32px rgb(0 0 0 / 0.18);
-}
-.card h3 {
-  margin: 0;
-  font-size: 16px;
-  letter-spacing: -0.01em;
-}
-.card p {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--k-text-muted);
-}
-.card .tags {
+.tags {
   margin-top: auto;
   padding-top: 10px;
 }
@@ -410,6 +345,7 @@ a {
   top: 84px;
   align-self: start;
   max-height: calc(100vh - 100px);
+  overflow-x: hidden;
   overflow-y: auto;
   font-size: 14px;
 }
@@ -823,17 +759,49 @@ details.source .shiki {
 }
 
 .footer {
+  margin-top: clamp(64px, 10vw, 120px);
   border-top: 1px solid var(--k-border);
 }
 .footer-inner {
   max-width: var(--max);
   margin: 0 auto;
-  padding: 28px var(--gutter);
+  padding: 48px var(--gutter) 32px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px 48px;
+  justify-content: space-between;
+}
+.footer-brand p {
+  margin: 12px 0 0;
+  font-size: 14px;
+}
+.footer-links {
+  display: flex;
+  gap: 56px;
+}
+.footer-links div {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+.footer-links a {
+  font-size: 14px;
+  color: var(--k-text-muted);
+  text-decoration: none;
+}
+.footer-links a:hover {
+  color: var(--k-text);
+}
+.footer-fine {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 20px var(--gutter) 32px;
   display: flex;
   flex-wrap: wrap;
   gap: 8px 24px;
   justify-content: space-between;
   font-size: 13px;
+  border-top: 1px solid var(--k-border);
 }
 
 /* ---------- Narrow screens ---------- */
@@ -856,6 +824,9 @@ details.source .shiki {
 }
 @media (max-width: 560px) {
   .topnav {
+    display: none;
+  }
+  .topbar-end .chip {
     display: none;
   }
   .topbar-inner {

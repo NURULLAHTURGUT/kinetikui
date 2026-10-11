@@ -40,11 +40,14 @@ export function LivePreview({
   name,
   controls,
   screen = false,
+  bare = false,
 }: {
   name: string;
   controls: Controls;
   /** Full-screen templates render in a phone-sized frame. */
   screen?: boolean;
+  /** Just the stage: no toolbar or controls (landing page showcase). */
+  bare?: boolean;
 }) {
   const [entry, setEntry] = useState<DemoEntry | null>(null);
   const scheme = useSiteTheme();
@@ -67,21 +70,23 @@ export function LivePreview({
   const Demo = entry?.Demo;
 
   return (
-    <div className={screen ? 'preview preview-screen' : 'preview'}>
+    <div className={screen ? 'preview preview-screen' : bare ? 'preview preview-bare' : 'preview'}>
       <div className="preview-stage" data-scheme={scheme}>
-        <div className="preview-toolbar">
-          <button
-            type="button"
-            className={`chip ${reduceMotion ? 'chip-on' : ''}`}
-            aria-pressed={reduceMotion}
-            onClick={() => setReduceMotion((v) => !v)}
-          >
-            Reduced motion
-          </button>
-          <button type="button" className="chip" onClick={() => setReplay((r) => r + 1)}>
-            Replay
-          </button>
-        </div>
+        {!bare && (
+          <div className="preview-toolbar">
+            <button
+              type="button"
+              className={`chip ${reduceMotion ? 'chip-on' : ''}`}
+              aria-pressed={reduceMotion}
+              onClick={() => setReduceMotion((v) => !v)}
+            >
+              Reduced motion
+            </button>
+            <button type="button" className="chip" onClick={() => setReplay((r) => r + 1)}>
+              Replay
+            </button>
+          </div>
+        )}
         {failed ? (
           <p className="preview-note">The live preview could not load its graphics runtime.</p>
         ) : !Demo ? (
@@ -99,7 +104,9 @@ export function LivePreview({
                     style={
                       screen
                         ? { flex: 1 }
-                        : { padding: 24, justifyContent: 'center', minHeight: 380 }
+                        : bare
+                          ? { flex: 1, padding: 24, justifyContent: 'center' }
+                          : { padding: 24, justifyContent: 'center', minHeight: 380 }
                     }
                   >
                     <Demo key={replay} {...values} />
@@ -110,12 +117,14 @@ export function LivePreview({
           </div>
         )}
       </div>
-      <ControlPanel
-        controls={controls}
-        values={values}
-        onChange={(k, v) => setValues((s) => ({ ...s, [k]: v }))}
-        onReset={() => setValues(defaultValues(controls))}
-      />
+      {!bare && (
+        <ControlPanel
+          controls={controls}
+          values={values}
+          onChange={(k, v) => setValues((s) => ({ ...s, [k]: v }))}
+          onReset={() => setValues(defaultValues(controls))}
+        />
+      )}
     </div>
   );
 }
