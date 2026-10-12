@@ -1,8 +1,8 @@
 <p align="center">
   <a href="https://kinetik-ui.dev">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset=".github/assets/hero-dark.jpg" />
-      <img alt="Kinetik UI: motion parts for Expo" src=".github/assets/hero-light.jpg" width="100%" />
+      <source media="(prefers-color-scheme: dark)" srcset=".github/assets/hero-light.jpg" />
+      <img alt="Kinetik UI: motion parts for Expo" src=".github/assets/hero-dark.jpg" width="100%" />
     </picture>
   </a>
 </p>
