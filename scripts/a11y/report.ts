@@ -11,6 +11,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import prettier from 'prettier';
+
 import { ROOT, loadItems } from '../lib/registry';
 
 type DeviceResult = { interactive: number | null; issues: string[] };
@@ -43,7 +45,7 @@ const rows = items.map((item) => {
       ? `✅ ${d.interactive} controls`
       : `⚠️ ${d.issues.map(cell).join('; ')}`
     : (previous.get(link) ?? '—');
-  return `| ${link} | ${cell(m.a11y.reducedMotion)} | ${cell(m.a11y.screenReader)} | ${cell(m.a11y.touchTarget)} | ✅ | ${deviceCell} | cihaz testi bekliyor |`;
+  return `| ${link} | ${cell(m.a11y.reducedMotion)} | ${cell(m.a11y.screenReader)} | ${cell(m.a11y.touchTarget)} | ✅ | ${deviceCell} | Pending |`;
 });
 
 const doc = `# Accessibility checklist
@@ -63,6 +65,15 @@ Reduced motion, screen reader and touch target notes come from each item's \`ite
 ${rows.join('\n')}
 `;
 
-fs.mkdirSync(path.dirname(OUT), { recursive: true });
-fs.writeFileSync(OUT, doc);
-console.log(`Wrote ${path.relative(ROOT, OUT)} (${rows.length} items).`);
+// Formatted like every other file, so regenerating never breaks the format check.
+async function write() {
+  const options = (await prettier.resolveConfig(OUT)) ?? {};
+  fs.mkdirSync(path.dirname(OUT), { recursive: true });
+  fs.writeFileSync(OUT, await prettier.format(doc, { ...options, filepath: OUT }));
+  console.log(`Wrote ${path.relative(ROOT, OUT)} (${rows.length} items).`);
+}
+
+write().catch((error: unknown) => {
+  console.error(error);
+  process.exit(1);
+});
