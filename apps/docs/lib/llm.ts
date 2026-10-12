@@ -23,7 +23,8 @@ export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kinetik-ui
 const fence = (lang: string, code: string) => `\`\`\`${lang}\n${code.trimEnd()}\n\`\`\``;
 
 function escapeCell(text: string) {
-  return text.replace(/\|/g, '\\|').replace(/\n/g, ' ');
+  // Backslashes first, so the escapes added for pipes are not themselves escaped.
+  return text.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
 }
 
 export function gettingStartedMarkdown(): string {

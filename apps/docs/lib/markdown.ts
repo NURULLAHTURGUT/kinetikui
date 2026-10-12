@@ -31,14 +31,16 @@ export async function renderMarkdown(source: string): Promise<string> {
         const i = blocks.push(highlight(text, lang ?? 'tsx')) - 1;
         return `<!--code:${i}-->`;
       },
-      heading({ tokens, depth }) {
-        const text = this.parser.parseInline(tokens);
-        const id = text
+      heading({ tokens, depth, text: source }) {
+        const html = this.parser.parseInline(tokens);
+        // The id comes from the heading's markdown, not its HTML, and keeps only
+        // letters, digits and dashes: "Install `kinetik-ui`" -> "install-kinetik-ui".
+        const id = source
+          .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
           .toLowerCase()
-          .replace(/<[^>]+>/g, '')
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/(^-|-$)/g, '');
-        return `<h${depth + 1} id="${id}">${text}</h${depth + 1}>`;
+        return `<h${depth + 1} id="${id}">${html}</h${depth + 1}>`;
       },
     },
   });

@@ -31,7 +31,8 @@ if (fs.existsSync(OUT)) {
 }
 
 const items = loadItems().filter((i) => i.kind !== 'shared' && i.meta);
-const cell = (s: string) => s.replace(/\|/g, '\\|').replace(/\n/g, ' ');
+// Backslashes first, so the escapes added for pipes are not themselves escaped.
+const cell = (s: string) => s.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
 
 const rows = items.map((item) => {
   const m = item.meta!;
