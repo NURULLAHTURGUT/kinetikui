@@ -1,6 +1,6 @@
 # Contributing to Kinetik UI
 
-Thanks for helping. This file covers setup and the workflow for adding or changing a component. Read the [rules](#rules) first; every change must follow them.
+Thanks for helping. This file covers setup and the workflow for adding or changing a component. Read the [rules](#rules) first; every change must follow them. Everyone taking part is expected to follow the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## Setup
 
