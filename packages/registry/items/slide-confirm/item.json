@@ -1,0 +1,40 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "slide-confirm",
+  "title": "Slide to Confirm",
+  "description": "Drag the knob across to confirm. A trail follows it, light sweeps the track, and it lands as a check.",
+  "category": "interaction",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["slide-confirm.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The knob follows the finger on the UI thread; the idle sweep is one repeating timing on a transform.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 32,
+        "baselineMs": 20,
+        "jankyPercent": 0.53,
+        "atRest": "animating",
+        "memoryMb": 159
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "No sweeping light; the knob still follows the finger and snaps without overshoot.",
+    "screenReader": "A button named by the label; 'activate' confirms without dragging. After confirming it reads the confirmed label.",
+    "touchTarget": "The knob is 56 pt; the track is 64 pt tall."
+  }
+}

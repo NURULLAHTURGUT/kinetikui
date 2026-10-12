@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "two-step-button",
+  "title": "Two-Step Button",
+  "description": "A button that asks before it acts: it splits into Cancel and Confirm, and the question closes by itself.",
+  "category": "interaction",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["two-step-button.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views animated by two shared values: the split and the countdown. No canvas, no work at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 20,
+        "p90Ms": 24,
+        "baselineMs": 20,
+        "jankyPercent": 1.72,
+        "atRest": "idle",
+        "memoryMb": 153
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The halves appear in place and the countdown band holds still; the question still closes after the timeout.",
+    "screenReader": "One button, then two (Cancel, and Confirm with the action's name). Opening the question is announced.",
+    "touchTarget": "52 pt tall; each half spans its share of the full width."
+  }
+}

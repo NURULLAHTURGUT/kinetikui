@@ -1,0 +1,25 @@
+## Usage
+
+```tsx
+import { BeamButton } from '@/components/kinetik/beam-button';
+
+<BeamButton onPress={upgrade}>Upgrade to Pro</BeamButton>;
+```
+
+`surface` is a quiet dark button whose edge carries the light; `ember` is the filled primary. Pass an icon as `leading`, and `beamColor` to tint the light with your brand.
+
+## When to use
+
+- One action you want noticed without shouting: an upgrade, a new feature, an invitation.
+- Empty states and onboarding, where a little movement draws the eye to the next step.
+
+## When not to use
+
+- More than one per screen. Two moving beams compete for attention.
+- Routine actions in forms and lists. Use a plain button.
+
+## Notes
+
+- The beam runs on a frame callback on the UI thread and stops when the button is disabled.
+- The glow spreads 14 pt past the button; leave a little room around it.
+- With reduced motion the beam stays still and the press is a 1% press-in.

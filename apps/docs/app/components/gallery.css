@@ -1,0 +1,361 @@
+/* Components gallery. Colours come from generated/tokens.css. */
+
+.gallery {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: clamp(48px, 8vw, 96px) var(--gutter) clamp(72px, 10vw, 120px);
+  overflow-x: clip;
+}
+
+.gallery-head {
+  display: grid;
+  gap: 14px;
+  max-width: 680px;
+  margin-bottom: 40px;
+}
+.gallery-head h1 {
+  margin: 0;
+  font-size: clamp(38px, 6vw, 68px);
+  line-height: 1.02;
+  letter-spacing: -0.05em;
+  font-weight: 600;
+}
+.gallery-head p {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--k-text-muted);
+}
+.gallery-head .overline {
+  color: var(--k-text-subtle);
+}
+/*
+ * The intro uses only opacity and transform, which the compositor animates
+ * on its own; a blur filter repaints the text every frame and stutters while
+ * the live demos load.
+ */
+.gallery-head.words-in .word,
+.gallery-head .rise {
+  animation: gallery-rise 800ms var(--ease-out) both;
+  will-change: transform, opacity;
+}
+.gallery-head.words-in .word {
+  animation-delay: calc(var(--w, 0) * 80ms + 80ms);
+}
+.gallery-head .rise {
+  animation-delay: calc(var(--d, 0) * 80ms + 80ms);
+}
+@keyframes gallery-fade {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+}
+@keyframes gallery-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.45em, 0);
+  }
+}
+
+/* ---------- Filters ---------- */
+
+.gallery-bar {
+  position: sticky;
+  top: 60px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 calc(var(--gutter) * -1) 28px;
+  padding: 12px var(--gutter);
+  background: color-mix(in srgb, var(--k-background) 82%, transparent);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  animation: gallery-fade 700ms var(--ease-out) both;
+  animation-delay: 380ms;
+}
+.gallery-filters {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.gallery-filters::-webkit-scrollbar {
+  display: none;
+}
+.gallery-filter {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--k-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--k-text-muted);
+  font: 500 13px/1 var(--font);
+  cursor: pointer;
+  transition:
+    color 200ms var(--ease),
+    background 200ms var(--ease),
+    border-color 200ms var(--ease);
+}
+.gallery-filter:hover {
+  color: var(--k-text);
+  border-color: var(--k-border-strong);
+}
+.gallery-filter[aria-pressed='true'] {
+  color: var(--k-on-ember);
+  background: var(--k-ember);
+  border-color: var(--k-ember);
+}
+.gallery-count {
+  font: 500 11px/1 var(--mono);
+  opacity: 0.55;
+}
+.gallery-search {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  width: 200px;
+  padding: 0 12px;
+  border: 1px solid var(--k-border);
+  border-radius: 8px;
+  color: var(--k-text-subtle);
+  transition: border-color 200ms var(--ease);
+}
+.gallery-search:focus-within {
+  border-color: var(--k-border-strong);
+  color: var(--k-text);
+}
+.gallery-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--k-text);
+  font: 400 13px/1 var(--font);
+}
+.gallery-search input::-webkit-search-cancel-button {
+  display: none;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- Grid ---------- */
+
+.gallery-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.gallery-empty {
+  margin: 48px 0;
+  text-align: center;
+  color: var(--k-text-muted);
+}
+
+/* Cards rise in, a column at a time, the first time they come into view. */
+.gallery-item {
+  opacity: 0;
+  transform: translate3d(0, 28px, 0);
+  transition:
+    opacity 700ms var(--ease-out),
+    transform 900ms var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 90ms + 200ms);
+}
+.gallery-item[data-in] {
+  opacity: 1;
+  transform: none;
+}
+
+.gallery-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 8px;
+  border: 1px solid var(--k-border);
+  border-radius: 20px;
+  background: var(--k-surface);
+  text-decoration: none;
+  transition:
+    transform 500ms var(--ease-out),
+    border-color 300ms var(--ease),
+    box-shadow 500ms var(--ease-out);
+}
+.gallery-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--k-border-strong);
+  box-shadow: 0 24px 48px -24px rgb(0 0 0 / 0.5);
+}
+
+.gallery-preview {
+  position: relative;
+  aspect-ratio: 11 / 10;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--k-border);
+  background:
+    radial-gradient(circle at 1px 1px, var(--k-border) 1px, transparent 0) 0 0 / 18px 18px,
+    var(--k-surface-sunken);
+}
+/* A soft vignette keeps the edges quiet, so each card reads as one object. */
+.gallery-preview::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 40px 6px var(--k-surface-sunken);
+  border-radius: inherit;
+}
+
+.thumb-box {
+  position: absolute;
+  inset: 0;
+}
+.thumb-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-origin: 50% 50%;
+  pointer-events: none;
+  animation: thumb-in 700ms var(--ease-out) both;
+}
+.thumb-phone {
+  overflow: hidden;
+  border-radius: 48px;
+  border: 2px solid var(--k-border-strong);
+  background: var(--k-background);
+  box-shadow: 0 40px 80px -30px rgb(0 0 0 / 0.6);
+}
+@keyframes thumb-in {
+  from {
+    opacity: 0;
+  }
+}
+/* Waiting for the runtime: a slow shimmer instead of a spinner. */
+.thumb-wait {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in srgb, var(--k-text) 5%, transparent) 50%,
+    transparent 70%
+  );
+  background-size: 250% 100%;
+  animation: thumb-shimmer 1600ms linear infinite;
+}
+@keyframes thumb-shimmer {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+
+.gallery-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 8px 6px 10px;
+}
+.gallery-text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.gallery-title {
+  color: var(--k-text);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition: transform 400ms var(--ease-out);
+}
+.gallery-meta {
+  color: var(--k-text-subtle);
+  font-size: 12.5px;
+}
+.gallery-arrow {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--k-border);
+  border-radius: 10px;
+  color: var(--k-text-muted);
+  transition:
+    color 300ms var(--ease),
+    background 300ms var(--ease),
+    border-color 300ms var(--ease);
+}
+.gallery-arrow svg {
+  transition: transform 400ms var(--ease-out);
+}
+.gallery-card:hover .gallery-arrow {
+  color: var(--k-on-ember);
+  background: var(--k-ember);
+  border-color: var(--k-ember);
+}
+.gallery-card:hover .gallery-arrow svg {
+  transform: translateX(2px) rotate(-45deg);
+}
+.gallery-card:hover .gallery-title {
+  transform: translateX(2px);
+}
+
+@media (max-width: 1000px) {
+  .gallery-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .gallery-item {
+    transition-delay: calc(var(--i, 0) * 0ms);
+  }
+}
+@media (max-width: 640px) {
+  .gallery-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .gallery-bar {
+    flex-wrap: wrap;
+  }
+  .gallery-search {
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gallery-item,
+  .gallery-card,
+  .gallery-bar,
+  .thumb-stage {
+    transition: none;
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  .thumb-wait,
+  .gallery-head .word,
+  .gallery-head .rise {
+    animation: none;
+  }
+}

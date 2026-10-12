@@ -1,0 +1,33 @@
+## Usage
+
+```tsx
+import { ActivityRings } from '@/components/kinetik/activity-rings';
+
+<ActivityRings
+  accessibilityLabel="Today's activity"
+  rings={[
+    { key: 'move', label: 'Move', value: 420, goal: 600 },
+    { key: 'steps', label: 'Steps', value: 9800, goal: 8000 },
+    { key: 'focus', label: 'Focus', value: 35, goal: 60 },
+  ]}
+  formatValue={(r) => `${r.value} / ${r.goal}`}
+/>;
+```
+
+Rings are listed outermost first and coloured azure, sky, success and warning in turn unless you pass `color`. Put a figure or a date in the middle with `center`.
+
+## When to use
+
+- Daily goals with a clear target: activity, habits, savings, reading.
+- Dashboards where two to four related goals are read together at a glance.
+
+## When not to use
+
+- Values without a goal. Use a bar or line chart.
+- More than four series. Inner rings get too small to read.
+
+## Notes
+
+- A ring past its goal keeps going round, up to two laps, and the second lap casts a shadow on the first.
+- Tap a legend row to bring its ring forward; the others step back.
+- With reduced motion the rings appear already filled.

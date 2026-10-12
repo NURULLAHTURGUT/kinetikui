@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "morph-icon",
+  "type": "registry:item",
+  "title": "Morph Icon",
+  "description": "An icon button whose glyph reshapes between two states: menu to close, play to pause, plus to check.",
+  "categories": [
+    "interaction"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/morph-icon.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/morph-icon.tsx",
+      "content": "import { Canvas, Group, Path, Skia } from '@shopify/react-native-skia';\nimport { useEffect, useState } from 'react';\nimport { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useDerivedValue,\n  useSharedValue,\n  withSpring,\n} from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget } from '../../lib/kinetik/tokens/tokens';\n\nexport type MorphIconPair = 'menu-close' | 'play-pause' | 'plus-close' | 'plus-check';\n\nexport type MorphIconProps = {\n  /** The two glyphs the icon moves between: off, then on. */\n  pair: MorphIconPair;\n  /** Controlled state. Leave unset to let the icon keep its own. */\n  value?: boolean;\n  /** Initial state when uncontrolled. Defaults to false. */\n  defaultValue?: boolean;\n  onValueChange?: (next: boolean) => void;\n  /**\n   * What the button does, e.g. \"Menu\". With `activeAccessibilityLabel` the\n   * label swaps instead (\"Play\" / \"Pause\") and the button is not a toggle.\n   */\n  accessibilityLabel: string;\n  /** Label while on, for buttons whose action changes rather than toggles. */\n  activeAccessibilityLabel?: string;\n  /** `ghost` has no fill, `soft` a quiet one, `solid` an azure disc. Defaults to `soft`. */\n  variant?: 'ghost' | 'soft' | 'solid';\n  /** Diameter of the button. The glyph is half of it. Defaults to 48. */\n  size?: number;\n  /** Glyph colour. Defaults to the variant's ink. */\n  color?: string;\n  /** A light tap as the state changes. Defaults to true. */\n  haptics?: boolean;\n  disabled?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\ntype Glyph = {\n  /** Strokes (or polygons when filled) on a 24 pt grid, as flat x, y lists. */\n  off: readonly (readonly number[])[];\n  /** The same strokes in the on state, point for point, so the two can be blended. */\n  on: readonly (readonly number[])[];\n  filled: boolean;\n  /** Degrees the whole glyph turns on its way to the on state. */\n  turn: number;\n};\n\n// The middle bar of the menu folds onto the first diagonal, so three bars\n// become two without anything fading. Plus to close is the same plus, turned.\nconst GLYPHS: Record<MorphIconPair, Glyph> = {\n  'menu-close': {\n    off: [\n      [4, 6.5, 20, 6.5],\n      [4, 12, 20, 12],\n      [4, 17.5, 20, 17.5],\n    ],\n    on: [\n      [6, 6, 18, 18],\n      [6, 6, 18, 18],\n      [6, 18, 18, 6],\n    ],\n    filled: false,\n    turn: 180,\n  },\n  'play-pause': {\n    // The triangle is two quads that straighten into the two bars.\n    off: [\n      [7.5, 4.5, 12.5, 7.6, 12.5, 16.4, 7.5, 19.5],\n      [12.5, 7.6, 19.5, 12, 19.5, 12, 12.5, 16.4],\n    ],\n    on: [\n      [6.5, 5, 10.25, 5, 10.25, 19, 6.5, 19],\n      [13.75, 5, 17.5, 5, 17.5, 19, 13.75, 19],\n    ],\n    filled: true,\n    turn: 0,\n  },\n  'plus-close': {\n    off: [\n      [12, 5, 12, 19],\n      [5, 12, 19, 12],\n    ],\n    on: [\n      [12, 5, 12, 19],\n      [5, 12, 19, 12],\n    ],\n    filled: false,\n    turn: 135,\n  },\n  'plus-check': {\n    off: [\n      [12, 5, 12, 19],\n      [5, 12, 19, 12],\n    ],\n    on: [\n      [5, 12.5, 9.75, 17.25],\n      [9.75, 17.25, 19, 7],\n    ],\n    filled: false,\n    turn: 0,\n  },\n};\n\n/**\n * An icon button whose glyph reshapes itself between two states: the menu\n * bars fold into a cross, play straightens into pause, a plus turns into a\n * cross or bends into a check. Every point travels on the UI thread.\n */\nexport function MorphIcon({\n  pair,\n  value,\n  defaultValue = false,\n  onValueChange,\n  accessibilityLabel,\n  activeAccessibilityLabel,\n  variant = 'soft',\n  size = 48,\n  color,\n  haptics = true,\n  disabled = false,\n  testID,\n  style,\n}: MorphIconProps) {\n  const { colors } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const [inner, setInner] = useState(defaultValue);\n  const on = value ?? inner;\n\n  const glyph = GLYPHS[pair];\n  const box = size / 2;\n  const unit = box / 24;\n  const ink = color ?? (variant === 'solid' ? colors.onAzure : colors.text);\n  const fill =\n    variant === 'solid' ? colors.azure : variant === 'soft' ? colors.surfaceRaised : 'transparent';\n\n  const t = useSharedValue(on ? 1 : 0);\n  const pressed = useSharedValue(0);\n  useEffect(() => {\n    t.set(withSpring(on ? 1 : 0, spring('smooth', reduced)));\n  }, [on, reduced, t]);\n\n  const path = useDerivedValue(() => {\n    const k = t.get();\n    const b = Skia.PathBuilder.Make();\n    for (let s = 0; s < glyph.off.length; s++) {\n      const a = glyph.off[s]!;\n      const z = glyph.on[s]!;\n      for (let i = 0; i < a.length; i += 2) {\n        const x = (a[i]! + (z[i]! - a[i]!) * k) * unit;\n        const y = (a[i + 1]! + (z[i + 1]! - a[i + 1]!) * k) * unit;\n        if (i === 0) b.moveTo(x, y);\n        else b.lineTo(x, y);\n      }\n      if (glyph.filled) b.close();\n    }\n    return b.detach();\n  });\n  const spin = useDerivedValue(() => [{ rotate: (glyph.turn * t.get() * Math.PI) / 180 }]);\n\n  const shell = useAnimatedStyle(() => ({\n    transform: [{ scale: 1 - pressed.get() * 0.1 }],\n  }));\n\n  const toggle = () => {\n    const next = !on;\n    if (value === undefined) setInner(next);\n    haptic('tap');\n    onValueChange?.(next);\n  };\n\n  const swaps = activeAccessibilityLabel !== undefined;\n  const slop = Math.max(0, (minTouchTarget - size) / 2);\n\n  return (\n    <Pressable\n      testID={testID}\n      disabled={disabled}\n      onPress={toggle}\n      onPressIn={() => pressed.set(withSpring(1, spring('snappy', reduced)))}\n      onPressOut={() => pressed.set(withSpring(0, spring('bouncy', reduced)))}\n      hitSlop={slop}\n      accessibilityRole={swaps ? 'button' : 'togglebutton'}\n      accessibilityLabel={swaps && on ? activeAccessibilityLabel : accessibilityLabel}\n      accessibilityState={swaps ? { disabled } : { checked: on, disabled }}\n      style={[{ width: size, height: size, opacity: disabled ? 0.45 : 1 }, style]}\n    >\n      <Animated.View\n        style={[\n          styles.disc,\n          { borderRadius: size / 2, backgroundColor: fill },\n          variant === 'soft' && {\n            borderColor: colors.border,\n            borderWidth: StyleSheet.hairlineWidth,\n          },\n          shell,\n        ]}\n      >\n        {/* Wrapped: the web canvas ignores pointerEvents and would swallow the press. */}\n        <View pointerEvents=\"none\" style={{ width: box, height: box }}>\n          <Canvas style={StyleSheet.absoluteFill}>\n            <Group origin={{ x: box / 2, y: box / 2 }} transform={spin}>\n              {glyph.filled ? (\n                <>\n                  <Path path={path} color={ink} />\n                  {/* A thin stroke over the fill rounds the polygon corners. */}\n                  <Path\n                    path={path}\n                    color={ink}\n                    style=\"stroke\"\n                    strokeWidth={1.6 * unit}\n                    strokeJoin=\"round\"\n                  />\n                </>\n              ) : (\n                <Path\n                  path={path}\n                  color={ink}\n                  style=\"stroke\"\n                  strokeWidth={2 * unit}\n                  strokeCap=\"round\"\n                  strokeJoin=\"round\"\n                />\n              )}\n            </Group>\n          </Canvas>\n        </View>\n      </Animated.View>\n    </Pressable>\n  );\n}\n\nconst styles = StyleSheet.create({\n  disc: { flex: 1, alignItems: 'center', justifyContent: 'center' },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "interaction",
+    "web": "live",
+    "perf": {
+      "budget": "One tiny Skia canvas. The glyph is rebuilt from a dozen points on the UI thread, and only while it morphs.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-12",
+          "build": "release",
+          "frameMs": 21,
+          "p90Ms": 29,
+          "baselineMs": 20,
+          "jankyPercent": 4.64,
+          "atRest": "idle",
+          "memoryMb": 157
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The glyph switches without travelling or turning; the press still dips slightly.",
+      "screenReader": "A toggle button with a checked state, or a button whose label swaps (Play / Pause) when activeAccessibilityLabel is set.",
+      "touchTarget": "48 pt by default; smaller sizes get a hit slop that makes up 44 pt."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { MorphIcon } from '@/components/kinetik/morph-icon';\n\n<MorphIcon pair=\"menu-close\" accessibilityLabel=\"Menu\" value={open} onValueChange={setOpen} />\n\n<MorphIcon\n  pair=\"play-pause\"\n  variant=\"solid\"\n  accessibilityLabel=\"Play\"\n  activeAccessibilityLabel=\"Pause\"\n  value={playing}\n  onValueChange={setPlaying}\n/>\n```\n\nFour pairs ship: `menu-close`, `play-pause`, `plus-close` and `plus-check`. Leave `value` unset and the icon keeps its own state.\n\n## When to use\n\n- Controls that flip between two actions in place: play and pause, open and close a menu, add and added.\n- Toolbars and players, where the change of shape is the confirmation and no label is needed.\n\n## When not to use\n\n- Actions that do not reverse. A one-way action is a button, not a toggle.\n- Icons that must stay recognisable at a glance in dense lists. Use a static icon.\n\n## Notes\n\n- Each pair is drawn from strokes matched point for point, so the morph is a blend, not a crossfade. The menu's middle bar folds onto a diagonal instead of fading.\n- Set `activeAccessibilityLabel` when the action changes (Play / Pause). Without it the button is a toggle with a checked state (Menu, open or not).\n- With reduced motion the glyph switches instantly.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add morph-icon`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

@@ -1,0 +1,32 @@
+## Usage
+
+```tsx
+import { StatCard } from '@/components/kinetik/stat-card';
+
+<StatCard
+  label="Visitors"
+  value={24180}
+  delta={0.124}
+  caption="vs last week"
+  trend={visitsPerDay}
+  onPress={openTraffic}
+/>;
+```
+
+`delta` is a fraction (0.124 for +12.4%). Rises are green and falls red; pass `invertDelta` for figures where lower is better, such as a bounce rate or a load time.
+
+## When to use
+
+- Dashboards and summaries: the handful of numbers someone checks first.
+- A figure that needs context to mean anything: its change and its recent shape.
+
+## When not to use
+
+- Many figures in a dense table. The count-up and the sparkline are for a few headline numbers.
+- Values without a sensible "previous period". Leave out `delta` rather than inventing one.
+
+## Notes
+
+- Changing `value` counts on from the current figure, so live updates read as movement, not jumps.
+- `formatValue` is applied to every counting frame; make sure it rounds (`v.toFixed(1)`, currency formatters).
+- With reduced motion the figure and the sparkline appear complete.

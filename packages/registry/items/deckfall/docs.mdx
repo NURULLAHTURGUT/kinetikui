@@ -1,0 +1,39 @@
+## Usage
+
+```tsx
+import { Deckfall, type DeckfallHandle } from '@/components/kinetik/deckfall';
+
+const deck = useRef<DeckfallHandle>(null);
+
+<Deckfall
+  ref={deck}
+  data={places}
+  keyExtractor={(p) => p.id}
+  renderCard={(p) => <PlaceCard place={p} />}
+  onSwipe={(p, direction) => direction === 'right' && save(p)}
+  leftLabel="Skip"
+  rightLabel="Save"
+  style={{ height: 320 }}
+/>;
+
+<Button title="Save" onPress={() => deck.current?.swipe('right')} />;
+```
+
+Give the deck a height; cards fill it. A drag past `threshold` (30% of the width) or a quick flick swipes the card; anything less springs back.
+
+## When to use
+
+- Deciding on one item at a time: triage, discovery, flashcards, onboarding choices.
+- Short sets where each item deserves full attention.
+
+## When not to use
+
+- Browsing or comparing. A list or grid shows more at once.
+- Anything users may want to undo often; swiped cards are gone unless you add your own undo.
+
+## Notes
+
+- Always offer buttons (via `ref.swipe`) next to the deck; not everyone can or wants to drag.
+- Screen readers get the top card only, with swipe actions named after your labels.
+- The drag is horizontal; vertical movement passes through to scroll views.
+- A tick plays when a drag crosses the threshold, so users feel when letting go will swipe.

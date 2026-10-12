@@ -1,0 +1,33 @@
+## Usage
+
+```tsx
+import { DonutChart } from '@/components/kinetik/donut-chart';
+
+<DonutChart
+  accessibilityLabel="Spending by category"
+  data={[
+    { label: 'Rent', value: 1240 },
+    { label: 'Groceries', value: 420 },
+    { label: 'Transport', value: 160 },
+  ]}
+  formatValue={(v) => `$${v}`}
+/>;
+```
+
+Slices default to a monochrome ramp of the theme's strongest ink; give a slice a `color` to pick your own. The legend under the ring lists every slice with its share and value.
+
+## When to use
+
+- Parts of a whole, with a few slices: budgets, storage, time spent.
+- Summaries where the total matters as much as the split.
+
+## When not to use
+
+- More than about six slices; small ones become hard to see and to tap.
+- Comparing values that do not add up to a whole. Use Bar Chart.
+
+## Notes
+
+- Tap a slice or its legend row to select it; tap it again, or the middle of the ring, to clear.
+- Gaps stay even because the rounded caps are taken out of each slice's sweep.
+- The ring sweeps in whenever the data changes.

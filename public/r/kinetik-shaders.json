@@ -1,0 +1,28 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "kinetik-shaders",
+  "type": "registry:item",
+  "title": "Kinetik Shaders",
+  "description": "Shared SkSL noise functions, lazily compiled runtime effects and colour uniforms.",
+  "dependencies": [
+    "@shopify/react-native-skia"
+  ],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "src/lib/kinetik/shaders/sksl.ts",
+      "type": "registry:file",
+      "target": "~/lib/kinetik/shaders/sksl.ts",
+      "content": "import { Skia, type SkRuntimeEffect } from '@shopify/react-native-skia';\n\n/**\n * SkSL helpers shared by Kinetik's shaders: hashing, value noise and fbm.\n * Paste `NOISE` above `half4 main(...)` in a shader source.\n */\nexport const NOISE = `\n// Sin-free hash (no visible lattice, stable across GPUs).\nfloat hash21(float2 p) {\n  float3 p3 = fract(float3(p.x, p.y, p.x) * 0.1031);\n  p3 += dot(p3, p3.yzx + 33.33);\n  return fract((p3.x + p3.y) * p3.z);\n}\n\nfloat valueNoise(float2 p) {\n  float2 i = floor(p);\n  float2 f = fract(p);\n  float2 u = f * f * (3.0 - 2.0 * f);\n  float a = hash21(i);\n  float b = hash21(i + float2(1.0, 0.0));\n  float c = hash21(i + float2(0.0, 1.0));\n  float d = hash21(i + float2(1.0, 1.0));\n  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);\n}\n\nfloat fbm(float2 p) {\n  float v = 0.0;\n  float amp = 0.5;\n  for (int i = 0; i < 4; i++) {\n    v += amp * valueNoise(p);\n    p = p * 2.03 + float2(17.1, 9.2);\n    amp *= 0.5;\n  }\n  return v;\n}\n`;\n\nconst cache = new Map<string, SkRuntimeEffect>();\n\n/**\n * Compiles a shader once and reuses it. Compilation is deferred to first use\n * so importing a component never touches Skia before it is ready (on the web,\n * CanvasKit loads asynchronously).\n */\nexport function runtimeEffect(source: string): SkRuntimeEffect {\n  let effect = cache.get(source);\n  if (!effect) {\n    const made = Skia.RuntimeEffect.Make(source);\n    if (!made) throw new Error('Kinetik: shader failed to compile');\n    effect = made;\n    cache.set(source, effect);\n  }\n  return effect;\n}\n\n/** A colour token as a premultiplication-free [r, g, b, a] uniform (0–1). */\nexport function colorUniform(color: string): [number, number, number, number] {\n  const c = Skia.Color(color);\n  return [c[0] ?? 0, c[1] ?? 0, c[2] ?? 0, c[3] ?? 1];\n}\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "shared",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "requires": "React Native New Architecture (Reanimated 4)"
+  }
+}

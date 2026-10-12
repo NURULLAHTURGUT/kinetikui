@@ -1,0 +1,25 @@
+## Usage
+
+```tsx
+import { SlideConfirm } from '@/components/kinetik/slide-confirm';
+
+<SlideConfirm label="Slide to send" confirmedLabel="Sent" onConfirm={send} />;
+```
+
+It fills the width of its parent. Past `threshold` (80% of the track by default), or with a quick flick past halfway, the knob runs to the end and `onConfirm` fires once. It returns to the start after `resetAfter` ms; pass `null` to keep it confirmed.
+
+## When to use
+
+- Payments, transfers and other actions that should not happen by accident.
+- Lock screens and handoffs, where the gesture itself says "I mean it".
+
+## When not to use
+
+- Actions that need to be fast or repeated. A tap is kinder.
+- Inside horizontal scroll views or pagers; both want the sideways drag.
+
+## Notes
+
+- A tick plays as the knob crosses the threshold, and a success haptic on confirm.
+- Screen readers confirm with the activate action, no dragging needed.
+- The sweeping light stops once confirmed, while disabled and with reduced motion.

@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "odometer",
+  "title": "Odometer",
+  "description": "A number whose digits roll like a mechanical counter, forward or back, the long way round.",
+  "category": "text",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["odometer.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One spring per changed digit column on the UI thread; layout transitions only when the number gains or loses columns.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 23,
+        "baselineMs": 20,
+        "jankyPercent": 2.12,
+        "atRest": "animating",
+        "memoryMb": 164,
+        "notes": "Frames at rest in the measurement came from the demo changing its value every few seconds; with a fixed value nothing redraws."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Digits change in place without rolling; no column transitions.",
+    "screenReader": "Exposed as one text element with the formatted value. Set `announce` to read changes aloud (live region).",
+    "touchTarget": "Not interactive."
+  }
+}

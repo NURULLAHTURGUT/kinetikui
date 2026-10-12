@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "morph-icon",
+  "title": "Morph Icon",
+  "description": "An icon button whose glyph reshapes between two states: menu to close, play to pause, plus to check.",
+  "category": "interaction",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["morph-icon.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One tiny Skia canvas. The glyph is rebuilt from a dozen points on the UI thread, and only while it morphs.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 21,
+        "p90Ms": 29,
+        "baselineMs": 20,
+        "jankyPercent": 4.64,
+        "atRest": "idle",
+        "memoryMb": 157
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The glyph switches without travelling or turning; the press still dips slightly.",
+    "screenReader": "A toggle button with a checked state, or a button whose label swaps (Play / Pause) when activeAccessibilityLabel is set.",
+    "touchTarget": "48 pt by default; smaller sizes get a hit slop that makes up 44 pt."
+  }
+}

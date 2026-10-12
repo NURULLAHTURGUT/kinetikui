@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "radar-chart",
+  "title": "Radar Chart",
+  "description": "A radar chart whose shapes grow from the centre and morph to new values; tap the legend to compare.",
+  "category": "data",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["radar-chart.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The web is built once per size. Each series is one path rebuilt from a handful of points on the UI thread while it grows or morphs, then static.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 32,
+        "baselineMs": 20,
+        "jankyPercent": 4.5,
+        "atRest": "idle",
+        "memoryMb": 153
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Shapes appear at their values; new values replace the old without morphing.",
+    "screenReader": "The chart reads as an image listing every series by axis; legend chips are switches.",
+    "touchTarget": "Legend chips are at least 44 pt tall."
+  }
+}

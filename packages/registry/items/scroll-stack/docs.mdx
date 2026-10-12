@@ -1,0 +1,29 @@
+## Usage
+
+```tsx
+import { ScrollStack } from '@/components/kinetik/scroll-stack';
+
+<ScrollStack cardHeight={320} header={<Intro />} contentContainerStyle={{ padding: 16 }}>
+  {chapters.map((c) => (
+    <Chapter key={c.id} chapter={c} />
+  ))}
+</ScrollStack>;
+```
+
+Give it a height (it fills its parent with `flex: 1`). Each child becomes a full-width card; `header` scrolls away above them.
+
+## When to use
+
+- A short sequence read one after another: chapters, steps, features, plans.
+- Landing and onboarding screens where the pile itself shows progress.
+
+## When not to use
+
+- Long feeds. Cards stay mounted, and a deep pile stops reading as a stack.
+- Cards of different heights; every card is `cardHeight` tall.
+
+## Notes
+
+- `peek` is how much of each stacked card stays visible above the next, so the pile shows how far you have come.
+- Covered cards shrink by `depth` per card on top of them and dim slightly.
+- The scroll indicator is hidden; the stack is its own progress.

@@ -1,0 +1,25 @@
+## Usage
+
+```tsx
+import { LikeBurst } from '@/components/kinetik/like-burst';
+
+<LikeBurst count={post.likesFromOthers} liked={post.liked} onLikedChange={toggleLike} />;
+```
+
+`count` is everyone else's likes; the viewer's own like is added on top, so the number moves the moment they tap, before your request returns. Counts are compact by default (1.2K, 3.1M); pass `formatCount` to change that.
+
+## When to use
+
+- Likes, favourites and saves on posts, photos and products, where a little delight rewards the tap.
+- Feeds, where the heart sits beside a count.
+
+## When not to use
+
+- Settings and anything that is not an expression of taste. Use a switch.
+- Many hearts in a dense grid. The burst needs a little room and draws attention.
+
+## Notes
+
+- Only a tap here bursts. A like that arrives from the parent (another device, a refetch) just fills the heart.
+- The burst reaches about a third of the heart's size past its box. Leave a little space around it.
+- With reduced motion the heart fills quietly and the count changes in place.

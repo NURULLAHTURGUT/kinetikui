@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "drift-marquee",
+  "type": "registry:item",
+  "title": "Drift Marquee",
+  "description": "An endless row that drifts on its own; drag it to scrub, fling it, and the items lean into the speed.",
+  "categories": [
+    "card"
+  ],
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/drift-marquee.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/drift-marquee.tsx",
+      "content": "import { Children, useEffect, useState, type ReactNode } from 'react';\nimport { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';\nimport { Gesture, GestureDetector } from 'react-native-gesture-handler';\nimport Animated, {\n  useAnimatedStyle,\n  useFrameCallback,\n  useSharedValue,\n  type SharedValue,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\n\nexport type DriftMarqueeProps = {\n  /** The items. Each child is laid out `itemWidth` wide. */\n  children: ReactNode;\n  itemWidth: number;\n  /** Height of the row, including 8 pt above and below the items for their lean. Defaults to 180. */\n  height?: number;\n  /** Space between items. Defaults to 12. */\n  gap?: number;\n  /** Drift speed in pt per second. 0 holds still until dragged. Defaults to 32. */\n  speed?: number;\n  /** Which way the row drifts. Defaults to `left`. */\n  direction?: 'left' | 'right';\n  /** Let the row be dragged and flung. Defaults to true. */\n  draggable?: boolean;\n  /** How far items lean into fast movement, 0–1. Defaults to 0.6. */\n  lean?: number;\n  /** Pause drifting, e.g. while off-screen. Defaults to true. */\n  active?: boolean;\n  style?: StyleProp<ViewStyle>;\n};\n\n/** Fling speeds are clamped to this many pt per second. */\nconst MAX_FLING = 4200;\n\n/**\n * An endless row that drifts on its own. Grab it to scrub, fling it to send\n * it spinning; it eases back to its drift, and the items lean into the\n * speed as they pass.\n */\nexport function DriftMarquee({\n  children,\n  itemWidth,\n  height = 180,\n  gap = 12,\n  speed = 32,\n  direction = 'left',\n  draggable = true,\n  lean = 0.6,\n  active = true,\n  style,\n}: DriftMarqueeProps) {\n  const reduced = useReduceMotion();\n  const items = Children.toArray(children);\n  const n = items.length;\n  const [width, setWidth] = useState(0);\n\n  const step = itemWidth + gap;\n  const total = Math.max(1, n * step);\n  // Enough copies of the row to cover the view plus one item on each side.\n  const copies = n === 0 ? 0 : Math.max(1, Math.ceil((width + step * 2) / total));\n  const span = total * copies;\n\n  const base = reduced ? 0 : (direction === 'left' ? 1 : -1) * Math.max(0, speed);\n  const offset = useSharedValue(0);\n  const velocity = useSharedValue(base);\n  const dragging = useSharedValue(false);\n  const start = useSharedValue(0);\n\n  const frame = useFrameCallback((info) => {\n    if (dragging.get()) return;\n    const dt = Math.min(0.05, (info.timeSincePreviousFrame ?? 16) / 1000);\n    // A fling eases back to the resting drift.\n    const v = base + (velocity.get() - base) * Math.exp(-3.2 * dt);\n    velocity.set(v);\n    offset.set(offset.get() + v * dt);\n  }, false);\n\n  useEffect(() => {\n    frame.setActive(active && n > 0);\n    // `frame` is stable for the component's lifetime.\n    // eslint-disable-next-line react-hooks/exhaustive-deps\n  }, [active, n]);\n\n  const pan = Gesture.Pan()\n    .withTestId('drift-marquee')\n    .enabled(draggable && n > 0)\n    .activeOffsetX([-6, 6])\n    .failOffsetY([-12, 12])\n    .onBegin(() => {\n      start.set(offset.get());\n    })\n    .onStart(() => {\n      dragging.set(true);\n    })\n    .onUpdate((e) => {\n      offset.set(start.get() - e.translationX);\n      velocity.set(Math.max(-MAX_FLING, Math.min(MAX_FLING, -e.velocityX)));\n    })\n    .onFinalize(() => {\n      dragging.set(false);\n    });\n\n  const tilt = reduced ? 0 : Math.max(0, Math.min(1, lean));\n\n  return (\n    <GestureDetector gesture={pan}>\n      <View\n        collapsable={false}\n        onLayout={(e) => setWidth(e.nativeEvent.layout.width)}\n        style={[styles.row, { height }, style]}\n      >\n        {width > 0 &&\n          Array.from({ length: copies }, (_, c) =>\n            items.map((item, i) => (\n              <Slot\n                key={`${c}-${i}`}\n                slot={c * n + i}\n                step={step}\n                span={span}\n                width={itemWidth}\n                offset={offset}\n                velocity={velocity}\n                base={base}\n                tilt={tilt}\n                hidden={c > 0}\n              >\n                {item}\n              </Slot>\n            )),\n          )}\n      </View>\n    </GestureDetector>\n  );\n}\n\nfunction Slot({\n  children,\n  slot,\n  step,\n  span,\n  width,\n  offset,\n  velocity,\n  base,\n  tilt,\n  hidden,\n}: {\n  children: ReactNode;\n  slot: number;\n  step: number;\n  span: number;\n  width: number;\n  offset: SharedValue<number>;\n  velocity: SharedValue<number>;\n  base: number;\n  tilt: number;\n  hidden: boolean;\n}) {\n  const style = useAnimatedStyle(() => {\n    // Wrap around: positions run from one item before the left edge onward.\n    const raw = (slot * step - offset.get()) % span;\n    const x = (raw < 0 ? raw + span : raw) - step;\n    const rush = Math.max(-1, Math.min(1, (velocity.get() - base) / 2600));\n    return {\n      transform: [\n        { translateX: x },\n        { rotateZ: `${-rush * 5 * tilt}deg` },\n        { scale: 1 - Math.abs(rush) * 0.05 * tilt },\n      ],\n    };\n  });\n\n  return (\n    <Animated.View\n      style={[styles.slot, { width }, style]}\n      // Copies exist only to fill the loop; screen readers get each item once.\n      importantForAccessibility={hidden ? 'no-hide-descendants' : 'auto'}\n      accessibilityElementsHidden={hidden}\n    >\n      {children}\n    </Animated.View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  row: { overflow: 'hidden' },\n  // A little room above and below so leaning items are not clipped.\n  slot: { position: 'absolute', top: 8, bottom: 8, left: 0 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "card",
+    "web": "live",
+    "perf": {
+      "budget": "A frame callback advances one offset on the UI thread; each item wraps around with a single transform. Pass active={false} off-screen to stop it.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-12",
+          "build": "release",
+          "frameMs": 22,
+          "p90Ms": 25,
+          "baselineMs": 20,
+          "jankyPercent": 0,
+          "atRest": "animating",
+          "memoryMb": 188
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "No drift and no lean. The row still scrolls by dragging.",
+      "screenReader": "Each item is read once; the copies that fill the loop are hidden.",
+      "touchTarget": "The whole row is the drag area."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { DriftMarquee } from '@/components/kinetik/drift-marquee';\n\n<DriftMarquee itemWidth={160} height={200}>\n  {covers.map((c) => (\n    <Image key={c.id} source={{ uri: c.url }} style={{ flex: 1, borderRadius: 16 }} />\n  ))}\n</DriftMarquee>;\n```\n\nEvery child becomes an item `itemWidth` wide that fills the row's height. The row repeats itself to fill the width, so even a few items loop without a gap.\n\n## When to use\n\n- Showcases and landing screens: covers, logos, artworks, testimonials.\n- A lively background row that people can also play with.\n\n## When not to use\n\n- Content people need to read or tap precisely. It keeps moving.\n- Inside horizontal scroll views; both want the sideways drag.\n\n## Notes\n\n- `speed` is in points per second; set it to 0 for a row that only moves when dragged.\n- A fling eases back to the drift; `lean` sets how far items tilt at speed.\n- Pass `active={false}` while the row is off-screen to stop its frame callback.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add drift-marquee`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

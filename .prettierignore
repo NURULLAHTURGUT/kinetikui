@@ -1,0 +1,15 @@
+node_modules
+.turbo
+dist
+coverage
+.next
+.expo
+public/r
+pnpm-lock.yaml
+apps/*/android
+apps/*/ios
+packages/registry/demos.generated.ts
+registry.json
+tmp
+apps/docs/public/r
+cdn/dist

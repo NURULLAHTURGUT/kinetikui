@@ -1,0 +1,39 @@
+## Usage
+
+```tsx
+import { FoldPanel } from '@/components/kinetik/fold-panel';
+
+<FoldPanel title="Check-in" subtitle="Friday from 3 pm" leading={<CalendarIcon />}>
+  <Text>Self check-in with a lockbox. The code arrives the day before.</Text>
+</FoldPanel>;
+```
+
+For a group where only one panel is open at a time, hold the open one in state:
+
+```tsx
+const [open, setOpen] = useState<string | null>('check-in');
+
+<FoldPanel
+  title="Check-in"
+  open={open === 'check-in'}
+  onOpenChange={(o) => setOpen(o ? 'check-in' : null)}
+>
+  …
+</FoldPanel>;
+```
+
+## When to use
+
+- Details that most people skip but some need: policies, specifications, frequently asked questions.
+- Long settings or booking screens, to keep the overview short.
+
+## When not to use
+
+- The main content of a screen. Hiding it behind a tap slows everyone down.
+- Content that changes height constantly while open, such as a live feed. Measure-and-spring suits settled content.
+
+## Notes
+
+- The body is measured at its natural height, so it can hold anything: text, images, lists.
+- The panel lifts from `surface` to `surfaceRaised` as it opens, so an open panel reads as the one in focus.
+- With reduced motion the body appears at once.

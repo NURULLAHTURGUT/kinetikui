@@ -1,0 +1,66 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "beam-button",
+  "type": "registry:item",
+  "title": "Beam Button",
+  "description": "A button with a beam of light running around its edge, leaving a soft glow that brightens on press.",
+  "categories": [
+    "interaction"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json",
+    "https://kinetik-ui.dev/r/kinetik-clock.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/beam-button.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/beam-button.tsx",
+      "content": "import {\n  BlurMask,\n  Canvas,\n  Group,\n  RoundedRect,\n  SweepGradient,\n  rect,\n  rrect,\n  vec,\n  type SkSize,\n} from '@shopify/react-native-skia';\nimport type { ReactNode } from 'react';\nimport {\n  StyleSheet,\n  Text,\n  View,\n  type AccessibilityActionEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport { Gesture, GestureDetector } from 'react-native-gesture-handler';\nimport Animated, {\n  useAnimatedStyle,\n  useDerivedValue,\n  useSharedValue,\n  withSpring,\n} from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { useShaderClock } from '../../lib/kinetik/hooks/use-shader-clock';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget, withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type BeamButtonProps = {\n  /** Label. A string gets the variant's text style; any node is rendered as is. */\n  children: ReactNode;\n  onPress?: () => void;\n  /** Icon before the label. */\n  leading?: ReactNode;\n  /** `surface` is quiet and dark; `ember` is the filled primary. Defaults to `surface`. */\n  variant?: 'surface' | 'ember';\n  /** Colour of the travelling light. Defaults to the strongest ink that reads on the variant. */\n  beamColor?: string;\n  /** Seconds for the light to go once around. Defaults to 3.2. */\n  lap?: number;\n  /** Corner radius. Defaults to the theme `md` radius. */\n  radius?: number;\n  disabled?: boolean;\n  /** A light tap on press. Defaults to true. */\n  haptics?: boolean;\n  /** Required when `children` is not a string. */\n  accessibilityLabel?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\n/** How far the glow may spread past the button's edge. */\nconst BLEED = 14;\nconst HEIGHT = 52;\n\n/**\n * A button with a beam of light running around its edge. The beam leaves a\n * soft glow outside the button and brightens while it is pressed.\n */\nexport function BeamButton({\n  children,\n  onPress,\n  leading,\n  variant = 'surface',\n  beamColor,\n  lap = 3.2,\n  radius,\n  disabled = false,\n  haptics = true,\n  accessibilityLabel,\n  style,\n}: BeamButtonProps) {\n  const theme = useKinetikTheme();\n  const { colors, font, space } = theme;\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const dark = theme.scheme === 'dark';\n  const r = radius ?? theme.radius.md;\n\n  const fill = variant === 'ember' ? colors.ember : colors.surfaceRaised;\n  const ink = variant === 'ember' ? colors.onEmber : colors.text;\n  const beam =\n    beamColor ?? (variant === 'ember' ? colors.ember : dark ? colors.highlight : colors.text);\n\n  const size = useSharedValue<SkSize>({ width: 0, height: 0 });\n  const pressed = useSharedValue(0);\n  const time = useShaderClock({ running: !reduced && !disabled });\n\n  // The light starts at the top left and goes round once per lap.\n  const turn = useDerivedValue(() => [\n    { rotate: -Math.PI * 0.75 + (time.get() / Math.max(0.5, lap)) * Math.PI * 2 },\n  ]);\n  const center = useDerivedValue(() => vec(size.get().width / 2, size.get().height / 2));\n  const edge = useDerivedValue(() => {\n    const { width, height } = size.get();\n    return rrect(\n      rect(BLEED + 0.75, BLEED + 0.75, width - BLEED * 2 - 1.5, height - BLEED * 2 - 1.5),\n      r,\n      r,\n    );\n  });\n  const glow = useDerivedValue(() => 0.45 + pressed.get() * 0.55);\n\n  const clear = withAlpha(beam, 0);\n  const beamColors = [clear, clear, withAlpha(beam, 0.9), beam, clear];\n  const beamStops = [0, 0.5, 0.82, 0.95, 1];\n\n  const press = () => {\n    haptic('tap');\n    onPress?.();\n  };\n\n  const tap = Gesture.Tap()\n    .withTestId('beam-button')\n    .enabled(!disabled)\n    .maxDuration(60_000)\n    .maxDistance(32)\n    .onBegin(() => {\n      pressed.set(withSpring(1, spring('snappy', reduced)));\n    })\n    .onFinalize(() => {\n      pressed.set(withSpring(0, spring('smooth', reduced)));\n    })\n    .onEnd((_e, success) => {\n      if (success) scheduleOnRN(press);\n    });\n\n  const body = useAnimatedStyle(() => ({\n    transform: [{ scale: 1 - pressed.get() * (reduced ? 0.01 : 0.035) }],\n  }));\n\n  const onAccessibilityAction = (e: AccessibilityActionEvent) => {\n    if (e.nativeEvent.actionName === 'activate' && !disabled) press();\n  };\n\n  return (\n    <GestureDetector gesture={tap}>\n      <Animated.View\n        collapsable={false}\n        accessible\n        accessibilityRole=\"button\"\n        accessibilityLabel={\n          accessibilityLabel ?? (typeof children === 'string' ? children : undefined)\n        }\n        accessibilityState={{ disabled }}\n        accessibilityActions={[{ name: 'activate' }]}\n        onAccessibilityAction={onAccessibilityAction}\n        style={[\n          styles.button,\n          {\n            height: HEIGHT,\n            minWidth: Math.max(minTouchTarget, HEIGHT * 2),\n            paddingHorizontal: space[6],\n            borderRadius: r,\n            backgroundColor: fill,\n            gap: space[2],\n            opacity: disabled ? 0.45 : 1,\n            boxShadow: theme.shadow.sm,\n          },\n          style,\n          body,\n        ]}\n      >\n        {/* Wrapped so touches pass through on the web, where the canvas ignores pointerEvents. */}\n        <View\n          pointerEvents=\"none\"\n          style={styles.bleed}\n          accessibilityElementsHidden\n          importantForAccessibility=\"no-hide-descendants\"\n        >\n          <Canvas style={StyleSheet.absoluteFill} onSize={size}>\n            <RoundedRect\n              rect={edge}\n              style=\"stroke\"\n              strokeWidth={1}\n              color={variant === 'ember' ? 'transparent' : colors.borderStrong}\n            />\n            {/* Glow: the beam, thicker and blurred, spilling past the edge. */}\n            <Group opacity={glow}>\n              <RoundedRect rect={edge} style=\"stroke\" strokeWidth={6}>\n                <SweepGradient\n                  c={center}\n                  colors={beamColors}\n                  positions={beamStops}\n                  origin={center}\n                  transform={turn}\n                />\n                <BlurMask blur={8} style=\"normal\" />\n              </RoundedRect>\n            </Group>\n            <RoundedRect rect={edge} style=\"stroke\" strokeWidth={1.5}>\n              <SweepGradient\n                c={center}\n                colors={beamColors}\n                positions={beamStops}\n                origin={center}\n                transform={turn}\n              />\n            </RoundedRect>\n          </Canvas>\n        </View>\n        {leading}\n        {typeof children === 'string' ? (\n          <Text\n            numberOfLines={1}\n            style={{\n              color: ink,\n              fontSize: font.size.md,\n              fontWeight: font.weight.semibold,\n              letterSpacing: -0.1,\n            }}\n          >\n            {children}\n          </Text>\n        ) : (\n          children\n        )}\n      </Animated.View>\n    </GestureDetector>\n  );\n}\n\nconst styles = StyleSheet.create({\n  button: {\n    flexDirection: 'row',\n    alignItems: 'center',\n    justifyContent: 'center',\n    alignSelf: 'flex-start',\n  },\n  bleed: { position: 'absolute', top: -BLEED, left: -BLEED, right: -BLEED, bottom: -BLEED },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "interaction",
+    "web": "live",
+    "perf": {
+      "budget": "One small Skia canvas; a frame callback advances the beam's angle on the UI thread. It stops while disabled or with reduced motion.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-12",
+          "build": "release",
+          "frameMs": 27,
+          "p90Ms": 30,
+          "baselineMs": 20,
+          "jankyPercent": 0.26,
+          "atRest": "animating",
+          "memoryMb": 157
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The beam holds still at the top left; the press still gives a 1% press-in.",
+      "screenReader": "Button role with disabled state; 'activate' presses it.",
+      "touchTarget": "52 pt tall and at least 104 pt wide."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { BeamButton } from '@/components/kinetik/beam-button';\n\n<BeamButton onPress={upgrade}>Upgrade to Pro</BeamButton>;\n```\n\n`surface` is a quiet dark button whose edge carries the light; `ember` is the filled primary. Pass an icon as `leading`, and `beamColor` to tint the light with your brand.\n\n## When to use\n\n- One action you want noticed without shouting: an upgrade, a new feature, an invitation.\n- Empty states and onboarding, where a little movement draws the eye to the next step.\n\n## When not to use\n\n- More than one per screen. Two moving beams compete for attention.\n- Routine actions in forms and lists. Use a plain button.\n\n## Notes\n\n- The beam runs on a frame callback on the UI thread and stops when the button is disabled.\n- The glow spreads 14 pt past the button; leave a little room around it.\n- With reduced motion the beam stays still and the press is a 1% press-in.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add beam-button`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "marker-highlight",
+  "type": "registry:item",
+  "title": "Marker Highlight",
+  "description": "A paragraph where key phrases get marked as if with a highlighter, the ink sweeping in phrase by phrase.",
+  "categories": [
+    "text"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/marker-highlight.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/marker-highlight.tsx",
+      "content": "import { useEffect, useMemo } from 'react';\nimport {\n  StyleSheet,\n  Text,\n  View,\n  type StyleProp,\n  type TextStyle,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  Easing,\n  useAnimatedStyle,\n  useSharedValue,\n  withDelay,\n  withTiming,\n  type SharedValue,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type MarkerHighlightProps = {\n  text: string;\n  /** Phrases in `text` to mark, in reading order. Each marks its first match. */\n  highlights: readonly string[];\n  /** `marker` paints behind the words; `underline` draws a line under them. Defaults to `marker`. */\n  variant?: 'marker' | 'underline';\n  /** Ink colour. Defaults to the theme azure. */\n  color?: string;\n  /** Run the sweep. Set it when the text scrolls into view; defaults to true (on mount). */\n  play?: boolean;\n  /** Wait before the first sweep, in ms. Defaults to 250. */\n  delay?: number;\n  /** Time to sweep one character, in ms. Defaults to 28. */\n  speed?: number;\n  style?: StyleProp<TextStyle>;\n  /** Style for marked words, on top of `style`. */\n  highlightStyle?: StyleProp<TextStyle>;\n  containerStyle?: StyleProp<ViewStyle>;\n};\n\n/** Pause between one marked phrase and the next, in ms. */\nconst BREATH = 160;\n\ntype Token = {\n  word: string;\n  /** Index of the phrase this word belongs to, or -1. */\n  mark: number;\n  /** Whether the next word belongs to the same phrase, so the ink carries over the space. */\n  joined: boolean;\n  /** When this word's ink starts and how long it takes, in ms. */\n  start: number;\n  length: number;\n};\n\n/** Splits the text into words and works out which are marked and when their ink runs. */\nfunction tokenize(text: string, highlights: readonly string[], speed: number): Token[] {\n  // Character ranges of each phrase's first match, searched in order.\n  const ranges: { from: number; to: number }[] = [];\n  let from = 0;\n  for (const phrase of highlights) {\n    const at = phrase ? text.indexOf(phrase, from) : -1;\n    ranges.push(at < 0 ? { from: -1, to: -1 } : { from: at, to: at + phrase.length });\n    if (at >= 0) from = at + phrase.length;\n  }\n\n  const tokens: Token[] = [];\n  const re = /\\S+/g;\n  let m: RegExpExecArray | null;\n  while ((m = re.exec(text))) {\n    const a = m.index;\n    const b = a + m[0].length;\n    const mark = ranges.findIndex((r) => r.from >= 0 && a < r.to && b > r.from);\n    tokens.push({ word: m[0], mark, joined: false, start: 0, length: 0 });\n  }\n\n  // Ink runs phrase after phrase, word after word, at a steady pace per character.\n  let clock = 0;\n  for (let p = 0; p < highlights.length; p++) {\n    const words = tokens.filter((t) => t.mark === p);\n    words.forEach((t, i) => {\n      t.joined = i < words.length - 1;\n      t.start = clock;\n      t.length = (t.word.length + (t.joined ? 1 : 0)) * speed;\n      clock += t.length;\n    });\n    if (words.length > 0) clock += BREATH;\n  }\n  return tokens;\n}\n\n/**\n * A paragraph where a few phrases get marked, as if with a highlighter: the\n * ink sweeps behind each phrase from left to right, one after another, and\n * carries across line breaks word by word.\n */\nexport function MarkerHighlight({\n  text,\n  highlights,\n  variant = 'marker',\n  color,\n  play = true,\n  delay = 250,\n  speed = 28,\n  style,\n  highlightStyle,\n  containerStyle,\n}: MarkerHighlightProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const ink = color ?? colors.azure;\n\n  const signature = highlights.join('\\u0000');\n  const tokens = useMemo(\n    () => tokenize(text, highlights, speed),\n    // `signature` stands in for `highlights`.\n    // eslint-disable-next-line react-hooks/exhaustive-deps\n    [text, signature, speed],\n  );\n  const total = tokens.reduce((end, t) => Math.max(end, t.start + t.length), 0);\n\n  const clock = useSharedValue(play && reduced ? total : 0);\n  useEffect(() => {\n    if (!play) {\n      clock.set(0);\n      return;\n    }\n    if (reduced) {\n      clock.set(total);\n      return;\n    }\n    clock.set(0);\n    clock.set(withDelay(delay, withTiming(total, { duration: total, easing: Easing.linear })));\n  }, [play, reduced, total, delay, clock]);\n\n  const base: StyleProp<TextStyle> = [\n    {\n      color: colors.text,\n      fontSize: font.size.lg,\n      lineHeight: font.size.lg * font.lineHeight.relaxed,\n    },\n    style,\n  ];\n  const marked: StyleProp<TextStyle> = [base, { fontWeight: font.weight.semibold }, highlightStyle];\n\n  return (\n    <View\n      accessible\n      accessibilityRole=\"text\"\n      accessibilityLabel={text}\n      style={[styles.flow, containerStyle]}\n    >\n      {tokens.map((t, i) =>\n        t.mark < 0 ? (\n          <Text key={i} style={base} accessibilityElementsHidden importantForAccessibility=\"no\">\n            {`${t.word} `}\n          </Text>\n        ) : (\n          <View\n            key={i}\n            style={styles.word}\n            accessibilityElementsHidden\n            importantForAccessibility=\"no-hide-descendants\"\n          >\n            {/* Inside a phrase the ink covers the space too, so it runs on unbroken. */}\n            <View>\n              <Ink token={t} clock={clock} color={ink} variant={variant} />\n              <Text style={marked}>{t.joined ? `${t.word} ` : t.word}</Text>\n            </View>\n            {t.joined ? null : <Text style={base}> </Text>}\n          </View>\n        ),\n      )}\n    </View>\n  );\n}\n\nfunction Ink({\n  token,\n  clock,\n  color,\n  variant,\n}: {\n  token: Token;\n  clock: SharedValue<number>;\n  color: string;\n  variant: 'marker' | 'underline';\n}) {\n  const { start, length, joined } = token;\n  const style = useAnimatedStyle(() => {\n    const p = Math.max(0, Math.min(1, (clock.get() - start) / Math.max(1, length)));\n    // The first and last stretch of a phrase ease; joins in the middle run straight.\n    const e = joined ? p : 1 - (1 - p) * (1 - p);\n    return { width: `${e * 100}%` };\n  });\n  return (\n    <Animated.View\n      pointerEvents=\"none\"\n      style={[\n        variant === 'marker' ? styles.marker : styles.underline,\n        { backgroundColor: variant === 'marker' ? withAlpha(color, 0.26) : color },\n        style,\n      ]}\n    />\n  );\n}\n\nconst styles = StyleSheet.create({\n  flow: { flexDirection: 'row', flexWrap: 'wrap' },\n  word: { flexDirection: 'row' },\n  marker: { position: 'absolute', left: -2, top: '22%', bottom: '8%', borderRadius: 4 },\n  underline: { position: 'absolute', left: 0, bottom: '6%', height: 2.5, borderRadius: 2 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "text",
+    "web": "live",
+    "perf": {
+      "budget": "One clock drives every stroke of ink on the UI thread; words are plain text views that wrap like a paragraph.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-12",
+          "build": "release",
+          "frameMs": 18,
+          "p90Ms": 26,
+          "baselineMs": 20,
+          "jankyPercent": 4.84,
+          "atRest": "idle",
+          "memoryMb": 148
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Phrases appear already marked.",
+      "screenReader": "Reads as one piece of text; the marking is visual only.",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { MarkerHighlight } from '@/components/kinetik/marker-highlight';\n\n<MarkerHighlight\n  text=\"Plan trips together and keep every booking in one place.\"\n  highlights={['together', 'every booking']}\n/>;\n```\n\nEach phrase marks its first match after the previous one, so list them in reading order. `variant=\"underline\"` draws a line under the words instead of painting behind them.\n\n## When to use\n\n- A sentence or two on a landing or onboarding screen where two or three phrases carry the message.\n- Pull quotes and summaries, to guide the eye to what matters.\n\n## When not to use\n\n- Body text and long articles. Marking everything marks nothing.\n- Search results. Matches should be visible at once, not sweep in.\n\n## Notes\n\n- Set `play` when the paragraph scrolls into view; it starts unmarked and sweeps when `play` turns true.\n- The ink runs word by word, so it follows the text across line breaks.\n- The marking is visual only; screen readers read the paragraph as plain text.\n- With reduced motion the phrases appear already marked.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add marker-highlight`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

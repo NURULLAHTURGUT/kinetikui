@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "press-jelly",
+  "type": "registry:item",
+  "title": "Press Jelly",
+  "description": "A primary button that squashes like jelly under the finger and wobbles back on release.",
+  "categories": [
+    "interaction"
+  ],
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/press-jelly.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/press-jelly.tsx",
+      "content": "import type { ReactNode } from 'react';\nimport {\n  ActivityIndicator,\n  StyleSheet,\n  Text,\n  View,\n  type AccessibilityActionEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport { Gesture, GestureDetector } from 'react-native-gesture-handler';\nimport Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { gradient } from '../../lib/kinetik/tokens/gradient';\nimport { glow, minTouchTarget, withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type PressJellyVariant = 'ember' | 'ice' | 'surface';\nexport type PressJellySize = 'md' | 'lg';\n\nexport type PressJellyProps = {\n  /** Button label. A string gets the variant's text style; any node is rendered as is. */\n  children: ReactNode;\n  onPress?: () => void;\n  /** Defaults to `ember`. */\n  variant?: PressJellyVariant;\n  /** `md` is 48 pt tall, `lg` 56 pt. Defaults to `md`. */\n  size?: PressJellySize;\n  /** Optional element before the label, e.g. an icon. */\n  leading?: ReactNode;\n  disabled?: boolean;\n  /** Shows a spinner and ignores presses. */\n  loading?: boolean;\n  /** How far the button squashes, 0–1. Defaults to 0.6. */\n  squish?: number;\n  /** Plays a light tap when the press lands. Defaults to true. */\n  haptics?: boolean;\n  /** Required when `children` is not a string. */\n  accessibilityLabel?: string;\n  accessibilityHint?: string;\n  /** Stretch to the parent's width. */\n  block?: boolean;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst HEIGHT: Record<PressJellySize, number> = { md: 48, lg: 56 };\n\n/**\n * A primary button that squashes like jelly under the finger and wobbles back\n * on release. The squash starts on the UI thread the instant the finger lands.\n */\nexport function PressJelly({\n  children,\n  onPress,\n  variant = 'ember',\n  size = 'md',\n  leading,\n  disabled = false,\n  loading = false,\n  squish = 0.6,\n  haptics = true,\n  accessibilityLabel,\n  accessibilityHint,\n  block = false,\n  style,\n}: PressJellyProps) {\n  const theme = useKinetikTheme();\n  const { colors, radius, font, space } = theme;\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const inactive = disabled || loading;\n  const k = Math.max(0, Math.min(1, squish));\n\n  const sx = useSharedValue(1);\n  const sy = useSharedValue(1);\n\n  const palette = {\n    ember: {\n      bg: colors.ember,\n      fg: colors.onEmber,\n      border: 'transparent',\n      shadow: glow(colors.ember),\n    },\n    ice: { bg: colors.ice, fg: colors.onIce, border: 'transparent', shadow: glow(colors.ice) },\n    surface: {\n      bg: colors.surfaceRaised,\n      fg: colors.text,\n      border: colors.borderStrong,\n      shadow: theme.shadow.sm,\n    },\n  }[variant];\n\n  const press = () => {\n    haptic('tap');\n    onPress?.();\n  };\n\n  const tap = Gesture.Tap()\n    .withTestId('press-jelly')\n    .enabled(!inactive)\n    .maxDuration(60_000)\n    .maxDistance(32)\n    .onBegin(() => {\n      if (reduced) {\n        sx.set(withSpring(0.98, spring('snappy', true)));\n        sy.set(withSpring(0.98, spring('snappy', true)));\n        return;\n      }\n      sx.set(withSpring(1 + 0.08 * k, spring('snappy')));\n      sy.set(withSpring(1 - 0.16 * k, spring('snappy')));\n    })\n    .onFinalize(() => {\n      // Release with an opposing kick so the shape overshoots and wobbles.\n      sx.set(withSpring(1, spring('bouncy', reduced, reduced ? 0 : -2.2 * k)));\n      sy.set(withSpring(1, spring('bouncy', reduced, reduced ? 0 : 3.4 * k)));\n    })\n    .onEnd((_e, success) => {\n      if (success) scheduleOnRN(press);\n    });\n\n  const jelly = useAnimatedStyle(() => ({\n    transform: [{ scaleX: sx.get() }, { scaleY: sy.get() }],\n  }));\n\n  const onAccessibilityAction = (e: AccessibilityActionEvent) => {\n    if (e.nativeEvent.actionName === 'activate' && !inactive) press();\n  };\n\n  const label =\n    typeof children === 'string' ? (\n      <Text\n        numberOfLines={1}\n        style={{\n          color: palette.fg,\n          fontSize: size === 'lg' ? font.size.lg : font.size.md,\n          fontWeight: font.weight.bold,\n          letterSpacing: -0.2,\n        }}\n      >\n        {children}\n      </Text>\n    ) : (\n      children\n    );\n\n  return (\n    <GestureDetector gesture={tap}>\n      <Animated.View\n        collapsable={false}\n        accessible\n        accessibilityRole=\"button\"\n        accessibilityLabel={\n          accessibilityLabel ?? (typeof children === 'string' ? children : undefined)\n        }\n        accessibilityHint={accessibilityHint}\n        accessibilityState={{ disabled, busy: loading }}\n        accessibilityActions={[{ name: 'activate' }]}\n        onAccessibilityAction={onAccessibilityAction}\n        style={[\n          styles.button,\n          {\n            height: HEIGHT[size],\n            minWidth: Math.max(minTouchTarget, HEIGHT[size] * 2),\n            paddingHorizontal: size === 'lg' ? space[8] : space[6],\n            borderRadius: radius.pill,\n            backgroundColor: palette.bg,\n            borderColor: palette.border,\n            boxShadow: inactive ? undefined : palette.shadow,\n            opacity: disabled ? 0.45 : 1,\n            alignSelf: block ? 'stretch' : 'flex-start',\n          },\n          style,\n          jelly,\n        ]}\n      >\n        {/* Top gloss gives the fill some volume. */}\n        <View\n          pointerEvents=\"none\"\n          style={[\n            StyleSheet.absoluteFill,\n            { borderRadius: radius.pill },\n            gradient(\n              `linear-gradient(180deg, ${withAlpha(colors.highlight, variant === 'surface' ? 0.06 : 0.22)} 0%, ${withAlpha(colors.highlight, 0)} 55%)`,\n            ),\n          ]}\n        />\n        <View style={[styles.content, { gap: space[2], opacity: loading ? 0 : 1 }]}>\n          {leading}\n          {label}\n        </View>\n        {loading && (\n          <View style={[StyleSheet.absoluteFill, styles.center]}>\n            <ActivityIndicator color={palette.fg} />\n          </View>\n        )}\n      </Animated.View>\n    </GestureDetector>\n  );\n}\n\nconst styles = StyleSheet.create({\n  button: {\n    justifyContent: 'center',\n    alignItems: 'center',\n    borderWidth: StyleSheet.hairlineWidth,\n  },\n  content: { flexDirection: 'row', alignItems: 'center' },\n  center: { alignItems: 'center', justifyContent: 'center' },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "interaction",
+    "web": "live",
+    "perf": {
+      "budget": "Two scale springs per press, started on the UI thread; nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-12",
+          "build": "release",
+          "frameMs": 23,
+          "p90Ms": 32,
+          "baselineMs": 20,
+          "jankyPercent": 4.51,
+          "atRest": "idle",
+          "memoryMb": 149
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "A 2% press-in instead of the squash and wobble.",
+      "screenReader": "Button role with disabled and busy states; 'activate' presses it.",
+      "touchTarget": "48 pt (md) or 56 pt (lg) tall, at least 96 pt wide."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { PressJelly } from '@/components/kinetik/press-jelly';\n\n<PressJelly onPress={checkout} size=\"lg\" block>\n  Continue\n</PressJelly>;\n```\n\nVariants: `ember` (primary), `ice` (secondary accent) and `surface` (neutral). Pass `loading` while work is in flight; presses are ignored and a spinner replaces the label without changing the button's size.\n\n## When to use\n\n- The one primary action on a screen: continue, buy, send.\n- Moments where a tactile response makes the app feel physical.\n\n## When not to use\n\n- Dense toolbars or lists of actions. A screen full of wobbling buttons stops feeling special.\n- Destructive actions that need a pause. Use Hold to Confirm.\n\n## Notes\n\n- The squash starts on the UI thread the moment the finger lands, so it stays responsive while JavaScript is busy.\n- Moving the finger more than 32 pt away cancels the press.\n- Pass `accessibilityLabel` when the label is not a plain string.\n- The button sizes to its label; `block` stretches it to the parent. Position it with `style`, e.g. `style={{ alignSelf: 'center' }}`.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add press-jelly`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

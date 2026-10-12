@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "two-step-button",
+  "type": "registry:item",
+  "title": "Two-Step Button",
+  "description": "A button that asks before it acts: it splits into Cancel and Confirm, and the question closes by itself.",
+  "categories": [
+    "interaction"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/two-step-button.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/two-step-button.tsx",
+      "content": "import { useEffect, useState } from 'react';\nimport {\n  AccessibilityInfo,\n  Pressable,\n  StyleSheet,\n  Text,\n  View,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  Easing,\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type TwoStepButtonProps = {\n  /** What the button does, e.g. \"Delete project\". */\n  children: string;\n  /** The confirming half. Defaults to 'Confirm'. */\n  confirmLabel?: string;\n  /** The way out. Defaults to 'Cancel'. */\n  cancelLabel?: string;\n  /** Runs on the second, confirming press. */\n  onConfirm: () => void;\n  /** How long the question stays open, in ms, before it quietly closes. Defaults to 4000. */\n  timeout?: number;\n  /** `danger` for destructive actions; `azure` and `ember` for weighty but safe ones. Defaults to `danger`. */\n  tone?: 'danger' | 'azure' | 'ember';\n  /** Haptics as it opens and confirms. Defaults to true. */\n  haptics?: boolean;\n  disabled?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst HEIGHT = 52;\nconst INSET = 4;\n/** Share of the width the confirming half takes. */\nconst SPLIT = 0.56;\n\n/**\n * A button that asks before it acts. The first press splits it in two: a\n * solid confirming half grows in from the edge while the label turns into\n * Cancel, and a lighter band drains across the confirm side until the question\n * closes by itself.\n */\nexport function TwoStepButton({\n  children,\n  confirmLabel = 'Confirm',\n  cancelLabel = 'Cancel',\n  onConfirm,\n  timeout = 4000,\n  tone = 'danger',\n  haptics = true,\n  disabled = false,\n  testID,\n  style,\n}: TwoStepButtonProps) {\n  const { colors, font, radius } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const [armed, setArmed] = useState(false);\n  const [width, setWidth] = useState(0);\n  const open = armed && !disabled;\n\n  const ink = tone === 'azure' ? colors.azure : tone === 'ember' ? colors.ember : colors.danger;\n  const onInk = tone === 'azure' ? colors.onAzure : colors.onEmber;\n\n  const arm = useSharedValue(0);\n  const left = useSharedValue(1);\n  const pressed = useSharedValue(0);\n\n  useEffect(() => {\n    arm.set(withSpring(open ? 1 : 0, spring('smooth', reduced)));\n    if (!open) return;\n    // The question closes by itself; the line shows how long is left.\n    left.set(1);\n    if (!reduced) left.set(withTiming(0, { duration: timeout, easing: Easing.linear }));\n    const id = setTimeout(() => setArmed(false), timeout);\n    return () => clearTimeout(id);\n  }, [open, reduced, timeout, arm, left]);\n\n  const ask = () => {\n    setArmed(true);\n    haptic('tap');\n    AccessibilityInfo.announceForAccessibility(`${confirmLabel} ${children}?`);\n  };\n  const confirm = () => {\n    setArmed(false);\n    haptic('thud');\n    onConfirm();\n  };\n\n  const full = Math.max(0, width - INSET * 2);\n  const segment = useAnimatedStyle(() => {\n    const a = arm.get();\n    const dot = HEIGHT - INSET * 2;\n    return {\n      width: dot + (full * SPLIT - dot) * a,\n      opacity: Math.min(1, a * 3),\n    };\n  });\n  const idleLabel = useAnimatedStyle(() => ({\n    opacity: 1 - Math.min(1, arm.get() * 1.6),\n    transform: [{ translateX: -arm.get() * 18 }, { scale: 1 - arm.get() * 0.06 }],\n  }));\n  const cancel = useAnimatedStyle(() => ({\n    opacity: Math.max(0, arm.get() * 1.6 - 0.6),\n    transform: [{ translateX: (1 - arm.get()) * 16 }],\n  }));\n  const confirmText = useAnimatedStyle(() => ({\n    opacity: Math.max(0, arm.get() * 2 - 1),\n    transform: [{ scale: 0.92 + arm.get() * 0.08 }],\n  }));\n  const drain = useAnimatedStyle(() => ({ width: `${left.get() * 100}%` }));\n  const shell = useAnimatedStyle(() => ({ transform: [{ scale: 1 - pressed.get() * 0.02 }] }));\n\n  const label = (text: string, color: string) => (\n    <Text\n      numberOfLines={1}\n      style={{ color, fontSize: font.size.md, fontWeight: font.weight.semibold }}\n    >\n      {text}\n    </Text>\n  );\n\n  return (\n    <Animated.View\n      testID={testID}\n      onLayout={(e) => setWidth(e.nativeEvent.layout.width)}\n      style={[\n        styles.shell,\n        {\n          borderRadius: radius.pill,\n          backgroundColor: withAlpha(ink, 0.12),\n          opacity: disabled ? 0.45 : 1,\n        },\n        style,\n        shell,\n      ]}\n    >\n      <Animated.View\n        pointerEvents=\"none\"\n        style={[styles.segment, { borderRadius: radius.pill, backgroundColor: ink }, segment]}\n      >\n        <Animated.View style={[styles.drain, { backgroundColor: withAlpha(onInk, 0.16) }, drain]} />\n        <Animated.View style={[styles.center, confirmText]}>\n          {label(confirmLabel, onInk)}\n        </Animated.View>\n      </Animated.View>\n\n      <Animated.View pointerEvents=\"none\" style={[styles.center, styles.fill, idleLabel]}>\n        {label(children, ink)}\n      </Animated.View>\n      <Animated.View\n        pointerEvents=\"none\"\n        style={[styles.center, styles.cancel, { width: `${(1 - SPLIT) * 100}%` }, cancel]}\n      >\n        {label(cancelLabel, colors.text)}\n      </Animated.View>\n\n      {open ? (\n        <View style={styles.halves}>\n          <Pressable\n            accessibilityRole=\"button\"\n            accessibilityLabel={cancelLabel}\n            onPress={() => setArmed(false)}\n            style={{ flex: 1 - SPLIT }}\n          />\n          <Pressable\n            accessibilityRole=\"button\"\n            accessibilityLabel={`${confirmLabel}: ${children}`}\n            onPress={confirm}\n            style={{ flex: SPLIT }}\n          />\n        </View>\n      ) : (\n        <Pressable\n          disabled={disabled}\n          accessibilityRole=\"button\"\n          accessibilityLabel={children}\n          accessibilityHint=\"Asks you to confirm\"\n          accessibilityState={{ disabled }}\n          onPress={ask}\n          onPressIn={() => pressed.set(withSpring(1, spring('snappy', reduced)))}\n          onPressOut={() => pressed.set(withSpring(0, spring('bouncy', reduced)))}\n          style={styles.fill}\n        />\n      )}\n    </Animated.View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  shell: { height: HEIGHT, overflow: 'hidden', justifyContent: 'center' },\n  fill: { ...StyleSheet.absoluteFill },\n  center: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },\n  segment: {\n    position: 'absolute',\n    top: INSET,\n    bottom: INSET,\n    right: INSET,\n    overflow: 'hidden',\n    justifyContent: 'center',\n  },\n  drain: { position: 'absolute', left: 0, top: 0, bottom: 0 },\n  cancel: { position: 'absolute', left: 0, top: 0, bottom: 0 },\n  halves: { ...StyleSheet.absoluteFill, flexDirection: 'row' },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "interaction",
+    "web": "live",
+    "perf": {
+      "budget": "Plain views animated by two shared values: the split and the countdown. No canvas, no work at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-12",
+          "build": "release",
+          "frameMs": 20,
+          "p90Ms": 24,
+          "baselineMs": 20,
+          "jankyPercent": 1.72,
+          "atRest": "idle",
+          "memoryMb": 153
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The halves appear in place and the countdown band holds still; the question still closes after the timeout.",
+      "screenReader": "One button, then two (Cancel, and Confirm with the action's name). Opening the question is announced.",
+      "touchTarget": "52 pt tall; each half spans its share of the full width."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { TwoStepButton } from '@/components/kinetik/two-step-button';\n\n<TwoStepButton confirmLabel=\"Delete\" onConfirm={deleteProject}>\n  Delete project\n</TwoStepButton>;\n```\n\nThe button fills the width it is given. `tone=\"azure\"` or `tone=\"ember\"` suits actions that are weighty but safe, such as publishing or sending to everyone.\n\n## When to use\n\n- Destructive or hard-to-undo actions in settings and detail screens: delete, leave, revoke.\n- Places where a modal dialog would feel heavier than the action deserves.\n\n## When not to use\n\n- Actions you can undo. Act at once and offer Undo in a toast instead.\n- Truly irreversible, high-stakes actions such as deleting an account. Ask for typed confirmation or a hold.\n\n## Notes\n\n- The question closes by itself after `timeout` (4 s by default), so a stray tap never leaves a loaded button behind.\n- The confirming half is named after the action (\"Delete: Delete project\"), so a screen reader user always knows what they are confirming.\n- With reduced motion the halves appear in place and the countdown band does not move.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add two-step-button`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

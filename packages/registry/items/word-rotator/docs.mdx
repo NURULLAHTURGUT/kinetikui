@@ -1,0 +1,30 @@
+## Usage
+
+```tsx
+import { WordRotator } from '@/components/kinetik/word-rotator';
+
+<WordRotator
+  before="Interfaces that feel"
+  words={['alive.', 'effortless.', 'yours.']}
+  align="center"
+/>;
+```
+
+`style` sets the type for the whole line; `wordStyle` is laid on top for the rotating word, which is azure by default.
+
+## When to use
+
+- A hero line that says one thing several ways: what an app is for, who it is for.
+- Short, punchy words, three to six of them.
+
+## When not to use
+
+- Words people need to act on. Anything that changes on its own is easy to miss.
+- Long phrases. Use Typewriter, which reads better for whole sentences.
+
+## Notes
+
+- Every word is measured once, off screen, so the gap springs to the right width before the letters arrive.
+- Pass `paused` while the line is off screen.
+- Screen readers hear the line once with every word, not an announcement on every change.
+- With reduced motion the words crossfade in place.

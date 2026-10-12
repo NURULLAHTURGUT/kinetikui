@@ -1,0 +1,31 @@
+## Usage
+
+```tsx
+import { GaugeMeter } from '@/components/kinetik/gauge-meter';
+
+<GaugeMeter
+  accessibilityLabel="Download speed"
+  value={speed}
+  max={1000}
+  unit="Mbps"
+  label="Download"
+/>;
+```
+
+Change `value` and the dial swings from where it is, while the figure counts on. `colors` takes the arc's start and tip colours; by default it runs from sky into azure.
+
+## When to use
+
+- One figure within a known range, read at a glance: a speed, a score, a battery level, a budget used.
+- Live readings that change now and then, where the swing shows the direction of change.
+
+## When not to use
+
+- Comparing several values. Use a bar chart.
+- Values without a meaningful maximum. A dial suggests a limit.
+
+## Notes
+
+- `sweep` sets how much of the circle the arc covers, from 180° to 300°.
+- The figure counts with `formatValue`, so pass one that rounds the way you want while it is counting.
+- With reduced motion the dial and the figure show the value at once.

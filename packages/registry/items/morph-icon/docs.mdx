@@ -1,0 +1,34 @@
+## Usage
+
+```tsx
+import { MorphIcon } from '@/components/kinetik/morph-icon';
+
+<MorphIcon pair="menu-close" accessibilityLabel="Menu" value={open} onValueChange={setOpen} />
+
+<MorphIcon
+  pair="play-pause"
+  variant="solid"
+  accessibilityLabel="Play"
+  activeAccessibilityLabel="Pause"
+  value={playing}
+  onValueChange={setPlaying}
+/>
+```
+
+Four pairs ship: `menu-close`, `play-pause`, `plus-close` and `plus-check`. Leave `value` unset and the icon keeps its own state.
+
+## When to use
+
+- Controls that flip between two actions in place: play and pause, open and close a menu, add and added.
+- Toolbars and players, where the change of shape is the confirmation and no label is needed.
+
+## When not to use
+
+- Actions that do not reverse. A one-way action is a button, not a toggle.
+- Icons that must stay recognisable at a glance in dense lists. Use a static icon.
+
+## Notes
+
+- Each pair is drawn from strokes matched point for point, so the morph is a blend, not a crossfade. The menu's middle bar folds onto a diagonal instead of fading.
+- Set `activeAccessibilityLabel` when the action changes (Play / Pause). Without it the button is a toggle with a checked state (Menu, open or not).
+- With reduced motion the glyph switches instantly.

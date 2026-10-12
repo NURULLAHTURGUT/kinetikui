@@ -1,0 +1,40 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "hold-to-confirm",
+  "title": "Hold to Confirm",
+  "description": "Press and hold to confirm: a ring fills around the icon and turns into a check mark.",
+  "category": "interaction",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["hold-to-confirm.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One linear timing and three trimmed Skia paths while holding; nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 24,
+        "p90Ms": 32,
+        "baselineMs": 20,
+        "jankyPercent": 3.86,
+        "atRest": "idle",
+        "memoryMb": 153
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The progress ring and fill still advance (they carry information); the press scale is reduced to 1%.",
+    "screenReader": "Button role. Double tap and hold ('longpress' action) confirms; a single double tap announces how to use it. Confirmation is announced.",
+    "touchTarget": "56 pt tall, at least 200 pt wide."
+  }
+}

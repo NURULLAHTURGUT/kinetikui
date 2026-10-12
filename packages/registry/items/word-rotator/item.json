@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "word-rotator",
+  "title": "Word Rotator",
+  "description": "A line with one word that keeps changing, rolling out and in letter by letter while its gap springs to fit.",
+  "category": "text",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["word-rotator.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One clock drives every letter on the UI thread; the width is one spring. Words are measured once, off screen.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 22,
+        "baselineMs": 20,
+        "jankyPercent": 3.47,
+        "atRest": "animating",
+        "memoryMb": 164,
+        "notes": "Animates by design while words rotate; pass paused off-screen."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Words crossfade in place; the gap still resizes.",
+    "screenReader": "Reads the whole line once, with every word in turn, instead of announcing each change.",
+    "touchTarget": "Not interactive."
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "bar-chart",
+  "title": "Bar Chart",
+  "description": "Bars that spring up in a wave; drag across them and the one under the finger stays bright with its value.",
+  "category": "data",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["bar-chart.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One spring per bar when values change and one opacity timing per bar when the selection changes, all on the UI thread.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 23,
+        "baselineMs": 20,
+        "jankyPercent": 2.24,
+        "atRest": "idle",
+        "memoryMb": 152
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Bars reach their height with a short timing instead of the wave of springs.",
+    "screenReader": "Adjustable: swipe up and down to move between bars; each reads its label and value.",
+    "touchTarget": "The whole chart is the scrub area; each bar's column is a target."
+  }
+}

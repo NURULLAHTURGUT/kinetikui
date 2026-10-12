@@ -1,0 +1,65 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "hold-to-confirm",
+  "type": "registry:item",
+  "title": "Hold to Confirm",
+  "description": "Press and hold to confirm: a ring fills around the icon and turns into a check mark.",
+  "categories": [
+    "interaction"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/hold-to-confirm.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/hold-to-confirm.tsx",
+      "content": "import { Canvas, Path } from '@shopify/react-native-skia';\nimport { useEffect, useState } from 'react';\nimport {\n  AccessibilityInfo,\n  StyleSheet,\n  Text,\n  View,\n  type AccessibilityActionEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport { Gesture, GestureDetector } from 'react-native-gesture-handler';\nimport Animated, {\n  Easing,\n  useAnimatedReaction,\n  useAnimatedStyle,\n  useDerivedValue,\n  useSharedValue,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic, type HapticKind } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring, timing } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type HoldToConfirmProps = {\n  /** Label while idle, e.g. \"Hold to delete\". */\n  label: string;\n  /** Label once confirmed, e.g. \"Deleted\". */\n  confirmedLabel?: string;\n  onConfirm: () => void;\n  /** Hold time in ms. Defaults to 1200. */\n  duration?: number;\n  /** `danger` for destructive actions. Defaults to `ember`. */\n  tone?: 'ember' | 'danger';\n  /** Return to idle this many ms after confirming. `null` stays confirmed. Defaults to 1800. */\n  resetAfter?: number | null;\n  disabled?: boolean;\n  /** Ticks at a third and two thirds, success on confirm. Defaults to true. */\n  haptics?: boolean;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst RING = 28;\nconst STROKE = 3;\nconst R = RING / 2 - STROKE / 2;\n// Circle starting at 12 o'clock, drawn clockwise.\nconst RING_PATH = `M ${RING / 2} ${STROKE / 2} A ${R} ${R} 0 1 1 ${RING / 2 - 0.01} ${STROKE / 2}`;\nconst CHECK_PATH = 'M 8.5 14.5 L 12.5 18.5 L 19.5 10';\n\n/**\n * Press and hold to confirm. A ring fills around the icon and the button\n * floods with colour; letting go early unwinds it. On completion the ring\n * becomes a check mark.\n */\nexport function HoldToConfirm({\n  label,\n  confirmedLabel = 'Done',\n  onConfirm,\n  duration = 1200,\n  tone = 'ember',\n  resetAfter = 1800,\n  disabled = false,\n  haptics = true,\n  style,\n}: HoldToConfirmProps) {\n  const { colors, radius, font, space } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const accent = tone === 'danger' ? colors.danger : colors.ember;\n  const [confirmed, setConfirmed] = useState(false);\n\n  const progress = useSharedValue(0);\n  const check = useSharedValue(0);\n  const press = useSharedValue(0);\n  const holding = useSharedValue(false);\n  // Mirrors `confirmed` on the UI thread so gesture callbacks see it immediately.\n  const done = useSharedValue(false);\n\n  useEffect(() => {\n    if (!confirmed || resetAfter === null) return;\n    const t = setTimeout(() => {\n      done.set(false);\n      setConfirmed(false);\n      progress.set(withTiming(0, timing('base', reduced)));\n      check.set(withTiming(0, timing('quick', reduced)));\n    }, resetAfter);\n    return () => clearTimeout(t);\n  }, [confirmed, resetAfter, reduced, progress, check, done]);\n\n  const play = (kind: HapticKind) => haptic(kind);\n  const confirm = () => {\n    setConfirmed(true);\n    haptic('success');\n    AccessibilityInfo.announceForAccessibility(confirmedLabel);\n    onConfirm();\n  };\n\n  // Detents at a third and two thirds make the hold feel measured.\n  useAnimatedReaction(\n    () => (holding.get() ? Math.floor(progress.get() * 3) : 0),\n    (step, prev) => {\n      if (prev !== null && step > prev && step < 3) scheduleOnRN(play, 'tick');\n    },\n  );\n\n  const finish = () => {\n    'worklet';\n    done.set(true);\n    holding.set(false);\n    progress.set(1);\n    check.set(withTiming(1, timing('base', reduced)));\n    press.set(withSpring(0, spring('bouncy', reduced)));\n    scheduleOnRN(confirm);\n  };\n\n  const hold = Gesture.LongPress()\n    .withTestId('hold-to-confirm')\n    .enabled(!disabled)\n    .minDuration(duration)\n    .maxDistance(40)\n    .onBegin(() => {\n      if (done.get()) return;\n      holding.set(true);\n      press.set(withSpring(1, spring('snappy', reduced)));\n      progress.set(withTiming(1, { duration, easing: Easing.linear }));\n      scheduleOnRN(play, 'tap');\n    })\n    .onStart(() => {\n      if (!done.get()) finish();\n    })\n    .onFinalize(() => {\n      if (done.get()) return;\n      holding.set(false);\n      press.set(withSpring(0, spring('snappy', reduced)));\n      progress.set(withSpring(0, spring('smooth', reduced)));\n    });\n\n  const buttonStyle = useAnimatedStyle(() => ({\n    transform: [{ scale: 1 - press.get() * (reduced ? 0.01 : 0.03) }],\n  }));\n  const floodStyle = useAnimatedStyle(() => ({ width: `${progress.get() * 100}%` }));\n  const ringEnd = useDerivedValue(() => progress.get());\n  const checkEnd = useDerivedValue(() => check.get());\n  const ringOpacity = useDerivedValue(() => 1 - check.get() * 0.6);\n\n  const onAccessibilityAction = (e: AccessibilityActionEvent) => {\n    if (disabled || confirmed) return;\n    if (e.nativeEvent.actionName === 'longpress') {\n      done.set(true);\n      progress.set(1);\n      check.set(withTiming(1, timing('base', reduced)));\n      confirm();\n    } else if (e.nativeEvent.actionName === 'activate') {\n      AccessibilityInfo.announceForAccessibility(`${label}. Double tap and hold to confirm.`);\n    }\n  };\n\n  return (\n    <GestureDetector gesture={hold}>\n      <Animated.View\n        collapsable={false}\n        accessible\n        accessibilityRole=\"button\"\n        accessibilityLabel={confirmed ? confirmedLabel : label}\n        accessibilityHint=\"Double tap and hold to confirm\"\n        accessibilityState={{ disabled: disabled || confirmed }}\n        accessibilityActions={[{ name: 'activate' }, { name: 'longpress' }]}\n        onAccessibilityAction={onAccessibilityAction}\n        style={[\n          styles.button,\n          {\n            borderRadius: radius.pill,\n            backgroundColor: colors.surfaceRaised,\n            borderColor: withAlpha(accent, 0.5),\n            paddingLeft: space[3],\n            paddingRight: space[6],\n            gap: space[3],\n            opacity: disabled ? 0.45 : 1,\n          },\n          style,\n          buttonStyle,\n        ]}\n      >\n        <Animated.View\n          pointerEvents=\"none\"\n          style={[styles.flood, { backgroundColor: withAlpha(accent, 0.22) }, floodStyle]}\n        />\n        <View\n          pointerEvents=\"none\"\n          style={styles.ring}\n          accessibilityElementsHidden\n          importantForAccessibility=\"no-hide-descendants\"\n        >\n          <Canvas style={StyleSheet.absoluteFill}>\n            <Path\n              path={RING_PATH}\n              style=\"stroke\"\n              strokeWidth={STROKE}\n              color={withAlpha(accent, 0.25)}\n              start={0}\n              end={1}\n            />\n            <Path\n              path={RING_PATH}\n              style=\"stroke\"\n              strokeWidth={STROKE}\n              strokeCap=\"round\"\n              color={accent}\n              start={0}\n              end={ringEnd}\n              opacity={ringOpacity}\n            />\n            <Path\n              path={CHECK_PATH}\n              style=\"stroke\"\n              strokeWidth={2.5}\n              strokeCap=\"round\"\n              strokeJoin=\"round\"\n              color={accent}\n              start={0}\n              end={checkEnd}\n            />\n          </Canvas>\n        </View>\n        <Text\n          numberOfLines={1}\n          style={{ color: colors.text, fontSize: font.size.md, fontWeight: font.weight.semibold }}\n        >\n          {confirmed ? confirmedLabel : label}\n        </Text>\n      </Animated.View>\n    </GestureDetector>\n  );\n}\n\nconst styles = StyleSheet.create({\n  button: {\n    height: 56,\n    minWidth: 200,\n    alignSelf: 'flex-start',\n    flexDirection: 'row',\n    alignItems: 'center',\n    borderWidth: StyleSheet.hairlineWidth,\n    overflow: 'hidden',\n  },\n  flood: { position: 'absolute', left: 0, top: 0, bottom: 0 },\n  ring: { width: RING, height: RING },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "interaction",
+    "web": "live",
+    "perf": {
+      "budget": "One linear timing and three trimmed Skia paths while holding; nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-12",
+          "build": "release",
+          "frameMs": 24,
+          "p90Ms": 32,
+          "baselineMs": 20,
+          "jankyPercent": 3.86,
+          "atRest": "idle",
+          "memoryMb": 153
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The progress ring and fill still advance (they carry information); the press scale is reduced to 1%.",
+      "screenReader": "Button role. Double tap and hold ('longpress' action) confirms; a single double tap announces how to use it. Confirmation is announced.",
+      "touchTarget": "56 pt tall, at least 200 pt wide."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { HoldToConfirm } from '@/components/kinetik/hold-to-confirm';\n\n<HoldToConfirm\n  label=\"Hold to delete project\"\n  confirmedLabel=\"Project deleted\"\n  tone=\"danger\"\n  onConfirm={deleteProject}\n/>;\n```\n\nHolding for `duration` ms (1200 by default) confirms. Letting go or sliding the finger more than 40 pt away cancels and the ring unwinds.\n\n## When to use\n\n- Destructive or costly actions where a confirmation dialog would be heavy: delete, transfer, end a session.\n- Actions that should not fire from an accidental tap in a pocket or a scroll.\n\n## When not to use\n\n- Everyday actions. Holding is slower than tapping; reserve it for moments that deserve the pause.\n- Actions that need to be undone easily. Prefer an undo toast after a normal tap.\n\n## Notes\n\n- Screen-reader users confirm with a double tap and hold (the `longpress` accessibility action). A plain double tap explains how to use the control instead of confirming.\n- The ring and fill keep advancing under reduced motion because they show progress; only the press scale is reduced.\n- After `resetAfter` ms the button returns to idle. Pass `null` to keep it confirmed.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add hold-to-confirm`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

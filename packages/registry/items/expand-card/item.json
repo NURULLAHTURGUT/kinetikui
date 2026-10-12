@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "expand-card",
+  "title": "Expand Card",
+  "description": "A row that opens into a card: the thumbnail grows into a wide picture and the details rise in beneath it.",
+  "category": "card",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["expand-card.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One spring drives the card height, picture size and title position on the UI thread; nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 20,
+        "p90Ms": 32,
+        "baselineMs": 20,
+        "jankyPercent": 4.72,
+        "atRest": "idle",
+        "memoryMb": 153
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Opens and closes in one step, without the morph.",
+    "screenReader": "A button named by the title and subtitle with an expanded state; the body is hidden from screen readers while closed.",
+    "touchTarget": "The whole row, at least 88 pt tall."
+  }
+}

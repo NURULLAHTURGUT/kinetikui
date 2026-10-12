@@ -1,0 +1,40 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "beam-button",
+  "title": "Beam Button",
+  "description": "A button with a beam of light running around its edge, leaving a soft glow that brightens on press.",
+  "category": "interaction",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics", "kinetik-clock"],
+  "files": ["beam-button.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One small Skia canvas; a frame callback advances the beam's angle on the UI thread. It stops while disabled or with reduced motion.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 27,
+        "p90Ms": 30,
+        "baselineMs": 20,
+        "jankyPercent": 0.26,
+        "atRest": "animating",
+        "memoryMb": 157
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The beam holds still at the top left; the press still gives a 1% press-in.",
+    "screenReader": "Button role with disabled state; 'activate' presses it.",
+    "touchTarget": "52 pt tall and at least 104 pt wide."
+  }
+}

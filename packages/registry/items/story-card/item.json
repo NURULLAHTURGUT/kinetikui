@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "story-card",
+  "title": "Story Card",
+  "description": "Full-bleed stories with progress bars: tap to step, hold to pause, each picture drifting closer as it plays.",
+  "category": "card",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-worklets"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["story-card.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One timing value drives the bar and the drift on the UI thread; every picture is mounted once and crossfaded, so stepping never waits on a decode.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 19,
+        "p90Ms": 25,
+        "baselineMs": 20,
+        "jankyPercent": 1.11,
+        "atRest": "animating",
+        "memoryMb": 160,
+        "notes": "Animates by design while a story plays; pass paused off-screen."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Pictures switch without the fade or the drift; the bars still fill.",
+    "screenReader": "An adjustable element named after the story, valued 'Story 2 of 5'; swipe up or down to step. Stories do not advance on their own while a screen reader runs.",
+    "touchTarget": "The whole card: its left third steps back, the rest forward."
+  }
+}

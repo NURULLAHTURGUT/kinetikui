@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "fan-stack",
+  "title": "Fan Stack",
+  "description": "A loose pile of pictures that fans out like a hand of cards; tap one to lift it out of the fan.",
+  "category": "card",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["fan-stack.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Three springs per card (fan, lift, dim), transforms and opacity only. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 26,
+        "p90Ms": 38,
+        "baselineMs": 20,
+        "jankyPercent": 3.08,
+        "atRest": "idle",
+        "memoryMb": 157
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Cards move straight to the fan or the pile without the stagger or the bounce.",
+    "screenReader": "Gathered, the pile is one button ('Photos, 5 items'); fanned, every card is a button with a selected state.",
+    "touchTarget": "Cards are 148 by 192 pt by default; overlapping cards keep at least 60 pt of their width uncovered."
+  }
+}

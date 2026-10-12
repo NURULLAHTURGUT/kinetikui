@@ -1,0 +1,30 @@
+## Usage
+
+```tsx
+import { HeatGrid } from '@/components/kinetik/heat-grid';
+
+<HeatGrid
+  accessibilityLabel="Rides, last 20 weeks"
+  data={ridesPerDay}
+  describe={(i, v) => `${formatDay(start, i)} · ${v} rides`}
+  summary={`${total} rides in 20 weeks`}
+/>;
+```
+
+`data` fills each column top to bottom, so with the default seven rows the first value should fall on the first day of a week. Cells are sized to fit the width, between 6 and 22 pt.
+
+## When to use
+
+- Habits and streaks over weeks or months: workouts, commits, practice, sales days.
+- Spotting rhythms, such as quiet weekends or a busy month, that a line chart flattens.
+
+## When not to use
+
+- Exact comparisons between days. Shades are bands, not values; use a bar chart.
+- Fewer than about three weeks of data. The pattern needs room to show.
+
+## Notes
+
+- Values are split into four shades relative to the busiest day; zero is the empty track.
+- Drag across the grid to read any day; tap the chosen day again to clear it.
+- With reduced motion the cells appear at once.

@@ -1,0 +1,40 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "morph-sheet",
+  "title": "Morph Sheet",
+  "description": "A bottom sheet with snap points that morphs from a floating card into a full sheet and blurs the screen behind.",
+  "category": "navigation",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "expo-blur",
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["morph-sheet.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One shared value (sheet position) drives the morph, scrim, blur intensity and the set-back of the screen; the sheet's insets are laid out on the UI thread while it moves. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 32,
+        "baselineMs": 20,
+        "jankyPercent": 4.5,
+        "atRest": "idle",
+        "memoryMb": 147
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The sheet moves with a short timing and the screen behind does not scale.",
+    "screenReader": "The open sheet is modal; the screen behind is hidden. Actions: close (also escape), expand and collapse. The scrim is a 'Close sheet' button.",
+    "touchTarget": "The whole sheet is draggable; the scrim closes it."
+  }
+}

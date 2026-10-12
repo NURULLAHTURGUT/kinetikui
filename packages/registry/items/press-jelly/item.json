@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "press-jelly",
+  "title": "Press Jelly",
+  "description": "A primary button that squashes like jelly under the finger and wobbles back on release.",
+  "category": "interaction",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["press-jelly.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Two scale springs per press, started on the UI thread; nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 23,
+        "p90Ms": 32,
+        "baselineMs": 20,
+        "jankyPercent": 4.51,
+        "atRest": "idle",
+        "memoryMb": 149
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "A 2% press-in instead of the squash and wobble.",
+    "screenReader": "Button role with disabled and busy states; 'activate' presses it.",
+    "touchTarget": "48 pt (md) or 56 pt (lg) tall, at least 96 pt wide."
+  }
+}

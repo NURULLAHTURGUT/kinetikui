@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "gauge-meter",
+  "title": "Gauge Meter",
+  "description": "A dial that swings to its value on a spring while the figure counts up beneath it.",
+  "category": "data",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-count"],
+  "files": ["gauge-meter.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Arc and ticks are built once per size; the swing trims the arc and moves the knob from one shared value. The figure re-renders only while it counts.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 19,
+        "p90Ms": 30,
+        "baselineMs": 20,
+        "jankyPercent": 5,
+        "atRest": "idle",
+        "memoryMb": 157
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The arc and the figure show the value at once.",
+    "screenReader": "A progress bar with its minimum, maximum and formatted value.",
+    "touchTarget": "Not interactive."
+  }
+}

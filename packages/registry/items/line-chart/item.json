@@ -1,0 +1,41 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "line-chart",
+  "title": "Line Chart",
+  "description": "A smooth line chart that draws itself in; drag across it and a guide, a dot and a label follow the finger.",
+  "category": "data",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["line-chart.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The curve is built once per data change; drawing in, scrubbing and three pulses of the latest point are shared values read by one Skia canvas. Nothing is drawn at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 21,
+        "p90Ms": 32,
+        "baselineMs": 20,
+        "jankyPercent": 9.36,
+        "atRest": "idle",
+        "memoryMb": 162,
+        "notes": "Pulses three times after drawing in, then draws nothing at rest (0 frames in 5 s). It used to pulse forever."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The line appears complete, without drawing in, and the latest point does not pulse.",
+    "screenReader": "Adjustable: swipe up and down to step through the points; each reads its label and value.",
+    "touchTarget": "The whole chart is the scrub area."
+  }
+}

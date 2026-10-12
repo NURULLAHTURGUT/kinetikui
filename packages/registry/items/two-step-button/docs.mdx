@@ -1,0 +1,27 @@
+## Usage
+
+```tsx
+import { TwoStepButton } from '@/components/kinetik/two-step-button';
+
+<TwoStepButton confirmLabel="Delete" onConfirm={deleteProject}>
+  Delete project
+</TwoStepButton>;
+```
+
+The button fills the width it is given. `tone="azure"` or `tone="ember"` suits actions that are weighty but safe, such as publishing or sending to everyone.
+
+## When to use
+
+- Destructive or hard-to-undo actions in settings and detail screens: delete, leave, revoke.
+- Places where a modal dialog would feel heavier than the action deserves.
+
+## When not to use
+
+- Actions you can undo. Act at once and offer Undo in a toast instead.
+- Truly irreversible, high-stakes actions such as deleting an account. Ask for typed confirmation or a hold.
+
+## Notes
+
+- The question closes by itself after `timeout` (4 s by default), so a stray tap never leaves a loaded button behind.
+- The confirming half is named after the action ("Delete: Delete project"), so a screen reader user always knows what they are confirming.
+- With reduced motion the halves appear in place and the countdown band does not move.

@@ -1,0 +1,35 @@
+## Usage
+
+```tsx
+import { LiquidTabs } from '@/components/kinetik/liquid-tabs';
+
+const [tab, setTab] = useState('for-you');
+
+<LiquidTabs
+  accessibilityLabel="Feed"
+  tabs={[
+    { key: 'for-you', label: 'For you' },
+    { key: 'following', label: 'Following' },
+    { key: 'nearby', label: 'Nearby' },
+  ]}
+  value={tab}
+  onChange={setTab}
+/>;
+```
+
+## When to use
+
+- Two to five peer views of the same content: feeds, filters, time ranges.
+- Top-of-screen switches where a little fluidity adds character.
+
+## When not to use
+
+- More than five options or long labels; use a scrolling tab bar or a menu.
+- Primary app navigation between unrelated sections. Use a bottom bar (see Dock Bar).
+
+## Notes
+
+- The leading edge uses the snappy spring and the trailing edge the smooth one; that difference is the liquid stretch.
+- Labels change colour by how much of their tab the liquid covers, so the colour sweeps with the motion.
+- Pass `color` and `activeTextColor` together to keep the label readable on the indicator.
+- On the web the indicator stretches but skips the droplet and goo filter, which CanvasKit does not render.

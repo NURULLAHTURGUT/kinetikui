@@ -1,0 +1,37 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "kinetik-motion",
+  "type": "registry:item",
+  "title": "Kinetik Motion",
+  "description": "The shared motion vocabulary: three springs, three durations, easings and the useReduceMotion hook.",
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json"
+  ],
+  "files": [
+    {
+      "path": "src/lib/kinetik/motion/motion.ts",
+      "type": "registry:file",
+      "target": "~/lib/kinetik/motion/motion.ts",
+      "content": "import {\n  Easing,\n  ReduceMotion,\n  type WithSpringConfig,\n  type WithTimingConfig,\n} from 'react-native-reanimated';\n\n/**\n * Kinetik motion vocabulary.\n *\n * Every animated value in every component picks one of these presets. No\n * component invents its own spring constants or durations — that is what makes\n * a screen full of Kinetik parts feel like one system.\n *\n *  - snappy  (keskin):  UI feedback — presses, toggles, indicators. Barely overshoots.\n *  - smooth  (yumuşak): Layout and position changes — sheets, cards, reveals.\n *  - bouncy  (esnek):   Playful, physical moments — release, snap-back, celebration.\n */\nexport const springs = {\n  snappy: { mass: 1, stiffness: 520, damping: 38 },\n  smooth: { mass: 1, stiffness: 210, damping: 27 },\n  bouncy: { mass: 1, stiffness: 260, damping: 13 },\n} as const satisfies Record<string, WithSpringConfig>;\n\nexport type SpringName = keyof typeof springs;\n\n/** Duration tiers in milliseconds. */\nexport const durations = {\n  quick: 140,\n  base: 260,\n  slow: 480,\n} as const;\n\nexport type DurationName = keyof typeof durations;\n\nexport const easings = {\n  /** Default for anything entering or changing on screen. */\n  standard: Easing.bezier(0.2, 0, 0, 1),\n  /** Exits and dismissals: accelerate away. */\n  exit: Easing.bezier(0.4, 0, 1, 1),\n  /** Continuous loops (shimmer, drift). */\n  linear: Easing.linear,\n  /** Symmetric loops that breathe in and out. */\n  inOut: Easing.inOut(Easing.sin),\n} as const;\n\nexport type EasingName = keyof typeof easings;\n\n/**\n * Spring config for a preset. When `reduced` is true the animation jumps to its\n * final value, so state still changes but nothing moves. Kinetik owns the\n * reduce-motion decision (system setting or provider override, see\n * `useReduceMotion`), so presets never defer to Reanimated's own system check.\n */\nexport function spring(name: SpringName, reduced = false, velocity?: number): WithSpringConfig {\n  'worklet';\n  const base = springs[name];\n  return {\n    ...base,\n    ...(velocity === undefined ? null : { velocity }),\n    reduceMotion: reduced ? ReduceMotion.Always : ReduceMotion.Never,\n  };\n}\n\n/** Timing config for a duration tier and easing. */\nexport function timing(\n  duration: DurationName,\n  reduced = false,\n  easing: EasingName = 'standard',\n): WithTimingConfig {\n  'worklet';\n  return {\n    duration: durations[duration],\n    easing: easings[easing],\n    reduceMotion: reduced ? ReduceMotion.Always : ReduceMotion.Never,\n  };\n}\n"
+    },
+    {
+      "path": "src/lib/kinetik/hooks/use-reduce-motion.ts",
+      "type": "registry:file",
+      "target": "~/lib/kinetik/hooks/use-reduce-motion.ts",
+      "content": "import { useEffect, useState } from 'react';\nimport { AccessibilityInfo } from 'react-native';\n\nimport { useKinetikConfig } from '../tokens/theme';\n\n/**\n * True when motion should be reduced: either the OS accessibility setting is on\n * or the nearest `KinetikProvider` forces it. Unlike Reanimated's\n * `useReducedMotion`, this re-renders when the system setting changes.\n */\nexport function useReduceMotion(): boolean {\n  const { reduceMotion } = useKinetikConfig();\n  const system = useSystemReduceMotion(reduceMotion === 'system');\n  if (reduceMotion === 'always') return true;\n  if (reduceMotion === 'never') return false;\n  return system;\n}\n\nfunction useSystemReduceMotion(subscribe: boolean): boolean {\n  const [enabled, setEnabled] = useState(false);\n\n  useEffect(() => {\n    if (!subscribe) return;\n    let mounted = true;\n    AccessibilityInfo.isReduceMotionEnabled()\n      .then((value) => {\n        if (mounted) setEnabled(value);\n      })\n      .catch(() => {});\n    const subscription = AccessibilityInfo.addEventListener('reduceMotionChanged', setEnabled);\n    return () => {\n      mounted = false;\n      subscription.remove();\n    };\n  }, [subscribe]);\n\n  return enabled;\n}\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "shared",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "requires": "React Native New Architecture (Reanimated 4)"
+  }
+}

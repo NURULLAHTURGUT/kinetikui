@@ -1,0 +1,30 @@
+## Usage
+
+```tsx
+import { BarChart } from '@/components/kinetik/bar-chart';
+
+<BarChart
+  accessibilityLabel="Steps this week"
+  data={days.map((d) => ({ label: d.short, value: d.steps }))}
+  formatValue={(v) => v.toLocaleString()}
+  onSelect={setDay}
+/>;
+```
+
+The chart fills its parent's width and spaces the bars evenly. Bars grow from zero in a wave the first time and spring to new values when `data` changes. Pass `max` to keep the scale fixed across datasets, for example a daily goal.
+
+## When to use
+
+- Comparing a handful of categories or periods: days, months, teams, products.
+- Summaries where the exact value matters on demand but not all at once.
+
+## When not to use
+
+- Continuous trends with many points. Use Line Chart.
+- More than about 16 bars; they get too thin to touch.
+
+## Notes
+
+- The selection stays after the finger lifts; tap the selected bar to clear it.
+- A tick plays as the finger crosses from bar to bar.
+- Screen readers move between bars with the adjustable actions.

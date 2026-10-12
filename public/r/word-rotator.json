@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "word-rotator",
+  "type": "registry:item",
+  "title": "Word Rotator",
+  "description": "A line with one word that keeps changing, rolling out and in letter by letter while its gap springs to fit.",
+  "categories": [
+    "text"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/word-rotator.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/word-rotator.tsx",
+      "content": "import { useEffect, useState } from 'react';\nimport {\n  StyleSheet,\n  Text,\n  View,\n  type LayoutChangeEvent,\n  type StyleProp,\n  type TextStyle,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  Easing,\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  withTiming,\n  type SharedValue,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type WordRotatorProps = {\n  /** The words that take turns, e.g. ['alive', 'effortless', 'yours']. */\n  words: readonly string[];\n  /** Fixed text before the rotating word. */\n  before?: string;\n  /** Fixed text after the rotating word. */\n  after?: string;\n  /** Time each word stays, in ms. Defaults to 2400. */\n  interval?: number;\n  /** Delay between letters as a word rolls in, in ms. Defaults to 24. */\n  stagger?: number;\n  /** Hold on the current word, e.g. while off screen. */\n  paused?: boolean;\n  /** Line alignment. Defaults to `left`. */\n  align?: 'left' | 'center';\n  /** Style for all of the text. */\n  style?: StyleProp<TextStyle>;\n  /** Style for the rotating word, on top of `style`. Defaults to the theme azure. */\n  wordStyle?: StyleProp<TextStyle>;\n  containerStyle?: StyleProp<ViewStyle>;\n};\n\n/** Spaces inside a word, kept from collapsing when letters are laid out one by one. */\nconst NBSP = String.fromCharCode(0xa0);\n/** How long one letter takes to roll, in ms. */\nconst LETTER = 420;\n\n/**\n * A line with one word that keeps changing: the old word rolls up and out\n * letter by letter while the new one rolls in from below, and the gap it\n * sits in springs to the new word's width.\n */\nexport function WordRotator({\n  words,\n  before,\n  after,\n  interval = 2400,\n  stagger = 24,\n  paused = false,\n  align = 'left',\n  style,\n  wordStyle,\n  containerStyle,\n}: WordRotatorProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const n = words.length;\n  const [turn, setTurn] = useState({ now: 0, was: -1 });\n  const [widths, setWidths] = useState<number[]>([]);\n  const [lineH, setLineH] = useState(0);\n\n  const clock = useSharedValue(0);\n  useEffect(() => {\n    if (paused || n < 2) return;\n    const id = setInterval(() => {\n      // Reset before the new letters mount, so they never show a frame at rest.\n      clock.set(0);\n      setTurn((t) => ({ now: (t.now + 1) % n, was: t.now }));\n    }, interval);\n    return () => clearInterval(id);\n  }, [paused, n, interval, clock]);\n\n  const width = useSharedValue(0);\n  const longest = Math.max(1, ...words.map((w) => w.length));\n  const total = LETTER + (longest - 1) * stagger;\n\n  useEffect(() => {\n    if (turn.was < 0) return;\n    clock.set(withTiming(total, { duration: reduced ? 1 : total, easing: Easing.linear }));\n  }, [turn, total, reduced, clock]);\n\n  const target = widths[turn.now] ?? 0;\n  useEffect(() => {\n    if (target === 0) return;\n    // The first width is set, not animated.\n    width.set(width.get() === 0 ? target : withSpring(target, spring('smooth', reduced)));\n  }, [target, reduced, width]);\n\n  const slot = useAnimatedStyle(() => (width.get() > 0 ? { width: width.get() } : {}));\n\n  const measure = (i: number) => (e: LayoutChangeEvent) => {\n    const w = Math.ceil(e.nativeEvent.layout.width);\n    if (i === 0) setLineH(Math.ceil(e.nativeEvent.layout.height));\n    setWidths((ws) => {\n      if (ws[i] === w) return ws;\n      const next = ws.slice();\n      next[i] = w;\n      return next;\n    });\n  };\n\n  const text: StyleProp<TextStyle> = [\n    {\n      color: colors.text,\n      fontSize: font.size['3xl'],\n      fontWeight: font.weight.bold,\n      letterSpacing: -0.8,\n    },\n    style,\n  ];\n  const accent: StyleProp<TextStyle> = [text, { color: colors.azure }, wordStyle];\n\n  return (\n    <View\n      accessible\n      accessibilityRole=\"text\"\n      accessibilityLabel={[before, words.join(', '), after].filter(Boolean).join(' ')}\n      style={[styles.line, align === 'center' && styles.center, containerStyle]}\n    >\n      {/* Every word, laid out off screen, to know each one's width. */}\n      <View\n        style={styles.measure}\n        pointerEvents=\"none\"\n        importantForAccessibility=\"no-hide-descendants\"\n        accessibilityElementsHidden\n      >\n        {/* Measured letter by letter, exactly as the word is drawn. */}\n        {words.map((w, i) => (\n          <View key={`${w}-${i}`} style={[styles.word, styles.measured]} onLayout={measure(i)}>\n            {Array.from(w).map((ch, j) => (\n              <Text key={j} style={accent}>\n                {ch === ' ' ? NBSP : ch}\n              </Text>\n            ))}\n          </View>\n        ))}\n      </View>\n\n      {before ? (\n        <Text style={text} importantForAccessibility=\"no\" accessibilityElementsHidden>\n          {`${before} `}\n        </Text>\n      ) : null}\n      <Animated.View\n        style={[styles.slot, lineH > 0 && { height: lineH }, slot]}\n        importantForAccessibility=\"no-hide-descendants\"\n        accessibilityElementsHidden\n      >\n        {turn.was >= 0 ? (\n          <Word\n            key={`was-${turn.was}-${turn.now}`}\n            word={words[turn.was] ?? ''}\n            leaving\n            clock={clock}\n            stagger={stagger}\n            height={lineH}\n            reduced={reduced}\n            style={accent}\n          />\n        ) : null}\n        <Word\n          key={`now-${turn.now}`}\n          word={words[turn.now] ?? ''}\n          leaving={false}\n          clock={turn.was >= 0 ? clock : undefined}\n          stagger={stagger}\n          height={lineH}\n          reduced={reduced}\n          style={accent}\n        />\n      </Animated.View>\n      {after ? (\n        <Text style={text} importantForAccessibility=\"no\" accessibilityElementsHidden>\n          {` ${after}`}\n        </Text>\n      ) : null}\n    </View>\n  );\n}\n\nfunction Word({\n  word,\n  leaving,\n  clock,\n  stagger,\n  height,\n  reduced,\n  style,\n}: {\n  word: string;\n  leaving: boolean;\n  /** Absent for the very first word, which simply sits in place. */\n  clock?: SharedValue<number>;\n  stagger: number;\n  height: number;\n  reduced: boolean;\n  style: StyleProp<TextStyle>;\n}) {\n  return (\n    <View style={[styles.word, leaving && styles.stacked]}>\n      {Array.from(word).map((ch, i) => (\n        <Letter\n          key={i}\n          ch={ch}\n          start={i * stagger}\n          leaving={leaving}\n          clock={clock}\n          height={height}\n          reduced={reduced}\n          style={style}\n        />\n      ))}\n    </View>\n  );\n}\n\nfunction Letter({\n  ch,\n  start,\n  leaving,\n  clock,\n  height,\n  reduced,\n  style,\n}: {\n  ch: string;\n  start: number;\n  leaving: boolean;\n  clock?: SharedValue<number>;\n  height: number;\n  reduced: boolean;\n  style: StyleProp<TextStyle>;\n}) {\n  const animated = useAnimatedStyle(() => {\n    if (!clock) return {};\n    const p = Math.max(0, Math.min(1, (clock.get() - start) / LETTER));\n    // Ease-out quart: letters snap into place and settle.\n    const e = 1 - (1 - p) ** 4;\n    if (reduced) return { opacity: leaving ? 1 - p : p };\n    const travel = height * 0.8;\n    return leaving\n      ? { opacity: 1 - e, transform: [{ translateY: -travel * e }] }\n      : { opacity: e, transform: [{ translateY: travel * (1 - e) }] };\n  });\n  return <Animated.Text style={[style, animated]}>{ch === ' ' ? NBSP : ch}</Animated.Text>;\n}\n\nconst styles = StyleSheet.create({\n  line: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-end' },\n  center: { justifyContent: 'center' },\n  measure: { position: 'absolute', opacity: 0, left: 0, top: 0, width: 2000 },\n  measured: { position: 'absolute', left: 0, top: 0 },\n  slot: { overflow: 'hidden' },\n  word: { flexDirection: 'row' },\n  stacked: { position: 'absolute', left: 0, top: 0 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "text",
+    "web": "live",
+    "perf": {
+      "budget": "One clock drives every letter on the UI thread; the width is one spring. Words are measured once, off screen.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-12",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 22,
+          "baselineMs": 20,
+          "jankyPercent": 3.47,
+          "atRest": "animating",
+          "memoryMb": 164,
+          "notes": "Animates by design while words rotate; pass paused off-screen."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Words crossfade in place; the gap still resizes.",
+      "screenReader": "Reads the whole line once, with every word in turn, instead of announcing each change.",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { WordRotator } from '@/components/kinetik/word-rotator';\n\n<WordRotator\n  before=\"Interfaces that feel\"\n  words={['alive.', 'effortless.', 'yours.']}\n  align=\"center\"\n/>;\n```\n\n`style` sets the type for the whole line; `wordStyle` is laid on top for the rotating word, which is azure by default.\n\n## When to use\n\n- A hero line that says one thing several ways: what an app is for, who it is for.\n- Short, punchy words, three to six of them.\n\n## When not to use\n\n- Words people need to act on. Anything that changes on its own is easy to miss.\n- Long phrases. Use Typewriter, which reads better for whole sentences.\n\n## Notes\n\n- Every word is measured once, off screen, so the gap springs to the right width before the letters arrive.\n- Pass `paused` while the line is off screen.\n- Screen readers hear the line once with every word, not an announcement on every change.\n- With reduced motion the words crossfade in place.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add word-rotator`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

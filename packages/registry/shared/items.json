@@ -1,0 +1,61 @@
+{
+  "$comment": "Shared registry items. Components pull these in through registryDependencies.",
+  "items": [
+    {
+      "name": "kinetik-tokens",
+      "title": "Kinetik Tokens",
+      "description": "Colour, spacing, radius, type and shadow tokens with dark and light palettes, plus the optional KinetikProvider.",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": ["tokens/tokens.ts", "tokens/theme.tsx", "tokens/gradient.ts"]
+    },
+    {
+      "name": "kinetik-motion",
+      "title": "Kinetik Motion",
+      "description": "The shared motion vocabulary: three springs, three durations, easings and the useReduceMotion hook.",
+      "dependencies": ["react-native-reanimated"],
+      "registryDependencies": ["kinetik-tokens"],
+      "files": ["motion/motion.ts", "hooks/use-reduce-motion.ts"]
+    },
+    {
+      "name": "kinetik-haptics",
+      "title": "Kinetik Haptics",
+      "description": "useHaptic: a small, meaningful haptic vocabulary that respects the provider switch.",
+      "dependencies": ["expo-haptics"],
+      "registryDependencies": ["kinetik-tokens"],
+      "files": ["hooks/use-haptic.ts"]
+    },
+    {
+      "name": "kinetik-tilt",
+      "title": "Kinetik Tilt",
+      "description": "useTilt and TiltSensor: device tilt as shared values, read on the UI thread.",
+      "dependencies": ["react-native-reanimated"],
+      "registryDependencies": [],
+      "files": ["hooks/use-tilt.ts"]
+    },
+    {
+      "name": "kinetik-clock",
+      "title": "Kinetik Clock",
+      "description": "useShaderClock: a pausable shader clock advanced on the UI thread, at 60 or 30 fps.",
+      "dependencies": ["react-native-reanimated"],
+      "registryDependencies": [],
+      "files": ["hooks/use-shader-clock.ts"]
+    },
+    {
+      "name": "kinetik-count",
+      "title": "Kinetik Count",
+      "description": "useCountUp: a number that counts towards its target with an ease-out curve, for figures shown as text.",
+      "dependencies": [],
+      "registryDependencies": [],
+      "files": ["hooks/use-count-up.ts"]
+    },
+    {
+      "name": "kinetik-shaders",
+      "title": "Kinetik Shaders",
+      "description": "Shared SkSL noise functions, lazily compiled runtime effects and colour uniforms.",
+      "dependencies": ["@shopify/react-native-skia"],
+      "registryDependencies": [],
+      "files": ["shaders/sksl.ts"]
+    }
+  ]
+}

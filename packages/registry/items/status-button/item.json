@@ -1,0 +1,40 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "status-button",
+  "title": "Status Button",
+  "description": "A button that folds into a spinner while it works, then opens in green with a traced check, or shakes in red.",
+  "category": "interaction",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics", "kinetik-clock"],
+  "files": ["status-button.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Width, colour and icon animations are springs and timings on the UI thread; the spinner's frame callback runs only while loading.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 27,
+        "p90Ms": 34,
+        "baselineMs": 20,
+        "jankyPercent": 7.11,
+        "atRest": "idle",
+        "memoryMb": 158
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "States switch with a short fade: no width spring, spinning or shake.",
+    "screenReader": "Button role; its name follows the state (label, 'in progress', success or error label) and is announced politely. Busy while loading.",
+    "touchTarget": "52 pt tall; at least 52 pt wide while loading."
+  }
+}

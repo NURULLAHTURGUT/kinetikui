@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "flip-ledger",
+  "title": "Flip Ledger",
+  "description": "A two-sided card that turns over in 3D, sized to the taller of its faces.",
+  "category": "card",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["flip-ledger.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Idle: no per-frame work. Flipping: two transforms and two opacities for ~400 ms on the UI thread.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 21,
+        "p90Ms": 31,
+        "baselineMs": 20,
+        "jankyPercent": 3.11,
+        "atRest": "idle",
+        "memoryMb": 157
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Crossfades between faces instead of rotating; no lift.",
+    "screenReader": "Button role with expanded state; only the visible face is exposed. 'Activate' flips the card.",
+    "touchTarget": "The whole card is the target."
+  }
+}

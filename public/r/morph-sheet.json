@@ -1,0 +1,65 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "morph-sheet",
+  "type": "registry:item",
+  "title": "Morph Sheet",
+  "description": "A bottom sheet with snap points that morphs from a floating card into a full sheet and blurs the screen behind.",
+  "categories": [
+    "navigation"
+  ],
+  "dependencies": [
+    "expo-blur",
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/morph-sheet.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/morph-sheet.tsx",
+      "content": "import { BlurTargetView, BlurView } from 'expo-blur';\nimport { useEffect, useRef, useState, type ReactNode } from 'react';\nimport {\n  Pressable,\n  StyleSheet,\n  View,\n  type AccessibilityActionEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport { Gesture, GestureDetector } from 'react-native-gesture-handler';\nimport Animated, {\n  interpolate,\n  useAnimatedProps,\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring, timing } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nconst AnimatedBlurView = Animated.createAnimatedComponent(BlurView);\n\nexport type MorphSheetProps = {\n  /** The screen behind the sheet. It is blurred and set back while the sheet is open. */\n  children: ReactNode;\n  /** Content of the sheet. */\n  sheet: ReactNode;\n  open: boolean;\n  onOpenChange: (open: boolean) => void;\n  /** Heights the sheet rests at, as fractions of the screen, lowest first. Defaults to [0.45, 0.92]. */\n  snapPoints?: readonly number[];\n  /** Snap point to open at. Defaults to 0. */\n  initialSnap?: number;\n  /** Called when the sheet settles at a snap point. */\n  onSnap?: (index: number) => void;\n  /** Blur the screen behind. Defaults to true. */\n  blur?: boolean;\n  /** A tick when the sheet settles at a new snap point. Defaults to true. */\n  haptics?: boolean;\n  /** Accessible name of the sheet. */\n  accessibilityLabel?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst INSET = 10;\nconst RADIUS = 28;\n\n/**\n * A bottom sheet with snap points that morphs as it rises: at its lowest stop\n * it floats as an inset card, at the top it becomes a full-width sheet. The\n * screen behind blurs and steps back.\n */\nexport function MorphSheet({\n  children,\n  sheet,\n  open,\n  onOpenChange,\n  snapPoints = [0.45, 0.92],\n  initialSnap = 0,\n  onSnap,\n  blur = true,\n  haptics = true,\n  accessibilityLabel,\n  style,\n}: MorphSheetProps) {\n  const theme = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const target = useRef<View>(null);\n  const [height, setHeight] = useState(0);\n  const snaps = [...snapPoints].sort((a, b) => a - b);\n  const tops = snaps.map((s) => height * (1 - s));\n  const lowest = tops[0] ?? height;\n  const highest = tops[tops.length - 1] ?? height;\n\n  // Distance from the top of the screen to the top of the sheet.\n  const y = useSharedValue(100_000);\n  const current = useSharedValue(-1);\n\n  const settle = (index: number) => {\n    if (index < 0) {\n      onOpenChange(false);\n      return;\n    }\n    haptic('tick');\n    onSnap?.(index);\n  };\n\n  const animateTo = (to: number, velocity = 0, then?: () => void) => {\n    'worklet';\n    const done = (finished?: boolean) => {\n      'worklet';\n      if (finished && then) then();\n    };\n    y.set(\n      reduced\n        ? withTiming(to, timing('base', true), done)\n        : withSpring(\n            to,\n            { ...spring('smooth', false, velocity), overshootClamping: to >= height },\n            done,\n          ),\n    );\n  };\n\n  useEffect(() => {\n    if (height === 0) return;\n    if (open) {\n      const i = Math.max(0, Math.min(tops.length - 1, initialSnap));\n      current.set(i);\n      animateTo(tops[i] ?? lowest);\n    } else {\n      current.set(-1);\n      animateTo(height);\n    }\n    // Re-run only when visibility or layout changes, not on every snap.\n    // eslint-disable-next-line react-hooks/exhaustive-deps\n  }, [open, height]);\n\n  const pan = Gesture.Pan()\n    .withTestId('morph-sheet')\n    .enabled(open)\n    .activeOffsetY([-8, 8])\n    .failOffsetX([-20, 20])\n    .onUpdate((e) => {\n      const base = tops[Math.max(0, current.get())] ?? lowest;\n      const next = base + e.translationY;\n      // Rubber-band above the highest stop.\n      y.set(next < highest ? highest - (highest - next) * 0.25 : next);\n    })\n    .onEnd((e) => {\n      const projected = y.get() + e.velocityY * 0.12;\n      const closeLine = lowest + (height - lowest) * 0.4;\n      if (projected > closeLine || e.velocityY > 1400) {\n        current.set(-1);\n        animateTo(height, e.velocityY, () => scheduleOnRN(settle, -1));\n        return;\n      }\n      let best = 0;\n      for (let i = 1; i < tops.length; i++) {\n        if (Math.abs((tops[i] ?? 0) - projected) < Math.abs((tops[best] ?? 0) - projected))\n          best = i;\n      }\n      const changed = best !== current.get();\n      current.set(best);\n      animateTo(\n        tops[best] ?? lowest,\n        e.velocityY,\n        changed ? () => scheduleOnRN(settle, best) : undefined,\n      );\n    });\n\n  // 0 closed → 1 at the lowest stop.\n  const visibility = (v: number) => {\n    'worklet';\n    return height === 0 ? 0 : Math.max(0, Math.min(1, (height - v) / Math.max(1, height - lowest)));\n  };\n  // 0 at the lowest stop → 1 at the highest: drives the card-to-sheet morph.\n  const morph = (v: number) => {\n    'worklet';\n    return highest >= lowest ? 0 : Math.max(0, Math.min(1, (lowest - v) / (lowest - highest)));\n  };\n\n  const sheetStyle = useAnimatedStyle(() => {\n    const m = morph(y.get());\n    const inset = INSET * (1 - m);\n    return {\n      top: y.get(),\n      left: inset,\n      right: inset,\n      bottom: inset,\n      borderTopLeftRadius: RADIUS - 8 * m,\n      borderTopRightRadius: RADIUS - 8 * m,\n      borderBottomLeftRadius: RADIUS * (1 - m),\n      borderBottomRightRadius: RADIUS * (1 - m),\n    };\n  });\n  const behind = useAnimatedStyle(() => {\n    const v = visibility(y.get());\n    return reduced ? {} : { transform: [{ scale: 1 - 0.04 * v }], borderRadius: 24 * v };\n  });\n  const scrim = useAnimatedStyle(() => ({ opacity: visibility(y.get()) }));\n  const blurProps = useAnimatedProps(() => ({\n    intensity: Math.max(1, interpolate(visibility(y.get()), [0, 1], [0, 40])),\n  }));\n\n  const onAccessibilityAction = (e: AccessibilityActionEvent) => {\n    const i = current.get();\n    switch (e.nativeEvent.actionName) {\n      case 'escape':\n      case 'close':\n        onOpenChange(false);\n        break;\n      case 'expand':\n        if (i < tops.length - 1) {\n          current.set(i + 1);\n          animateTo(tops[i + 1] ?? highest);\n          settle(i + 1);\n        }\n        break;\n      case 'collapse':\n        if (i > 0) {\n          current.set(i - 1);\n          animateTo(tops[i - 1] ?? lowest);\n          settle(i - 1);\n        }\n        break;\n    }\n  };\n\n  return (\n    <View style={[styles.host, style]} onLayout={(e) => setHeight(e.nativeEvent.layout.height)}>\n      <Animated.View\n        style={[styles.fill, { overflow: 'hidden' }, behind]}\n        importantForAccessibility={open ? 'no-hide-descendants' : 'auto'}\n        accessibilityElementsHidden={open}\n      >\n        <BlurTargetView ref={target} style={styles.fill}>\n          {children}\n        </BlurTargetView>\n      </Animated.View>\n\n      <Animated.View\n        pointerEvents={open ? 'auto' : 'none'}\n        style={[StyleSheet.absoluteFill, scrim]}\n      >\n        {blur ? (\n          <AnimatedBlurView\n            style={StyleSheet.absoluteFill}\n            blurTarget={target}\n            blurMethod=\"dimezisBlurViewSdk31Plus\"\n            tint={theme.scheme === 'dark' ? 'dark' : 'light'}\n            animatedProps={blurProps}\n          />\n        ) : null}\n        <Pressable\n          accessibilityRole=\"button\"\n          accessibilityLabel=\"Close sheet\"\n          onPress={() => onOpenChange(false)}\n          style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.scrim }]}\n        />\n      </Animated.View>\n\n      <GestureDetector gesture={pan}>\n        <Animated.View\n          collapsable={false}\n          accessibilityViewIsModal={open}\n          accessibilityLabel={accessibilityLabel}\n          accessibilityActions={[\n            { name: 'escape' },\n            { name: 'close', label: 'Close' },\n            { name: 'expand', label: 'Expand' },\n            { name: 'collapse', label: 'Collapse' },\n          ]}\n          onAccessibilityAction={onAccessibilityAction}\n          importantForAccessibility={open ? 'yes' : 'no-hide-descendants'}\n          style={[\n            styles.sheet,\n            {\n              backgroundColor: theme.colors.surfaceRaised,\n              borderColor: theme.colors.border,\n              boxShadow: theme.shadow.lg,\n            },\n            sheetStyle,\n          ]}\n        >\n          <View style={styles.grabber}>\n            <View style={[styles.grabberBar, { backgroundColor: theme.colors.borderStrong }]} />\n          </View>\n          {sheet}\n        </Animated.View>\n      </GestureDetector>\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  host: { flex: 1, overflow: 'hidden' },\n  fill: { flex: 1 },\n  sheet: { position: 'absolute', overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth },\n  grabber: { height: 28, alignItems: 'center', justifyContent: 'center' },\n  grabberBar: { width: 40, height: 5, borderRadius: 3 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "navigation",
+    "web": "live",
+    "perf": {
+      "budget": "One shared value (sheet position) drives the morph, scrim, blur intensity and the set-back of the screen; the sheet's insets are laid out on the UI thread while it moves. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-12",
+          "build": "release",
+          "frameMs": 18,
+          "p90Ms": 32,
+          "baselineMs": 20,
+          "jankyPercent": 4.5,
+          "atRest": "idle",
+          "memoryMb": 147
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The sheet moves with a short timing and the screen behind does not scale.",
+      "screenReader": "The open sheet is modal; the screen behind is hidden. Actions: close (also escape), expand and collapse. The scrim is a 'Close sheet' button.",
+      "touchTarget": "The whole sheet is draggable; the scrim closes it."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { MorphSheet } from '@/components/kinetik/morph-sheet';\n\nconst [open, setOpen] = useState(false);\n\n<MorphSheet\n  open={open}\n  onOpenChange={setOpen}\n  snapPoints={[0.5, 0.92]}\n  accessibilityLabel=\"Share photo\"\n  sheet={<ShareOptions />}\n>\n  <PhotoScreen onShare={() => setOpen(true)} />\n</MorphSheet>;\n```\n\nWrap the screen in `MorphSheet` and pass the sheet's content as `sheet`. The sheet opens at `initialSnap`, settles at the nearest snap point when released (taking the flick into account) and closes when dragged or flicked below its lowest stop.\n\n## When to use\n\n- Secondary tasks over the current screen: share, filters, details, quick actions.\n- Content with a short and an expanded form, such as a preview that can grow into a full view.\n\n## When not to use\n\n- Primary navigation or long flows. Push a screen instead.\n- Content that needs its own vertical scrolling at the lowest stop; the drag and the scroll compete. Expand to the top stop first.\n\n## Notes\n\n- The screen behind is wrapped in a `BlurTargetView`, which Android needs for a real blur (`expo-blur`'s `blurMethod` falls back to a tint below Android 12).\n- While open the sheet is modal for screen readers and offers close, expand and collapse actions; the dimmed scrim is a close button.\n- A tick plays when the sheet settles at a new stop.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add morph-sheet`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

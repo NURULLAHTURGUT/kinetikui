@@ -1,0 +1,34 @@
+## Usage
+
+```tsx
+import { DockBar } from '@/components/kinetik/dock-bar';
+
+<DockBar
+  accessibilityLabel="Main"
+  value={tab}
+  onChange={setTab}
+  items={[
+    { key: 'home', label: 'Home', icon: ({ color }) => <HomeIcon color={color} /> },
+    { key: 'search', label: 'Search', icon: ({ color }) => <SearchIcon color={color} /> },
+    { key: 'profile', label: 'Profile', icon: ({ color }) => <ProfileIcon color={color} /> },
+  ]}
+/>;
+```
+
+Place it at the bottom of the screen above the safe area. `icon` receives the active state and a colour so your icons follow the theme.
+
+## When to use
+
+- Primary navigation with three to six destinations.
+- Apps with personality where the bar itself is part of the brand.
+
+## When not to use
+
+- More than six items; the dock gets cramped and the magnification overlaps.
+- Screens that need every pixel; a floating dock covers content beneath it.
+
+## Notes
+
+- A tap chooses an item; sliding previews items with a label bubble and a tick per item, and releasing chooses the one under the finger.
+- The bar claims the touch as soon as the finger lands, so it should not sit inside a horizontal scroll view.
+- Under reduced motion the items keep their size; the label still shows while sliding.

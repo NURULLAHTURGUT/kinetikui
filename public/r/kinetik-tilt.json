@@ -1,0 +1,29 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "kinetik-tilt",
+  "type": "registry:item",
+  "title": "Kinetik Tilt",
+  "description": "useTilt and TiltSensor: device tilt as shared values, read on the UI thread.",
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "src/lib/kinetik/hooks/use-tilt.ts",
+      "type": "registry:file",
+      "target": "~/lib/kinetik/hooks/use-tilt.ts",
+      "content": "import {\n  useAnimatedReaction,\n  useAnimatedSensor,\n  useSharedValue,\n  SensorType,\n  type SharedValue,\n} from 'react-native-reanimated';\n\nexport type Tilt = {\n  /** Left/right tilt, -1 (left) … 1 (right). */\n  x: SharedValue<number>;\n  /** Toward/away tilt relative to how the device was held, -1 (away) … 1 (toward). */\n  y: SharedValue<number>;\n};\n\n/** Shared values that a `TiltSensor` (or a gesture) writes into. */\nexport function useTilt(): Tilt {\n  const x = useSharedValue(0);\n  const y = useSharedValue(0);\n  return { x, y };\n}\n\nexport type TiltSensorProps = {\n  target: Tilt;\n  /** Device angle, in degrees, that maps to a full ±1 tilt. Defaults to 22°. */\n  range?: number;\n  /** Sensor sample interval in ms. Defaults to 16 (≈60 Hz). */\n  interval?: number;\n};\n\nconst G = 9.81;\n/** ±1 tilt spans the card's light travel, so 0.004 moves the glint well under a pixel. */\nconst DEADBAND = 0.004;\n\ntype Vec = { x: number; y: number };\n\n/**\n * One sensor sample: returns the new neutral pose and the tilt to write, or\n * `null` for an axis whose change is too small to see.\n */\nexport function tiltStep(g: Vec, baseline: Vec | null, x: number, y: number, span: number) {\n  'worklet';\n  // Gravity in device axes, normalised to ±1 g.\n  const gx = Math.max(-1, Math.min(1, g.x / G));\n  const gy = Math.max(-1, Math.min(1, g.y / G));\n  if (baseline === null) return { baseline: { x: gx, y: gy }, x: null, y: null };\n  // Low-pass the neutral pose so a change of grip recentres within ~2 s.\n  const next = {\n    x: baseline.x + (gx - baseline.x) * 0.01,\n    y: baseline.y + (gy - baseline.y) * 0.01,\n  };\n  // Skip sub-perceptual changes so a device at rest (where sensor noise and\n  // the recentring drift never settle exactly) stops redrawing.\n  const nx = Math.max(-1, Math.min(1, (gx - baseline.x) / span));\n  const ny = Math.max(-1, Math.min(1, (gy - baseline.y) / span));\n  return {\n    baseline: next,\n    x: Math.abs(nx - x) > DEADBAND ? nx : null,\n    y: Math.abs(ny - y) > DEADBAND ? ny : null,\n  };\n}\n\n/**\n * Feeds device tilt into a `Tilt` on the UI thread. Render it only while the\n * effect is visible — unmounting it unregisters the sensor:\n *\n *   {active && <TiltSensor target={tilt} />}\n *\n * The neutral pose recentres slowly to however the user is holding the\n * device, so the effect always starts from rest.\n */\nexport function TiltSensor({ target, range = 22, interval = 16 }: TiltSensorProps) {\n  const sensor = useAnimatedSensor(SensorType.GRAVITY, { interval });\n  const baseline = useSharedValue<{ x: number; y: number } | null>(null);\n  const span = Math.sin((Math.min(Math.max(range, 5), 80) * Math.PI) / 180);\n\n  useAnimatedReaction(\n    () => sensor.sensor.get(),\n    (g) => {\n      const next = tiltStep(g, baseline.get(), target.x.get(), target.y.get(), span);\n      baseline.set(next.baseline);\n      if (next.x !== null) target.x.set(next.x);\n      if (next.y !== null) target.y.set(next.y);\n    },\n  );\n\n  return null;\n}\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "shared",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "requires": "React Native New Architecture (Reanimated 4)"
+  }
+}

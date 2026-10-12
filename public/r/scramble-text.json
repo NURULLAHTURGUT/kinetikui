@@ -1,0 +1,60 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "scramble-text",
+  "type": "registry:item",
+  "title": "Scramble Text",
+  "description": "Characters cycle through random glyphs and lock into place from left to right.",
+  "categories": [
+    "text"
+  ],
+  "dependencies": [],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/scramble-text.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/scramble-text.tsx",
+      "content": "import { useEffect, useRef, useState } from 'react';\nimport {\n  StyleSheet,\n  Text,\n  View,\n  type StyleProp,\n  type TextStyle,\n  type ViewStyle,\n} from 'react-native';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport const SCRAMBLE_GLYPHS = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789#%&@$*+=';\n\n/** Glyphs change every 55 ms: fast enough to read as noise, slow enough not to strobe. */\nconst TICK = 55;\n\nexport type ScrambleTextProps = {\n  /** The text to settle on. Changing it scrambles again. */\n  text: string;\n  /** Time in ms for all characters to settle. Defaults to 900. */\n  duration?: number;\n  /** Wait before the first character settles, in ms. Defaults to 0. */\n  delay?: number;\n  /** Glyphs used while scrambling. */\n  glyphs?: string;\n  /** Change this value to replay the effect with the same text. */\n  replayKey?: string | number;\n  /** Scramble on first render. Defaults to true. */\n  animateOnMount?: boolean;\n  /** Called when every character has settled. */\n  onDone?: () => void;\n  style?: StyleProp<TextStyle>;\n  containerStyle?: StyleProp<ViewStyle>;\n};\n\n/** Deterministic 0–1 jitter per character, so replays look the same. */\nfunction jitter(i: number) {\n  return ((i * 9301 + 49297) % 233280) / 233280;\n}\n\n/** The string shown `elapsed` ms into the effect, and whether it has settled. */\nexport function scrambleFrame(\n  goal: string,\n  elapsed: number,\n  duration: number,\n  delay: number,\n  glyphs: string,\n): { text: string; settled: boolean } {\n  const n = goal.length;\n  const tick = Math.floor(elapsed / TICK);\n  let text = '';\n  let settled = true;\n  for (let i = 0; i < n; i++) {\n    const ch = goal.charAt(i);\n    if (ch === ' ' || ch === '\\n') {\n      text += ch;\n      continue;\n    }\n    const at = delay + (n <= 1 ? 0 : i / (n - 1)) * duration * 0.65 + duration * 0.35 * jitter(i);\n    if (elapsed >= at) {\n      text += ch;\n    } else {\n      settled = false;\n      text += glyphs.charAt((tick * 31 + i * 17) % glyphs.length);\n    }\n  }\n  return { text, settled };\n}\n\n/**\n * Text whose characters cycle through random glyphs and lock into place from\n * left to right. Best for headlines, labels and codes rather than paragraphs.\n *\n * The glyphs step on a ~18 Hz timer for the length of the effect and then\n * stop. (Driving a TextInput's text from the UI thread every frame is avoided\n * on purpose: on Android's New Architecture each update chains a new text\n * input state onto the last, and long chains crash when released.)\n */\nexport function ScrambleText({\n  text,\n  duration = 900,\n  delay = 0,\n  glyphs = SCRAMBLE_GLYPHS,\n  replayKey,\n  animateOnMount = true,\n  onDone,\n  style,\n  containerStyle,\n}: ScrambleTextProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const [shown, setShown] = useState(() =>\n    animateOnMount && !reduced ? scrambleFrame(text, 0, duration, delay, glyphs).text : text,\n  );\n  const [box, setBox] = useState<{ width: number; height: number } | null>(null);\n  // Show the first scrambled frame in the same render the text changes.\n  const [played, setPlayed] = useState({ text, replayKey });\n  if (played.text !== text || played.replayKey !== replayKey) {\n    setPlayed({ text, replayKey });\n    setShown(scrambleFrame(text, 0, duration, delay, glyphs).text);\n  }\n  const first = useRef(true);\n  const onDoneRef = useRef(onDone);\n  useEffect(() => {\n    onDoneRef.current = onDone;\n  }, [onDone]);\n\n  useEffect(() => {\n    const skip = reduced || (first.current && !animateOnMount);\n    first.current = false;\n    if (skip) return;\n    const start = Date.now();\n    const step = () => {\n      const frame = scrambleFrame(text, Date.now() - start, duration, delay, glyphs);\n      setShown(frame.text);\n      if (frame.settled) {\n        clearInterval(timer);\n        onDoneRef.current?.();\n      }\n    };\n    const timer = setInterval(step, TICK);\n    return () => clearInterval(timer);\n  }, [text, replayKey, reduced, animateOnMount, duration, delay, glyphs]);\n\n  const textStyle: StyleProp<TextStyle> = [\n    { color: colors.text, fontSize: font.size['2xl'], fontWeight: font.weight.bold },\n    style,\n  ];\n  // Scramble glyphs can be wider than the settled text. Single-line text gets\n  // headroom so a wide glyph never wraps; multi-line text keeps its exact width\n  // so line breaks match the settled text.\n  const multiline = text.includes('\\n');\n\n  return (\n    <View\n      accessible\n      accessibilityRole=\"text\"\n      accessibilityLabel={text}\n      style={[styles.container, containerStyle]}\n    >\n      {/* The settled text sizes the box so scrambling never shifts layout. */}\n      <Text\n        style={[textStyle, styles.ghost]}\n        importantForAccessibility=\"no-hide-descendants\"\n        accessibilityElementsHidden\n        onLayout={(e) => setBox(e.nativeEvent.layout)}\n      >\n        {text}\n      </Text>\n      <Text\n        importantForAccessibility=\"no-hide-descendants\"\n        accessibilityElementsHidden\n        numberOfLines={multiline ? undefined : 1}\n        style={[\n          textStyle,\n          styles.overlay,\n          box && {\n            width: multiline ? box.width : Math.max(box.width * 1.5, box.width + 48),\n          },\n        ]}\n      >\n        {reduced ? text : shown}\n      </Text>\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  container: { alignSelf: 'flex-start' },\n  ghost: { opacity: 0 },\n  overlay: { position: 'absolute', left: 0, top: 0 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "text",
+    "web": "live",
+    "perf": {
+      "budget": "Re-renders one Text at ~18 Hz for `duration` ms, then stops. Deliberately not driven per frame through a TextInput: on Android Fabric that chains text-input states and can crash.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-12",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 22,
+          "baselineMs": 20,
+          "jankyPercent": 17.96,
+          "atRest": "animating",
+          "memoryMb": 155,
+          "notes": "Frames at rest in the measurement came from the demo cycling words; the effect stops once the text settles."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Shows the final text immediately.",
+      "screenReader": "Exposed as a single text element with the final string; the scrambling glyphs are hidden.",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { ScrambleText } from '@/components/kinetik/scramble-text';\n\n<ScrambleText text=\"KINETIK\" style={{ fontSize: 48, fontWeight: '800' }} />;\n```\n\nThe effect plays on mount and whenever `text` changes. Change `replayKey` to replay it with the same text.\n\n## When to use\n\n- Headlines, codes and status labels that change: a build number, a reveal, a mode switch.\n- Monospace or uppercase text, where the cycling glyphs keep a steady rhythm.\n\n## When not to use\n\n- Paragraphs. Scrambled body text is unreadable and long strings wrap unpredictably while cycling.\n- Text the user is trying to read while it changes, such as prices during checkout.\n\n## Notes\n\n- The settled text sizes the component, so scrambling never shifts the layout around it.\n- While scrambling, one `Text` re-renders about 18 times a second; when every character has settled the timer stops. This is deliberate: driving a `TextInput`'s text from the UI thread every frame chains text-input states on Android's New Architecture and can crash a long-running screen.\n- Screen readers get the final text immediately.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add scramble-text`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

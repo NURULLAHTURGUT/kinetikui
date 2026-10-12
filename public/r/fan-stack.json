@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "fan-stack",
+  "type": "registry:item",
+  "title": "Fan Stack",
+  "description": "A loose pile of pictures that fans out like a hand of cards; tap one to lift it out of the fan.",
+  "categories": [
+    "card"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/fan-stack.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/fan-stack.tsx",
+      "content": "import { useEffect, useState } from 'react';\nimport {\n  Image,\n  Pressable,\n  StyleSheet,\n  View,\n  type ImageSourcePropType,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withDelay,\n  withSpring,\n} from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type FanItem = {\n  key: string;\n  image: ImageSourcePropType;\n  /** Names the card for screen readers. */\n  title: string;\n};\n\nexport type FanStackProps = {\n  /** Two to seven pictures; the last one lies on top of the pile. */\n  items: readonly FanItem[];\n  /** Width of each card. Defaults to 148. */\n  cardWidth?: number;\n  /** Card height divided by width. Defaults to 1.3. */\n  aspect?: number;\n  /** Degrees between neighbouring cards when fanned. Defaults to 11. */\n  spread?: number;\n  /** Controlled fan state. Leave unset to let the stack keep its own. */\n  open?: boolean;\n  onOpenChange?: (open: boolean) => void;\n  /** Called with the lifted card, or null when none is. */\n  onSelect?: (index: number | null) => void;\n  /** Names the pile for screen readers. Defaults to 'Photos'. */\n  accessibilityLabel?: string;\n  /** A tap as it fans out and a tick as a card lifts. Defaults to true. */\n  haptics?: boolean;\n  style?: StyleProp<ViewStyle>;\n};\n\n/** Each card's lie in the pile, in degrees: loose, never neat. */\nconst PILE = [-5, 4, -8, 7, -2, 6, -6];\n/** Delay between cards as they fan out, in ms. */\nconst STAGGER = 24;\n\n/**\n * A loose pile of pictures that fans out like a hand of cards. Tap the pile\n * to spread it; tap a card to lift it out of the fan, and tap it again to\n * gather them all back up.\n */\nexport function FanStack({\n  items,\n  cardWidth = 148,\n  aspect = 1.3,\n  spread = 11,\n  open,\n  onOpenChange,\n  onSelect,\n  accessibilityLabel = 'Photos',\n  haptics = true,\n  style,\n}: FanStackProps) {\n  const { radius } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const [inner, setInner] = useState(false);\n  const [selected, setSelected] = useState<number | null>(null);\n  const isOpen = open ?? inner;\n  const lifted = isOpen ? selected : null;\n\n  const n = items.length;\n  const height = Math.round(cardWidth * aspect);\n\n  const setOpen = (next: boolean) => {\n    if (open === undefined) setInner(next);\n    onOpenChange?.(next);\n  };\n  const lift = (i: number | null) => {\n    setSelected(i);\n    onSelect?.(i);\n  };\n\n  const press = (i: number) => {\n    if (!isOpen) {\n      haptic('tap');\n      setSelected(null);\n      setOpen(true);\n    } else if (lifted === i) {\n      // A second tap on the lifted card gathers the pile.\n      lift(null);\n      setOpen(false);\n    } else {\n      haptic('tick');\n      lift(i);\n    }\n  };\n\n  return (\n    <View\n      style={[\n        styles.stage,\n        // Room for the fan's swing and the lifted card.\n        { height: height + 64, minWidth: cardWidth * 2 },\n        style,\n      ]}\n    >\n      {items.map((item, i) => (\n        <Card\n          key={item.key}\n          item={item}\n          index={i}\n          count={n}\n          width={cardWidth}\n          height={height}\n          radius={radius.lg}\n          spread={spread}\n          open={isOpen}\n          state={lifted === null ? 'rest' : lifted === i ? 'lifted' : 'behind'}\n          reduced={reduced}\n          // Closed, the pile is one control: the top card stands for it.\n          role={isOpen ? 'card' : i === n - 1 ? 'pile' : 'hidden'}\n          pileLabel={`${accessibilityLabel}, ${n} items`}\n          onPress={() => press(i)}\n        />\n      ))}\n    </View>\n  );\n}\n\nfunction Card({\n  item,\n  index,\n  count,\n  width,\n  height,\n  radius,\n  spread,\n  open,\n  state,\n  reduced,\n  role,\n  pileLabel,\n  onPress,\n}: {\n  item: FanItem;\n  index: number;\n  count: number;\n  width: number;\n  height: number;\n  radius: number;\n  spread: number;\n  open: boolean;\n  state: 'rest' | 'lifted' | 'behind';\n  reduced: boolean;\n  role: 'card' | 'pile' | 'hidden';\n  pileLabel: string;\n  onPress: () => void;\n}) {\n  const { colors, shadow } = useKinetikTheme();\n  const fan = useSharedValue(open ? 1 : 0);\n  const up = useSharedValue(state === 'lifted' ? 1 : 0);\n  const dim = useSharedValue(state === 'behind' ? 1 : 0);\n  const pressed = useSharedValue(0);\n\n  useEffect(() => {\n    // Out from the top of the pile down; back in the other way.\n    const order = open ? count - 1 - index : index;\n    const to = withSpring(open ? 1 : 0, spring(open ? 'bouncy' : 'smooth', reduced));\n    fan.set(reduced ? to : withDelay(order * STAGGER, to));\n  }, [open, index, count, reduced, fan]);\n  useEffect(() => {\n    up.set(withSpring(state === 'lifted' ? 1 : 0, spring('bouncy', reduced)));\n    dim.set(withSpring(state === 'behind' ? 1 : 0, spring('smooth', reduced)));\n  }, [state, reduced, up, dim]);\n\n  const offset = index - (count - 1) / 2;\n  const pile = PILE[index % PILE.length]!;\n  const angle = offset * spread;\n  const x = offset * width * 0.44;\n  // Cards further from the middle dip, so the fan follows an arc.\n  const dip = offset * offset * 5;\n\n  const style = useAnimatedStyle(() => {\n    const f = fan.get();\n    const u = up.get();\n    return {\n      opacity: 1 - dim.get() * 0.35,\n      transform: [\n        { translateX: x * f },\n        // Stacked a little higher card by card in the pile; on the arc when fanned.\n        { translateY: -index * 1.5 + (dip + index * 1.5) * f - u * 30 },\n        { rotate: `${pile + (angle - pile) * f - angle * 0.7 * u}deg` },\n        { scale: (1 + u * 0.07) * (1 - pressed.get() * 0.03) },\n      ],\n    };\n  });\n\n  return (\n    <Animated.View\n      style={[\n        styles.card,\n        {\n          width,\n          height,\n          marginLeft: -width / 2,\n          borderRadius: radius,\n          boxShadow: shadow.lg,\n          backgroundColor: colors.surfaceRaised,\n          zIndex: state === 'lifted' ? count + 1 : index,\n        },\n        style,\n      ]}\n      accessibilityElementsHidden={role === 'hidden'}\n      importantForAccessibility={role === 'hidden' ? 'no-hide-descendants' : 'auto'}\n    >\n      <Pressable\n        onPress={onPress}\n        onPressIn={() => pressed.set(withSpring(1, spring('snappy', reduced)))}\n        onPressOut={() => pressed.set(withSpring(0, spring('bouncy', reduced)))}\n        accessibilityRole=\"button\"\n        accessibilityLabel={role === 'pile' ? pileLabel : item.title}\n        accessibilityHint={role === 'pile' ? 'Spreads them out' : undefined}\n        accessibilityState={role === 'card' ? { selected: state === 'lifted' } : undefined}\n        style={[styles.press, { borderRadius: radius, borderColor: colors.border }]}\n      >\n        <Image source={item.image} style={StyleSheet.absoluteFill} resizeMode=\"cover\" />\n      </Pressable>\n    </Animated.View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  stage: { width: '100%', alignItems: 'center' },\n  card: {\n    position: 'absolute',\n    left: '50%',\n    bottom: 24,\n    // Turns about the bottom edge, like cards held in a hand.\n    transformOrigin: 'bottom',\n  },\n  press: { flex: 1, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "card",
+    "web": "live",
+    "perf": {
+      "budget": "Three springs per card (fan, lift, dim), transforms and opacity only. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-12",
+          "build": "release",
+          "frameMs": 26,
+          "p90Ms": 38,
+          "baselineMs": 20,
+          "jankyPercent": 3.08,
+          "atRest": "idle",
+          "memoryMb": 157
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Cards move straight to the fan or the pile without the stagger or the bounce.",
+      "screenReader": "Gathered, the pile is one button ('Photos, 5 items'); fanned, every card is a button with a selected state.",
+      "touchTarget": "Cards are 148 by 192 pt by default; overlapping cards keep at least 60 pt of their width uncovered."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { FanStack } from '@/components/kinetik/fan-stack';\n\n<FanStack\n  accessibilityLabel=\"Desert trip\"\n  items={photos.map((p) => ({ key: p.id, image: { uri: p.url }, title: p.title }))}\n  onSelect={(i) => setFocus(i)}\n/>;\n```\n\nThe stack centres itself in the width it is given and reserves the height the fan needs. The last item lies on top of the pile.\n\n## When to use\n\n- A small set of pictures that belongs together: an album, a trip, a moodboard.\n- Previews where the playful gesture is part of the charm, such as a profile or a shared memory.\n\n## When not to use\n\n- More than seven items. Use a grid or a carousel.\n- Pictures people need to compare side by side. The fan overlaps them.\n\n## Notes\n\n- Tap the pile to fan it out, tap a card to lift it, tap the lifted card to gather the pile.\n- Pass `open` and `onOpenChange` to fan it out from elsewhere, for example when its section scrolls into view.\n- With reduced motion the cards move without the stagger or the bounce.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add fan-stack`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

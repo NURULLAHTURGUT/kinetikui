@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "confetti-burst",
+  "title": "Confetti Burst",
+  "description": "A burst of confetti drawn as one Skia Atlas, with physics on the UI thread.",
+  "category": "feedback",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["confetti-burst.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "All particles are one Atlas draw call. Physics runs in a frame callback only while particles are alive (about 3 s per burst), then stops.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 27,
+        "p90Ms": 31,
+        "baselineMs": 20,
+        "jankyPercent": 2.95,
+        "atRest": "idle",
+        "memoryMb": 154
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "No particles; the success haptic still plays.",
+    "screenReader": "Decorative: the canvas is hidden. Announce the event that triggered the burst in your own UI.",
+    "touchTarget": "Not interactive; touches pass through to the content."
+  }
+}

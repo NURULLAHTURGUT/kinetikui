@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "aurora-veil",
+  "title": "Aurora Veil",
+  "description": "A slow, flowing aurora drawn by a fragment shader, for screen and hero backgrounds.",
+  "category": "background",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-clock", "kinetik-shaders"],
+  "files": ["aurora-veil.tsx", "aurora-veil.shader.ts"],
+  "web": "live",
+  "perf": {
+    "budget": "One full-surface fragment shader (4-octave fbm, twice) per frame. frameRate={30} halves the work; reduceEffects draws a single frame.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 24,
+        "p90Ms": 26,
+        "baselineMs": 20,
+        "jankyPercent": 0,
+        "atRest": "animating",
+        "memoryMb": 154,
+        "notes": "Animates by design while active; pass active={false} off-screen. Clock drops to 30 fps with reduceEffects."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "A single still frame of the aurora; no per-frame work.",
+    "screenReader": "Decorative: the canvas is hidden from assistive tech. Children stay accessible.",
+    "touchTarget": "Not interactive."
+  }
+}

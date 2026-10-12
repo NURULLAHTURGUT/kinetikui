@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "activity-rings",
+  "title": "Activity Rings",
+  "description": "Concentric progress rings that wind up one after another; a ring past its goal laps itself.",
+  "category": "data",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["activity-rings.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Ring paths are built once per size; the wind-up trims them with one shared value per ring, drawn by a single Skia canvas.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 28,
+        "baselineMs": 20,
+        "jankyPercent": 3.8,
+        "atRest": "idle",
+        "memoryMb": 153
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Rings appear filled to their values and selection fades without delay.",
+    "screenReader": "The rings read as an image listing every ring's value, goal and share; legend rows are buttons with a selected state.",
+    "touchTarget": "Legend rows are at least 44 pt tall and span the legend's width."
+  }
+}

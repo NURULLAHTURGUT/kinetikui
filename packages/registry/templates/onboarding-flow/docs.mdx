@@ -1,0 +1,37 @@
+## Usage
+
+```tsx
+import { OnboardingFlow } from '@/components/kinetik/screens/onboarding-flow';
+
+export default function Welcome() {
+  return (
+    <OnboardingFlow
+      brand="Acme"
+      onFinish={() => router.replace('/home')}
+      slides={[
+        { key: 'a', eyebrow: 'Plan', title: 'Your week at a glance.', body: '…', visual: <Hero /> },
+        { key: 'b', title: 'Share with your team.', body: '…' },
+      ]}
+    />
+  );
+}
+```
+
+Render it as a full screen (it fills its parent and handles the safe area).
+
+## When to use
+
+- First launch, or after a major update, to explain two to four ideas.
+- When each idea has a visual worth showing; the illustrations carry the flow.
+
+## When not to use
+
+- To ask for permissions or collect data. Ask in context, where the reason is obvious.
+- More than four slides. People skip long tours; teach in the product instead.
+
+## Notes
+
+- Default slides show Tilt Deck, Glint Card and Scramble Text; pass `slides` to replace them.
+- The round next button grows into `finishLabel` as the last slide arrives.
+- The title of each slide replays its cascade when the slide arrives.
+- `onSkip` defaults to `onFinish`.

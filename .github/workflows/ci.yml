@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Registry, lint, types, tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Registry output is up to date
+        run: pnpm check:registry
+
+      # Lint and typecheck resolve files that are generated, not committed:
+      # the docs data (apps/docs/generated) and the MCP server build.
+      - name: Generate docs data and the MCP build
+        run: pnpm generate
+
+      - name: Formatting
+        run: pnpm format:check
+
+      - name: Lint (zero warnings)
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit and component tests
+        run: pnpm test
+
+      - name: Registry integrity
+        run: pnpm test:integrity
+
+      - name: Docs site builds
+        run: pnpm --filter @kinetik/docs build
+
+      - name: shadcn registry schema
+        run: |
+          npx --yes shadcn@latest registry validate ./registry.json
+          npx --yes shadcn@latest registry validate registry.json --cwd public/r

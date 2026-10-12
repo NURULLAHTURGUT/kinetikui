@@ -1,0 +1,33 @@
+## Usage
+
+```tsx
+import { RadarChart } from '@/components/kinetik/radar-chart';
+
+<RadarChart
+  accessibilityLabel="Two trails compared"
+  axes={['Distance', 'Climb', 'Views', 'Shade', 'Water']}
+  series={[
+    { key: 'ridge', label: 'Ridge loop', values: [8, 9, 10, 3, 4] },
+    { key: 'lake', label: 'Lake path', values: [5, 2, 7, 8, 10] },
+  ]}
+  max={10}
+/>;
+```
+
+Axes run clockwise from the top. Pass `max` when the scale is fixed (scores out of 10); otherwise the largest value sits on the outer ring.
+
+## When to use
+
+- Comparing two or three things across the same handful of qualities: products, plans, routes, skills.
+- Profiles where the overall shape matters more than any single value.
+
+## When not to use
+
+- Precise comparisons on one quality. Use a bar chart.
+- More than eight axes or three series. The shapes turn into a tangle.
+
+## Notes
+
+- Changing `values` morphs each shape from where it is to the new values, even mid-morph.
+- Legend chips show and hide their series, so people can compare two at a time.
+- With reduced motion the shapes appear and change without moving.

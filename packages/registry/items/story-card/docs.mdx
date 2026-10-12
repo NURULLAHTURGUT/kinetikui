@@ -1,0 +1,32 @@
+## Usage
+
+```tsx
+import { StoryCard } from '@/components/kinetik/story-card';
+
+<StoryCard
+  stories={[
+    { key: 'dunes', image: require('./dunes.jpg'), title: 'Huacachina', caption: 'Day 1' },
+    { key: 'sands', image: require('./sands.jpg'), title: 'White Sands', caption: 'Day 2' },
+  ]}
+  header={<SourceRow />}
+/>;
+```
+
+The card takes the width it is given and sets its height from `aspect` (1.5 by default). `header` is laid over the top under the bars, for a source and a time.
+
+## When to use
+
+- Short visual sequences people tap through: trip highlights, product launches, a recap.
+- Onboarding told in pictures, where people set the pace.
+
+## When not to use
+
+- Content people need to read closely or come back to. Use a list or a carousel they control.
+- Long videos. This shows pictures; pair it with a video player for footage.
+
+## Notes
+
+- Tap the left third to go back, anywhere else to go forward; hold to pause. Pass `paused` while the card is off screen.
+- While a screen reader runs, stories do not move on by themselves; people step with the adjust gesture.
+- Every picture is mounted once and crossfaded, so keep the set short (up to about ten) and the images small.
+- With reduced motion pictures switch without the fade or the drift.

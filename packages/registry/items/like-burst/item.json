@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "like-burst",
+  "title": "Like Burst",
+  "description": "A like button whose heart pops with a ring of light and a spray of sparks while the count rolls over.",
+  "category": "interaction",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["like-burst.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One small Skia canvas: a ring, ten dots and the heart, all read from three shared values. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 20,
+        "p90Ms": 31,
+        "baselineMs": 20,
+        "jankyPercent": 4.47,
+        "atRest": "idle",
+        "memoryMb": 153
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The heart fills without the pop, the ring or the sparks, and the count changes in place.",
+    "screenReader": "A toggle button with a checked state; the count is its value.",
+    "touchTarget": "The heart's box is 57 pt at the default size and the row is at least 44 pt tall."
+  }
+}

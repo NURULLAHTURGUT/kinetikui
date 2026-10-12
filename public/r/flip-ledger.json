@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "flip-ledger",
+  "type": "registry:item",
+  "title": "Flip Ledger",
+  "description": "A two-sided card that turns over in 3D, sized to the taller of its faces.",
+  "categories": [
+    "card"
+  ],
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/flip-ledger.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/flip-ledger.tsx",
+      "content": "import { useEffect, useState, type ReactNode } from 'react';\nimport {\n  StyleSheet,\n  View,\n  type AccessibilityActionEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport { Gesture, GestureDetector } from 'react-native-gesture-handler';\nimport Animated, {\n  interpolate,\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring, timing } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type FlipLedgerProps = {\n  /** Face shown when not flipped. */\n  front: ReactNode;\n  /** Face shown when flipped. */\n  back: ReactNode;\n  /** Controlled flip state. Leave undefined to let the card manage it. */\n  flipped?: boolean;\n  /** Initial state when uncontrolled. Defaults to false. */\n  defaultFlipped?: boolean;\n  /** Called with the next state whenever the card is flipped by the user. */\n  onFlippedChange?: (flipped: boolean) => void;\n  /** Rotation axis. `y` flips like a page, `x` like a flap. Defaults to `y`. */\n  axis?: 'x' | 'y';\n  /** Flip when tapped. Defaults to true. Set false to drive it only through `flipped`. */\n  flipOnPress?: boolean;\n  /** Plays a light tap when the card lands. Defaults to true. */\n  haptics?: boolean;\n  /** Accessibility label for the card as a whole. */\n  accessibilityLabel?: string;\n  /** Corner radius. Defaults to the theme `xl` radius. */\n  radius?: number;\n  style?: StyleProp<ViewStyle>;\n  /** Style applied to both faces (padding, background). */\n  faceStyle?: StyleProp<ViewStyle>;\n};\n\n/** A two-sided card that turns over in 3D, sized to the taller of its faces. */\nexport function FlipLedger({\n  front,\n  back,\n  flipped: controlled,\n  defaultFlipped = false,\n  onFlippedChange,\n  axis = 'y',\n  flipOnPress = true,\n  haptics = true,\n  accessibilityLabel,\n  radius,\n  style,\n  faceStyle,\n}: FlipLedgerProps) {\n  const theme = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const [internal, setInternal] = useState(defaultFlipped);\n  const [heights, setHeights] = useState({ front: 0, back: 0 });\n  const contentHeight = Math.max(heights.front, heights.back);\n  const flipped = controlled ?? internal;\n  const r = radius ?? theme.radius.xl;\n\n  // 0 = front, 1 = back. Rotation and lift both derive from it.\n  const progress = useSharedValue(flipped ? 1 : 0);\n  const press = useSharedValue(0);\n\n  useEffect(() => {\n    const target = flipped ? 1 : 0;\n    if (reduced) {\n      progress.set(withTiming(target, timing('base')));\n    } else {\n      progress.set(withSpring(target, spring('smooth')));\n    }\n  }, [flipped, reduced, progress]);\n\n  const toggle = () => {\n    const next = !flipped;\n    if (controlled === undefined) setInternal(next);\n    onFlippedChange?.(next);\n    haptic('tap');\n  };\n\n  const tap = Gesture.Tap()\n    .withTestId('flip-ledger')\n    .enabled(flipOnPress)\n    .onBegin(() => {\n      press.set(withSpring(1, spring('snappy', reduced)));\n    })\n    .onFinalize(() => {\n      press.set(withSpring(0, spring('snappy', reduced)));\n    })\n    .onEnd(() => {\n      scheduleOnRN(toggle);\n    });\n\n  const flipX = axis === 'x';\n\n  const container = useAnimatedStyle(() => {\n    // The card lifts slightly at the midpoint of the turn and when pressed.\n    const lift = Math.sin(progress.get() * Math.PI);\n    return {\n      transform: [{ scale: 1 - press.get() * 0.02 + (reduced ? 0 : lift * 0.04) }],\n    };\n  });\n\n  const frontStyle = useAnimatedStyle(() => {\n    const p = progress.get();\n    if (reduced) return { opacity: 1 - p };\n    return { opacity: p < 0.5 ? 1 : 0, transform: turn(p * 180, flipX) };\n  });\n\n  const backStyle = useAnimatedStyle(() => {\n    const p = progress.get();\n    if (reduced) return { opacity: p };\n    return { opacity: p >= 0.5 ? 1 : 0, transform: turn(p * 180 - 180, flipX) };\n  });\n\n  // A shade sweeps across each face as it turns away from the viewer.\n  const frontShade = useAnimatedStyle(() => ({\n    opacity: reduced ? 0 : interpolate(progress.get(), [0, 0.5], [0, 0.35], 'clamp'),\n  }));\n  const backShade = useAnimatedStyle(() => ({\n    opacity: reduced ? 0 : interpolate(progress.get(), [0.5, 1], [0.35, 0], 'clamp'),\n  }));\n\n  // Both faces take the height of the taller one, so nothing clips mid-turn.\n  const measure = (side: 'front' | 'back', height: number) => {\n    setHeights((h) => (Math.abs(h[side] - height) < 0.5 ? h : { ...h, [side]: height }));\n  };\n\n  const onAccessibilityAction = (e: AccessibilityActionEvent) => {\n    if (e.nativeEvent.actionName === 'activate' && flipOnPress) toggle();\n  };\n\n  const face: StyleProp<ViewStyle> = [\n    styles.face,\n    {\n      borderRadius: r,\n      backgroundColor: theme.colors.surface,\n      borderColor: theme.colors.border,\n      padding: theme.space[5],\n      boxShadow: theme.shadow.md,\n    },\n    faceStyle,\n  ];\n  const shade = [styles.shade, { borderRadius: r, backgroundColor: theme.colors.scrim }];\n\n  return (\n    <GestureDetector gesture={tap}>\n      <Animated.View\n        collapsable={false}\n        accessible\n        accessibilityRole={flipOnPress ? 'button' : undefined}\n        accessibilityLabel={accessibilityLabel}\n        accessibilityHint={flipOnPress ? 'Turns the card over' : undefined}\n        accessibilityState={{ expanded: flipped }}\n        accessibilityActions={flipOnPress ? [{ name: 'activate' }] : undefined}\n        onAccessibilityAction={onAccessibilityAction}\n        style={[styles.root, style, container]}\n      >\n        <Animated.View\n          style={[face, frontStyle]}\n          pointerEvents={flipped ? 'none' : 'auto'}\n          importantForAccessibility={flipped ? 'no-hide-descendants' : 'auto'}\n          accessibilityElementsHidden={flipped}\n        >\n          <View style={{ minHeight: contentHeight }}>\n            <View onLayout={(e) => measure('front', e.nativeEvent.layout.height)}>{front}</View>\n          </View>\n          <Animated.View pointerEvents=\"none\" style={[shade, frontShade]} />\n        </Animated.View>\n        <Animated.View\n          style={[face, styles.back, backStyle]}\n          pointerEvents={flipped ? 'auto' : 'none'}\n          importantForAccessibility={flipped ? 'auto' : 'no-hide-descendants'}\n          accessibilityElementsHidden={!flipped}\n        >\n          <View style={{ minHeight: contentHeight }}>\n            <View onLayout={(e) => measure('back', e.nativeEvent.layout.height)}>{back}</View>\n          </View>\n          <Animated.View pointerEvents=\"none\" style={[shade, backShade]} />\n        </Animated.View>\n      </Animated.View>\n    </GestureDetector>\n  );\n}\n\nfunction turn(deg: number, flipX: boolean) {\n  'worklet';\n  return flipX\n    ? [{ perspective: 1200 }, { rotateX: `${-deg}deg` }]\n    : [{ perspective: 1200 }, { rotateY: `${deg}deg` }];\n}\n\nconst styles = StyleSheet.create({\n  root: {},\n  face: {\n    borderWidth: StyleSheet.hairlineWidth,\n    overflow: 'hidden',\n    backfaceVisibility: 'hidden',\n  },\n  back: { position: 'absolute', top: 0, left: 0, right: 0 },\n  shade: { ...StyleSheet.absoluteFill },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "card",
+    "web": "live",
+    "perf": {
+      "budget": "Idle: no per-frame work. Flipping: two transforms and two opacities for ~400 ms on the UI thread.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-12",
+          "build": "release",
+          "frameMs": 21,
+          "p90Ms": 31,
+          "baselineMs": 20,
+          "jankyPercent": 3.11,
+          "atRest": "idle",
+          "memoryMb": 157
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Crossfades between faces instead of rotating; no lift.",
+      "screenReader": "Button role with expanded state; only the visible face is exposed. 'Activate' flips the card.",
+      "touchTarget": "The whole card is the target."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { FlipLedger } from '@/components/kinetik/flip-ledger';\n\n<FlipLedger\n  accessibilityLabel=\"October ledger\"\n  front={<Balance />}\n  back={<RecentTransactions />}\n/>;\n```\n\nUncontrolled by default: a tap turns the card over. Pass `flipped` and `onFlippedChange` to drive it from state, or `flipOnPress={false}` to flip only from code.\n\n## When to use\n\n- Two closely related views of one object: a summary and its detail, a question and its answer, a front and a back.\n- Content that fits on a card; both faces take the height of the taller one.\n\n## When not to use\n\n- Hiding information the user needs to compare side by side. Show both instead.\n- Long or scrolling content on either face. Navigate to a detail screen.\n- Forms. Inputs on a face that turns away are easy to lose.\n\n## Notes\n\n- Only the visible face is exposed to screen readers and receives touches.\n- The axis can be `y` (like a page) or `x` (like a flap). Reduced motion swaps the rotation for a crossfade.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add flip-ledger`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

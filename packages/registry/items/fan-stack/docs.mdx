@@ -1,0 +1,29 @@
+## Usage
+
+```tsx
+import { FanStack } from '@/components/kinetik/fan-stack';
+
+<FanStack
+  accessibilityLabel="Desert trip"
+  items={photos.map((p) => ({ key: p.id, image: { uri: p.url }, title: p.title }))}
+  onSelect={(i) => setFocus(i)}
+/>;
+```
+
+The stack centres itself in the width it is given and reserves the height the fan needs. The last item lies on top of the pile.
+
+## When to use
+
+- A small set of pictures that belongs together: an album, a trip, a moodboard.
+- Previews where the playful gesture is part of the charm, such as a profile or a shared memory.
+
+## When not to use
+
+- More than seven items. Use a grid or a carousel.
+- Pictures people need to compare side by side. The fan overlaps them.
+
+## Notes
+
+- Tap the pile to fan it out, tap a card to lift it, tap the lifted card to gather the pile.
+- Pass `open` and `onOpenChange` to fan it out from elsewhere, for example when its section scrolls into view.
+- With reduced motion the cards move without the stagger or the bounce.

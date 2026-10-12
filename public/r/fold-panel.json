@@ -1,0 +1,62 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "fold-panel",
+  "type": "registry:item",
+  "title": "Fold Panel",
+  "description": "A panel that unfolds in place: the body springs to its measured height and drifts in behind it.",
+  "categories": [
+    "card"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/fold-panel.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/fold-panel.tsx",
+      "content": "import { useEffect, useState, type ReactNode } from 'react';\nimport { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  interpolateColor,\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type FoldPanelProps = {\n  title: string;\n  /** A line under the title, visible while folded. */\n  subtitle?: string;\n  /** An icon before the title. It sits on a small tinted tile. */\n  leading?: ReactNode;\n  /** What unfolds. Any height; it is measured. */\n  children: ReactNode;\n  /** Controlled state. Leave unset to let the panel keep its own. */\n  open?: boolean;\n  defaultOpen?: boolean;\n  onOpenChange?: (open: boolean) => void;\n  disabled?: boolean;\n  style?: StyleProp<ViewStyle>;\n};\n\n/**\n * A panel that unfolds in place. The body grows to its measured height on a\n * spring and drifts into view a moment behind it, the chevron turns over,\n * and the panel itself lifts a shade.\n */\nexport function FoldPanel({\n  title,\n  subtitle,\n  leading,\n  children,\n  open,\n  defaultOpen = false,\n  onOpenChange,\n  disabled = false,\n  style,\n}: FoldPanelProps) {\n  const { colors, font, radius, space } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const [inner, setInner] = useState(defaultOpen);\n  const isOpen = open ?? inner;\n  const [bodyH, setBodyH] = useState(0);\n\n  const t = useSharedValue(isOpen ? 1 : 0);\n  const pressed = useSharedValue(0);\n  useEffect(() => {\n    t.set(withSpring(isOpen ? 1 : 0, spring('smooth', reduced)));\n  }, [isOpen, reduced, t]);\n\n  const toggle = () => {\n    const next = !isOpen;\n    if (open === undefined) setInner(next);\n    onOpenChange?.(next);\n  };\n\n  const shell = useAnimatedStyle(() => ({\n    backgroundColor: interpolateColor(t.get(), [0, 1], [colors.surface, colors.surfaceRaised]),\n    borderColor: interpolateColor(t.get(), [0, 1], [colors.border, colors.borderStrong]),\n    transform: [{ scale: 1 - pressed.get() * 0.01 }],\n  }));\n  const well = useAnimatedStyle(() => ({ height: bodyH * Math.max(0, t.get()) }));\n  // The body follows the fold: it fades in over the second half and settles downwards.\n  const body = useAnimatedStyle(() => ({\n    opacity: Math.max(0, Math.min(1, t.get() * 2 - 0.6)),\n    transform: [{ translateY: (1 - t.get()) * -10 }],\n  }));\n  const chevron = useAnimatedStyle(() => ({ transform: [{ rotate: `${t.get() * 180}deg` }] }));\n\n  return (\n    <Animated.View\n      style={[styles.panel, { borderRadius: radius.lg, opacity: disabled ? 0.5 : 1 }, shell, style]}\n    >\n      <Pressable\n        disabled={disabled}\n        onPress={toggle}\n        onPressIn={() => pressed.set(withSpring(1, spring('snappy', reduced)))}\n        onPressOut={() => pressed.set(withSpring(0, spring('smooth', reduced)))}\n        accessibilityRole=\"button\"\n        accessibilityLabel={subtitle ? `${title}, ${subtitle}` : title}\n        accessibilityState={{ expanded: isOpen, disabled }}\n        style={[styles.header, { paddingHorizontal: space[4], gap: space[3] }]}\n      >\n        {leading ? (\n          <View\n            style={[styles.tile, { backgroundColor: colors.azureSoft, borderRadius: radius.sm }]}\n          >\n            {leading}\n          </View>\n        ) : null}\n        <View style={styles.titles}>\n          <Text\n            numberOfLines={1}\n            style={{ color: colors.text, fontSize: font.size.md, fontWeight: font.weight.semibold }}\n          >\n            {title}\n          </Text>\n          {subtitle ? (\n            <Text numberOfLines={1} style={{ color: colors.textMuted, fontSize: font.size.sm }}>\n              {subtitle}\n            </Text>\n          ) : null}\n        </View>\n        <Animated.View style={[styles.chevronBox, chevron]}>\n          <View style={[styles.chevron, { borderColor: colors.textMuted }]} />\n        </Animated.View>\n      </Pressable>\n\n      <Animated.View\n        style={[styles.well, well]}\n        accessibilityElementsHidden={!isOpen}\n        importantForAccessibility={isOpen ? 'auto' : 'no-hide-descendants'}\n        pointerEvents={isOpen ? 'auto' : 'none'}\n      >\n        {/* Laid out at its natural height, unclipped, so it can be measured at any time. */}\n        <Animated.View\n          onLayout={(e) => setBodyH(Math.ceil(e.nativeEvent.layout.height))}\n          style={[styles.body, { paddingHorizontal: space[4], paddingBottom: space[4] }, body]}\n        >\n          {children}\n        </Animated.View>\n      </Animated.View>\n    </Animated.View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  panel: { borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },\n  header: { flexDirection: 'row', alignItems: 'center', minHeight: 64, paddingVertical: 12 },\n  tile: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },\n  titles: { flex: 1, gap: 2 },\n  chevronBox: { width: 20, height: 20, alignItems: 'center', justifyContent: 'center' },\n  // A square's two edges, turned to point down.\n  chevron: {\n    width: 8,\n    height: 8,\n    borderRightWidth: 1.75,\n    borderBottomWidth: 1.75,\n    transform: [{ translateY: -2 }, { rotate: '45deg' }],\n  },\n  well: { overflow: 'hidden' },\n  body: { position: 'absolute', top: 0, left: 0, right: 0 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "card",
+    "web": "live",
+    "perf": {
+      "budget": "One spring drives the height, the body, the chevron and the panel colour. The body is measured once per layout, not per frame.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-12",
+          "build": "release",
+          "frameMs": 19,
+          "p90Ms": 32,
+          "baselineMs": 20,
+          "jankyPercent": 3.61,
+          "atRest": "idle",
+          "memoryMb": 152
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The body appears and disappears at once; the chevron flips without turning.",
+      "screenReader": "The header is a button with an expanded state; a folded body is hidden from screen readers.",
+      "touchTarget": "The header is at least 64 pt tall and full width."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { FoldPanel } from '@/components/kinetik/fold-panel';\n\n<FoldPanel title=\"Check-in\" subtitle=\"Friday from 3 pm\" leading={<CalendarIcon />}>\n  <Text>Self check-in with a lockbox. The code arrives the day before.</Text>\n</FoldPanel>;\n```\n\nFor a group where only one panel is open at a time, hold the open one in state:\n\n```tsx\nconst [open, setOpen] = useState<string | null>('check-in');\n\n<FoldPanel\n  title=\"Check-in\"\n  open={open === 'check-in'}\n  onOpenChange={(o) => setOpen(o ? 'check-in' : null)}\n>\n  …\n</FoldPanel>;\n```\n\n## When to use\n\n- Details that most people skip but some need: policies, specifications, frequently asked questions.\n- Long settings or booking screens, to keep the overview short.\n\n## When not to use\n\n- The main content of a screen. Hiding it behind a tap slows everyone down.\n- Content that changes height constantly while open, such as a live feed. Measure-and-spring suits settled content.\n\n## Notes\n\n- The body is measured at its natural height, so it can hold anything: text, images, lists.\n- The panel lifts from `surface` to `surfaceRaised` as it opens, so an open panel reads as the one in focus.\n- With reduced motion the body appears at once.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add fold-panel`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

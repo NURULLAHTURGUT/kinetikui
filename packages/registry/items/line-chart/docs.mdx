@@ -1,0 +1,31 @@
+## Usage
+
+```tsx
+import { LineChart } from '@/components/kinetik/line-chart';
+
+<LineChart
+  accessibilityLabel="Revenue, last 12 months"
+  data={revenue}
+  labels={months}
+  formatValue={(v) => `$${(v / 1000).toFixed(1)}k`}
+  onScrub={(i) => setFocus(i)}
+/>;
+```
+
+The chart fills its parent's width. The curve passes through every value without overshooting, so a dip never draws below its real number. `onScrub` reports the index under the finger (and `null` when it lifts), which is handy for a headline figure above the chart.
+
+## When to use
+
+- Trends over time: revenue, steps, heart rate, prices.
+- Dashboards where people want to read the exact value at a moment.
+
+## When not to use
+
+- Comparing separate categories. Use Bar Chart.
+- Dense data with thousands of points; down-sample first.
+
+## Notes
+
+- The line draws in whenever the data changes, with the area revealed behind it.
+- The latest point pulses a few times after the line draws in, a quiet "this is live", then rests so a chart on screen costs no frames.
+- Screen readers step through the points with the adjustable increment and decrement actions.

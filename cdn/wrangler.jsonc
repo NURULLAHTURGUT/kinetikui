@@ -1,0 +1,9 @@
+// A static-assets-only Worker that serves heavy, versioned files for the docs
+// site from Cloudflare (no bandwidth limits). Deploy with `pnpm cdn:deploy`.
+{
+  "name": "kinetik-cdn",
+  "compatibility_date": "2026-09-01",
+  "assets": { "directory": "./dist" },
+  "routes": [{ "pattern": "cdn.kinetik-ui.dev", "custom_domain": true }],
+  "workers_dev": false,
+}

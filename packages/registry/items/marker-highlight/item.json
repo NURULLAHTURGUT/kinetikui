@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "marker-highlight",
+  "title": "Marker Highlight",
+  "description": "A paragraph where key phrases get marked as if with a highlighter, the ink sweeping in phrase by phrase.",
+  "category": "text",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["marker-highlight.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One clock drives every stroke of ink on the UI thread; words are plain text views that wrap like a paragraph.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 26,
+        "baselineMs": 20,
+        "jankyPercent": 4.84,
+        "atRest": "idle",
+        "memoryMb": 148
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Phrases appear already marked.",
+    "screenReader": "Reads as one piece of text; the marking is visual only.",
+    "touchTarget": "Not interactive."
+  }
+}

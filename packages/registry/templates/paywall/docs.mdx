@@ -1,0 +1,42 @@
+## Usage
+
+```tsx
+import { Paywall } from '@/components/kinetik/screens/paywall';
+
+<Paywall
+  plans={[
+    {
+      id: 'annual',
+      title: 'Annual',
+      price: 49.99,
+      period: 'year',
+      badge: 'Best value',
+      trialDays: 7,
+    },
+    { id: 'monthly', title: 'Monthly', price: 6.99, period: 'month' },
+  ]}
+  onPurchase={(plan) => purchases.buy(plan.id)}
+  onRestore={() => purchases.restore()}
+  onClose={() => router.back()}
+  onTerms={() => openURL(TERMS)}
+  onPrivacy={() => openURL(PRIVACY)}
+/>;
+```
+
+`onPurchase` may return a promise: the button shows a spinner until it settles, confetti fires when it resolves and the screen stays put if it rejects.
+
+## When to use
+
+- A dedicated upgrade screen opened from a locked feature or from settings.
+- Two or three plans with one clearly recommended.
+
+## When not to use
+
+- On first launch, before people have seen the product.
+- With store prices you have not localised: pass the store's price and `currency`, or replace the price lines with the store's formatted strings.
+
+## Notes
+
+- The pre-selected plan is the first one with a `badge`. The large price shows the monthly equivalent and rolls when the plan changes.
+- The terms line under the button is generated from the selected plan; check it against your store's requirements.
+- Wire it to your purchase library (RevenueCat, expo-iap, …); the template does not talk to a store.

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "gauge-meter",
+  "type": "registry:item",
+  "title": "Gauge Meter",
+  "description": "A dial that swings to its value on a spring while the figure counts up beneath it.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-count.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/gauge-meter.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/gauge-meter.tsx",
+      "content": "import { Canvas, Circle, Group, Path, Skia, SweepGradient, vec } from '@shopify/react-native-skia';\nimport { useEffect, useMemo } from 'react';\nimport { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport { useDerivedValue, useSharedValue, withSpring } from 'react-native-reanimated';\n\nimport { useCountUp } from '../../lib/kinetik/hooks/use-count-up';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type GaugeMeterProps = {\n  value: number;\n  /** Defaults to 0. */\n  min?: number;\n  /** Defaults to 100. */\n  max?: number;\n  /** Under the figure, e.g. \"Download speed\". */\n  label?: string;\n  /** Formats the figure as it counts, and the two ends. Defaults to whole numbers. */\n  formatValue?: (value: number) => string;\n  /** Unit after the figure, e.g. \"Mbps\". */\n  unit?: string;\n  /** Width of the gauge. Defaults to 240. */\n  size?: number;\n  /** Width of the arc. Defaults to 14. */\n  thickness?: number;\n  /** Degrees of the arc, 180–300. Defaults to 240. */\n  sweep?: number;\n  /** Ticks around the outside. Defaults to true. */\n  ticks?: boolean;\n  /** Arc colours from the start to the tip. Defaults to sky into azure. */\n  colors?: readonly [string, string];\n  /** What the gauge measures, read before the value, e.g. \"Download speed\". */\n  accessibilityLabel: string;\n  style?: StyleProp<ViewStyle>;\n};\n\n/** Tick marks around the arc: every 5%, longer every 25%. */\nconst TICKS = 21;\n/** Width of the labels under the arc's ends. */\nconst END_W = 64;\n\n/**\n * A dial that swings to its value on a spring while the figure counts up\n * beneath it. The arc brightens from one end to the other, and a knob rides\n * its tip.\n */\nexport function GaugeMeter({\n  value,\n  min = 0,\n  max = 100,\n  label,\n  formatValue = (v) => String(Math.round(v)),\n  unit,\n  size = 240,\n  thickness = 14,\n  sweep = 240,\n  ticks = true,\n  colors: ramp,\n  accessibilityLabel,\n  style,\n}: GaugeMeterProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n\n  const arc = Math.max(180, Math.min(300, sweep));\n  const share = max > min ? Math.max(0, Math.min(1, (value - min) / (max - min))) : 0;\n  const [from, to] = ramp ?? [colors.sky, colors.azure];\n\n  const c = size / 2;\n  const r = c - thickness / 2 - (ticks ? 14 : 2);\n  // The arc is open at the bottom. Its ends sit `lift` degrees below the horizontal.\n  const start = 90 + (360 - arc) / 2;\n  const lift = ((arc - 180) / 2) * (Math.PI / 180);\n  const endX = r * Math.cos(lift);\n  const endY = c + r * Math.sin(lift);\n  const labelTop = endY + thickness / 2 + 6;\n  const height = Math.ceil(labelTop + 18);\n\n  const { track, tickPath, majorPath } = useMemo(() => {\n    const oval = { x: c - r, y: c - r, width: r * 2, height: r * 2 };\n    const t = Skia.PathBuilder.Make().addArc(oval, 0, arc).detach();\n    const minor = Skia.PathBuilder.Make();\n    const major = Skia.PathBuilder.Make();\n    for (let i = 0; i < TICKS; i++) {\n      const a = ((arc * i) / (TICKS - 1)) * (Math.PI / 180);\n      const big = i % 5 === 0;\n      const inner = r + thickness / 2 + 5;\n      const outer = inner + (big ? 8 : 4);\n      const b = big ? major : minor;\n      b.moveTo(c + Math.cos(a) * inner, c + Math.sin(a) * inner);\n      b.lineTo(c + Math.cos(a) * outer, c + Math.sin(a) * outer);\n    }\n    return { track: t, tickPath: minor.detach(), majorPath: major.detach() };\n  }, [c, r, arc, thickness]);\n\n  const progress = useSharedValue(reduced ? share : 0);\n  useEffect(() => {\n    progress.set(withSpring(share, spring('smooth', reduced)));\n  }, [share, reduced, progress]);\n\n  const end = useDerivedValue(() => Math.max(0.0001, Math.min(1, progress.get())));\n  const knob = useDerivedValue(() => {\n    const a = arc * Math.max(0, Math.min(1, progress.get())) * (Math.PI / 180);\n    return vec(c + Math.cos(a) * r, c + Math.sin(a) * r);\n  });\n\n  const shown = useCountUp(value, { instant: reduced, duration: 1100, from: min });\n  const text = formatValue(shown);\n\n  return (\n    <View\n      accessible\n      accessibilityRole=\"progressbar\"\n      accessibilityLabel={accessibilityLabel}\n      accessibilityValue={{\n        min,\n        max,\n        now: value,\n        text: `${formatValue(value)}${unit ? ` ${unit}` : ''}`,\n      }}\n      style={[{ width: size, height }, style]}\n    >\n      <View pointerEvents=\"none\" style={StyleSheet.absoluteFill}>\n        <Canvas style={StyleSheet.absoluteFill}>\n          {/* Drawn from 0°, then turned so the arc opens at the bottom. */}\n          <Group origin={vec(c, c)} transform={[{ rotate: (start * Math.PI) / 180 }]}>\n            {ticks ? (\n              <>\n                <Path\n                  path={tickPath}\n                  style=\"stroke\"\n                  strokeWidth={1.25}\n                  strokeCap=\"round\"\n                  color={colors.borderStrong}\n                />\n                <Path\n                  path={majorPath}\n                  style=\"stroke\"\n                  strokeWidth={1.75}\n                  strokeCap=\"round\"\n                  color={colors.textSubtle}\n                />\n              </>\n            ) : null}\n            <Path\n              path={track}\n              style=\"stroke\"\n              strokeWidth={thickness}\n              strokeCap=\"round\"\n              color={colors.track}\n            />\n            <Path path={track} style=\"stroke\" strokeWidth={thickness} strokeCap=\"round\" end={end}>\n              {/* The start colour also fills the open gap, so the round cap at 0° is not tinted by the tip. */}\n              <SweepGradient\n                c={vec(c, c)}\n                colors={[from, to, to, from]}\n                positions={[0, arc / 360, (arc + (360 - arc) / 2) / 360, 1]}\n              />\n            </Path>\n            <Circle c={knob} r={thickness * 0.9} color={withAlpha(to, 0.25)} />\n            <Circle c={knob} r={thickness * 0.62} color={colors.surfaceRaised} />\n            <Circle c={knob} r={thickness * 0.3} color={to} />\n          </Group>\n        </Canvas>\n      </View>\n\n      <View pointerEvents=\"none\" style={[styles.readout, { top: c - 34 }]}>\n        <View style={styles.figure}>\n          <Text\n            style={{\n              color: colors.text,\n              fontSize: Math.round(size * 0.18),\n              fontWeight: font.weight.bold,\n              letterSpacing: -1.2,\n              fontVariant: ['tabular-nums'],\n            }}\n          >\n            {text}\n          </Text>\n          {unit ? (\n            <Text\n              style={{\n                color: colors.textMuted,\n                fontSize: font.size.sm,\n                fontWeight: font.weight.semibold,\n                marginLeft: 4,\n              }}\n            >\n              {unit}\n            </Text>\n          ) : null}\n        </View>\n        {label ? (\n          <Text style={{ color: colors.textMuted, fontSize: font.size.sm, marginTop: 2 }}>\n            {label}\n          </Text>\n        ) : null}\n      </View>\n\n      {[min, max].map((v, i) => (\n        <Text\n          key={i}\n          style={[\n            styles.end,\n            {\n              top: labelTop,\n              left: c + (i === 0 ? -endX : endX) - END_W / 2,\n              color: colors.textSubtle,\n              fontSize: font.size.xs,\n            },\n          ]}\n        >\n          {formatValue(v)}\n        </Text>\n      ))}\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  readout: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },\n  figure: { flexDirection: 'row', alignItems: 'baseline' },\n  end: { position: 'absolute', width: END_W, textAlign: 'center', fontVariant: ['tabular-nums'] },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "Arc and ticks are built once per size; the swing trims the arc and moves the knob from one shared value. The figure re-renders only while it counts.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-12",
+          "build": "release",
+          "frameMs": 19,
+          "p90Ms": 30,
+          "baselineMs": 20,
+          "jankyPercent": 5,
+          "atRest": "idle",
+          "memoryMb": 157
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The arc and the figure show the value at once.",
+      "screenReader": "A progress bar with its minimum, maximum and formatted value.",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { GaugeMeter } from '@/components/kinetik/gauge-meter';\n\n<GaugeMeter\n  accessibilityLabel=\"Download speed\"\n  value={speed}\n  max={1000}\n  unit=\"Mbps\"\n  label=\"Download\"\n/>;\n```\n\nChange `value` and the dial swings from where it is, while the figure counts on. `colors` takes the arc's start and tip colours; by default it runs from sky into azure.\n\n## When to use\n\n- One figure within a known range, read at a glance: a speed, a score, a battery level, a budget used.\n- Live readings that change now and then, where the swing shows the direction of change.\n\n## When not to use\n\n- Comparing several values. Use a bar chart.\n- Values without a meaningful maximum. A dial suggests a limit.\n\n## Notes\n\n- `sweep` sets how much of the circle the arc covers, from 180° to 300°.\n- The figure counts with `formatValue`, so pass one that rounds the way you want while it is counting.\n- With reduced motion the dial and the figure show the value at once.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add gauge-meter`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

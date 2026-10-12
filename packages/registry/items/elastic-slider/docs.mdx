@@ -1,0 +1,35 @@
+## Usage
+
+```tsx
+import { ElasticSlider } from '@/components/kinetik/elastic-slider';
+
+const [volume, setVolume] = useState(64);
+
+<ElasticSlider
+  label="Volume"
+  value={volume}
+  onValueChange={setVolume}
+  min={0}
+  max={100}
+  step={1}
+  formatValue={(v) => `${v}%`}
+/>;
+```
+
+The slider is controlled: keep `value` in state and update it from `onValueChange`. Use `onSlidingComplete` for work that should happen once, such as saving.
+
+## When to use
+
+- Continuous settings where the exact number matters less than the feel: volume, brightness, intensity.
+- Ranges with a few meaningful steps; with 40 steps or fewer each detent ticks under the finger.
+
+## When not to use
+
+- Precise numeric entry. Pair it with a text field or use a stepper.
+- Ranges in a horizontally scrolling container; both want the horizontal drag.
+
+## Notes
+
+- Pulling past either end stretches the track with rubber-band resistance and it springs back on release.
+- A tap on the track jumps to that point.
+- Vertical drags are left to the parent scroll view.

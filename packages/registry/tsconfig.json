@@ -1,0 +1,9 @@
+{
+  "extends": ["expo/tsconfig.base", "../../tsconfig.base.json"],
+  "compilerOptions": {
+    "strict": true,
+    "types": ["jest"]
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+}

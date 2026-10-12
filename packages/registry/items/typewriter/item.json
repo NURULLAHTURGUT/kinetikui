@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "typewriter",
+  "title": "Typewriter",
+  "description": "Text typed out with a human rhythm; several phrases are typed, held, erased and replaced in turn.",
+  "category": "text",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["typewriter.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One timeout per character and a slow caret blink at rest. Plain text, so it wraps and scales like any other.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 19,
+        "baselineMs": 20,
+        "jankyPercent": 20.49,
+        "atRest": "animating",
+        "memoryMb": 158,
+        "notes": "Draws while it types, by design. Janky frames come from redrawing the demo card's full-size photo behind each new letter; frame times stay at p50 17 ms, p99 25 ms."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Whole phrases appear and swap after each hold; the caret still blinks at rest.",
+    "screenReader": "Reads as text with the whole current phrase, never a half-typed one.",
+    "touchTarget": "Not interactive."
+  }
+}

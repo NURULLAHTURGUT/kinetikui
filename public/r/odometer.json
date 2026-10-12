@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "odometer",
+  "type": "registry:item",
+  "title": "Odometer",
+  "description": "A number whose digits roll like a mechanical counter, forward or back, the long way round.",
+  "categories": [
+    "text"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/odometer.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/odometer.tsx",
+      "content": "import { useEffect, useMemo, useState } from 'react';\nimport {\n  StyleSheet,\n  Text,\n  View,\n  type StyleProp,\n  type TextStyle,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  FadeIn,\n  FadeOut,\n  LinearTransition,\n  useAnimatedStyle,\n  useSharedValue,\n  withDelay,\n  withSpring,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { durations, spring, springs } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type OdometerProps = {\n  value: number;\n  /** Fraction digits shown. Defaults to 0. */\n  decimals?: number;\n  /** BCP 47 locale for separators. Defaults to the device locale. */\n  locale?: string;\n  /** Text before the number, e.g. a currency sign. */\n  prefix?: string;\n  /** Text after the number, e.g. a unit. */\n  suffix?: string;\n  /** Full control over formatting. Digits 0–9 in the result roll; everything else is static. */\n  format?: (value: number) => string;\n  /** Extra delay per column, right to left, in ms. Defaults to 24. */\n  stagger?: number;\n  /** Announce changes to screen readers. Defaults to false. */\n  announce?: boolean;\n  style?: StyleProp<TextStyle>;\n  containerStyle?: StyleProp<ViewStyle>;\n};\n\nconst DIGITS = Array.from({ length: 20 }, (_, i) => String(i % 10));\n\n/**\n * A number whose digits roll like a mechanical counter. Each column spins\n * forward when the value grows and backward when it shrinks, the long way\n * round when needed (9 → 0 rolls on to 0, not back through 8…1).\n */\nexport function Odometer({\n  value,\n  decimals = 0,\n  locale,\n  prefix = '',\n  suffix = '',\n  format,\n  stagger = 24,\n  announce = false,\n  style,\n  containerStyle,\n}: OdometerProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const [height, setHeight] = useState(0);\n  // Roll direction follows the last change (state adjusted during render, per React docs).\n  const [last, setLast] = useState(value);\n  const [direction, setDirection] = useState(1);\n  if (value !== last) {\n    setLast(value);\n    setDirection(value > last ? 1 : -1);\n  }\n\n  const formatter = useMemo(\n    () =>\n      format ??\n      ((v: number) =>\n        new Intl.NumberFormat(locale, {\n          minimumFractionDigits: decimals,\n          maximumFractionDigits: decimals,\n        }).format(v)),\n    [format, locale, decimals],\n  );\n  const text = `${prefix}${formatter(value)}${suffix}`;\n\n  // Key characters by their distance from the right so existing columns keep\n  // their identity when the number gains or loses digits on the left.\n  const chars = [...text].map((ch, i, all) => ({ ch, key: `p${all.length - 1 - i}` }));\n\n  const textStyle: StyleProp<TextStyle> = [\n    {\n      color: colors.text,\n      fontSize: font.size['3xl'],\n      fontWeight: font.weight.bold,\n      fontVariant: ['tabular-nums'],\n    },\n    style,\n  ];\n\n  const layout = reduced\n    ? undefined\n    : LinearTransition.springify()\n        .mass(springs.smooth.mass)\n        .stiffness(springs.smooth.stiffness)\n        .damping(springs.smooth.damping);\n\n  return (\n    <View\n      accessible\n      accessibilityRole=\"text\"\n      accessibilityLabel={text}\n      accessibilityLiveRegion={announce ? 'polite' : 'none'}\n      style={[styles.row, containerStyle]}\n    >\n      {/* Measures one line so columns can clip to it. */}\n      <Text\n        style={[textStyle, styles.probe]}\n        onLayout={(e) => setHeight(e.nativeEvent.layout.height)}\n      >\n        8\n      </Text>\n      {height > 0 &&\n        chars.map(({ ch, key }, i) => {\n          const isDigit = ch >= '0' && ch <= '9';\n          const column = chars.length - 1 - i;\n          return (\n            <Animated.View\n              key={key + (isDigit ? 'd' : ch)}\n              layout={layout}\n              entering={reduced ? undefined : FadeIn.duration(durations.base)}\n              exiting={reduced ? undefined : FadeOut.duration(durations.quick)}\n            >\n              {isDigit ? (\n                <Column\n                  digit={Number(ch)}\n                  height={height}\n                  direction={direction}\n                  delay={column * stagger}\n                  reduced={reduced}\n                  textStyle={textStyle}\n                />\n              ) : (\n                <Text style={textStyle}>{ch}</Text>\n              )}\n            </Animated.View>\n          );\n        })}\n    </View>\n  );\n}\n\nfunction Column({\n  digit,\n  height,\n  direction,\n  delay,\n  reduced,\n  textStyle,\n}: {\n  digit: number;\n  height: number;\n  direction: number;\n  delay: number;\n  reduced: boolean;\n  textStyle: StyleProp<TextStyle>;\n}) {\n  // Position on a 0–19 strip (two copies of 0–9) so a column can roll past 9.\n  const pos = useSharedValue(digit);\n\n  useEffect(() => {\n    if (reduced) {\n      pos.set(digit);\n      return;\n    }\n    const mod10 = (n: number) => ((n % 10) + 10) % 10;\n    // Rebase onto the copy of 0–9 that leaves room to roll in the needed\n    // direction; both copies look identical, so this jump is invisible.\n    let from = pos.get();\n    if (direction > 0 && from >= 10) from -= 10;\n    if (direction < 0 && from < 10) from += 10;\n    // Works mid-animation too: `from` may sit between two digits.\n    const to = direction > 0 ? from + mod10(digit - from) : from - mod10(from - digit);\n    if (Math.abs(to - from) < 0.001) return;\n    pos.set(from);\n    pos.set(\n      withDelay(\n        delay,\n        withSpring(to, spring('smooth'), (finished) => {\n          'worklet';\n          if (finished) pos.set(((to % 10) + 10) % 10);\n        }),\n      ),\n    );\n  }, [digit, direction, delay, reduced, pos]);\n\n  const strip = useAnimatedStyle(() => ({ transform: [{ translateY: -pos.get() * height }] }));\n\n  return (\n    <View style={{ height, overflow: 'hidden' }}>\n      {/* Invisible copy of the digit gives the column its width. */}\n      <Text style={[textStyle, styles.ghost]}>{digit}</Text>\n      <Animated.View style={[styles.strip, strip]}>\n        {DIGITS.map((d, i) => (\n          <Text key={i} style={[textStyle, { height, lineHeight: height }]}>\n            {d}\n          </Text>\n        ))}\n      </Animated.View>\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  row: { flexDirection: 'row', alignItems: 'flex-start', alignSelf: 'flex-start' },\n  probe: { position: 'absolute', opacity: 0 },\n  ghost: { opacity: 0 },\n  strip: { position: 'absolute', top: 0, left: 0, right: 0, alignItems: 'center' },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "text",
+    "web": "live",
+    "perf": {
+      "budget": "One spring per changed digit column on the UI thread; layout transitions only when the number gains or loses columns.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-12",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 23,
+          "baselineMs": 20,
+          "jankyPercent": 2.12,
+          "atRest": "animating",
+          "memoryMb": 164,
+          "notes": "Frames at rest in the measurement came from the demo changing its value every few seconds; with a fixed value nothing redraws."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Digits change in place without rolling; no column transitions.",
+      "screenReader": "Exposed as one text element with the formatted value. Set `announce` to read changes aloud (live region).",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { Odometer } from '@/components/kinetik/odometer';\n\n<Odometer value={revenue} decimals={2} prefix=\"$\" locale=\"en-US\" />;\n```\n\nEvery digit 0–9 in the formatted value rolls; separators, signs and units stay put. When the value grows the columns roll forward, when it shrinks they roll back, and a column that wraps (9 → 0) keeps rolling instead of reversing through every digit.\n\n## When to use\n\n- Counters and totals that change while the user watches: balances, scores, live metrics.\n- Moments where the size of a change matters as much as the result.\n\n## When not to use\n\n- Values that change many times per second. The digits blur; show a static number or throttle updates.\n- Long tables of numbers. Rolling columns draw the eye; keep them for a few headline figures.\n\n## Notes\n\n- Pass `format` for full control; the default uses `Intl.NumberFormat` with `decimals` fixed so columns stay aligned.\n- Columns are keyed from the right, so gaining a digit (999 → 1,000) slides a new column in on the left.\n- Use a font with tabular figures (the default sets `fontVariant: ['tabular-nums']`) so digits keep a steady width.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add odometer`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

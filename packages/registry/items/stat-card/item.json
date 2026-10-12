@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "stat-card",
+  "title": "Stat Card",
+  "description": "A key figure that counts up, with a change pill and a sparkline that draws itself in.",
+  "category": "data",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-count"],
+  "files": ["stat-card.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The sparkline is built once per data change and revealed by a clip on the UI thread; the figure re-renders only while it counts.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 22,
+        "baselineMs": 20,
+        "jankyPercent": 4.19,
+        "atRest": "idle",
+        "memoryMb": 157
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The figure and the sparkline appear complete.",
+    "screenReader": "One summary: label, value, change ('up 12.4%') and caption. A button when onPress is set.",
+    "touchTarget": "The whole card when it is pressable."
+  }
+}

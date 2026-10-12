@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "bloom-menu",
+  "title": "Bloom Menu",
+  "description": "A floating action button that blooms: the plus turns, a halo opens and actions spring out one by one.",
+  "category": "interaction",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["bloom-menu.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One spring per action plus one for the button; views only, transforms and opacity. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 20,
+        "baselineMs": 20,
+        "jankyPercent": 2.88,
+        "atRest": "idle",
+        "memoryMb": 148
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Actions appear in place without travelling or staggering; the halo and the cross still change.",
+    "screenReader": "The main button reports expanded; closed actions are hidden from screen readers. The escape gesture closes it.",
+    "touchTarget": "60 pt main button, 48 pt actions; in the column layout the label is part of the action's target."
+  }
+}

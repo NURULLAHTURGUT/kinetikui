@@ -1,0 +1,26 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "kinetik-count",
+  "type": "registry:item",
+  "title": "Kinetik Count",
+  "description": "useCountUp: a number that counts towards its target with an ease-out curve, for figures shown as text.",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "src/lib/kinetik/hooks/use-count-up.ts",
+      "type": "registry:file",
+      "target": "~/lib/kinetik/hooks/use-count-up.ts",
+      "content": "import { useEffect, useRef, useState } from 'react';\n\nexport type CountUpOptions = {\n  /** Length of the count in ms. Defaults to 900. */\n  duration?: number;\n  /** Jump straight to the target, as with reduced motion. */\n  instant?: boolean;\n  /** Where the first count starts from. Defaults to 0. */\n  from?: number;\n};\n\n/**\n * A number that counts towards `target` with an ease-out curve, for figures\n * shown as text. Later targets count on from wherever the number is, so an\n * interrupted count never jumps back.\n *\n * Text cannot be animated on the UI thread, so this re-renders on animation\n * frames; it runs only while counting.\n */\nexport function useCountUp(\n  target: number,\n  { duration = 900, instant = false, from = 0 }: CountUpOptions = {},\n): number {\n  const [value, setValue] = useState(instant ? target : from);\n  const current = useRef(value);\n\n  useEffect(() => {\n    const start = current.current;\n    if (instant || start === target || duration <= 0) {\n      current.current = target;\n      setValue(target);\n      return;\n    }\n    let frame = 0;\n    // Checked on every frame too: cancelAnimationFrame is not reliable in every environment.\n    let cancelled = false;\n    const began = Date.now();\n    const step = () => {\n      if (cancelled) return;\n      const t = Math.min(1, (Date.now() - began) / duration);\n      // Ease-out quint: quick to start, settling gently on the figure.\n      const eased = 1 - (1 - t) ** 5;\n      const next = start + (target - start) * eased;\n      current.current = next;\n      setValue(next);\n      if (t < 1) frame = requestAnimationFrame(step);\n    };\n    frame = requestAnimationFrame(step);\n    return () => {\n      cancelled = true;\n      cancelAnimationFrame(frame);\n    };\n  }, [target, duration, instant]);\n\n  return value;\n}\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "shared",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "requires": "React Native New Architecture (Reanimated 4)"
+  }
+}

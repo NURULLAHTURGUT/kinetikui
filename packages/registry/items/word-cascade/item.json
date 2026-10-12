@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "word-cascade",
+  "title": "Word Cascade",
+  "description": "A paragraph that arrives word by word, each word rising into place after the last.",
+  "category": "text",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-worklets"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["word-cascade.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One linear timing drives every word; each word evaluates a small style worklet per frame until the cascade ends.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 24,
+        "baselineMs": 20,
+        "jankyPercent": 4.82,
+        "atRest": "idle",
+        "memoryMb": 149
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The whole paragraph appears at once.",
+    "screenReader": "Exposed as one text element with the full paragraph; individual words are hidden.",
+    "touchTarget": "Not interactive."
+  }
+}

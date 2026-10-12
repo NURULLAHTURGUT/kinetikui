@@ -1,0 +1,40 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "toast-stack",
+  "title": "Toast Stack",
+  "description": "Notifications that stack like cards, fan out on tap and swipe away sideways.",
+  "category": "feedback",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-safe-area-context",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["toast-stack.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Springs run only while toasts enter, re-stack, expand or leave; swipes track on the UI thread.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 19,
+        "p90Ms": 23,
+        "baselineMs": 20,
+        "jankyPercent": 4.5,
+        "atRest": "idle",
+        "memoryMb": 142
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Toasts fade in and out in place; no slide, scale or fly-out.",
+    "screenReader": "Each toast is announced when shown and exposed as an alert with a 'Dismiss' action; the Undo-style action is its own button.",
+    "touchTarget": "Action buttons are at least 44 pt tall."
+  }
+}

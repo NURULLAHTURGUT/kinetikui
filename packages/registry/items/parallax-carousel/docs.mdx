@@ -1,0 +1,35 @@
+## Usage
+
+```tsx
+import { ParallaxCarousel } from '@/components/kinetik/parallax-carousel';
+
+<ParallaxCarousel
+  items={trips.map((t) => ({
+    key: t.id,
+    image: { uri: t.photo },
+    title: t.name,
+    subtitle: t.city,
+  }))}
+  onPress={(item) => router.push(`/trips/${item.key}`)}
+/>;
+```
+
+The carousel fills its parent's width. Cards are `cardWidth` of it (78% by default) so the neighbours peek in from the sides, and `aspect` sets their height. Captions sit on a dark gradient at the bottom of each picture.
+
+## When to use
+
+- Browsing a handful of visual items: places, products, albums, artworks.
+- Feature or story cards on a home screen.
+
+## When not to use
+
+- Long lists that people search or compare. Use a grid or a list.
+- Content that has to be read in full; only the centre card has room to breathe.
+
+## Notes
+
+- `parallax` sets how far each picture drifts inside its card; the image is drawn wider than the card to make room.
+- A tick plays each time a new card comes to the centre.
+- Drag with a finger, a mouse or a pen; past either end the row resists like rubber, and a flick moves up to three cards.
+- Tap the centre card to press it; tap a side card to bring it to the centre.
+- Screen readers get Next card and Previous card actions on every card.

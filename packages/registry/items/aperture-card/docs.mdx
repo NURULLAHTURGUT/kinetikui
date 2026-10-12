@@ -1,0 +1,31 @@
+## Usage
+
+```tsx
+import { ApertureCard } from '@/components/kinetik/aperture-card';
+
+<ApertureCard
+  accessibilityLabel="Mystery reward"
+  cover={<Text>Tap to open</Text>}
+  style={{ height: 280 }}
+>
+  <Reward />
+</ApertureCard>;
+```
+
+Uncontrolled by default: a tap opens and closes the iris. Pass `open` and `onOpenChange` to drive it from state, for example after a purchase completes.
+
+## When to use
+
+- Reveals with a little ceremony: rewards, unlocked content, a daily surprise.
+- Camera, photo and media products, where the iris is a natural metaphor.
+
+## When not to use
+
+- Hiding content people need right away. A reveal is a delay.
+- Small cards; the blades need room to read as an aperture.
+
+## Notes
+
+- The revealed content is hidden from screen readers until the card opens.
+- `blades` takes 5 to 9; odd numbers look most like a real lens.
+- A light tap plays when the aperture finishes opening.

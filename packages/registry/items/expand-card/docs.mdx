@@ -1,0 +1,27 @@
+## Usage
+
+```tsx
+import { ExpandCard } from '@/components/kinetik/expand-card';
+
+<ExpandCard image={{ uri: trip.photo }} title={trip.name} subtitle={trip.dates}>
+  <Text>{trip.summary}</Text>
+</ExpandCard>;
+```
+
+Uncontrolled by default. Pass `expanded` and `onExpandedChange` to drive it, for example to keep only one card of a list open at a time.
+
+## When to use
+
+- Lists where each row has a picture and a little more to say: trips, recipes, events, artworks.
+- Settings or FAQs that benefit from a visual anchor.
+
+## When not to use
+
+- Long content. Navigate to a detail screen instead.
+- Rows without an image; a plain disclosure row is clearer.
+
+## Notes
+
+- The card measures its title and body, so the open height always fits the content.
+- Children are laid out at the card's width; keep interactive content out of the body, since a tap on the card toggles it.
+- A light tap plays as it opens and closes.

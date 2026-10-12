@@ -1,0 +1,32 @@
+## Usage
+
+```tsx
+import { GlintCard } from '@/components/kinetik/glint-card';
+
+export function Pass() {
+  return (
+    <GlintCard accessibilityLabel="Night pass, gate 4">
+      <Text>Night pass</Text>
+    </GlintCard>
+  );
+}
+```
+
+The light follows the finger while it touches the card and the device tilt the rest of the time. The touch tracking never claims the gesture, so a `GlintCard` inside a `ScrollView` still scrolls normally.
+
+## When to use
+
+- A hero object the user is meant to pick up and look at: a pass, a ticket, a membership or achievement card.
+- One or two cards per screen, where the reflection adds a sense of material.
+
+## When not to use
+
+- Long lists of cards. Every live card runs its own sensor; set `reduceEffects` or pass `active={false}` to cards that are off-screen.
+- Cards whose main job is navigation. Pair the glint with a press response (see Press Jelly) instead of relying on it as feedback.
+
+## Notes
+
+- With `source="tilt"` or `"both"` the card registers the gravity sensor while mounted and active. Unmounting it, or setting `active={false}`, unregisters the sensor.
+- The neutral pose recentres to however the user is holding the device, so the light always starts at rest.
+- Content is rendered beneath the glint. On dark surfaces the glint only brightens; on light surfaces (where white light cannot brighten white) it shades the card by up to 7 % away from the light instead, so check text contrast against a slightly darker card.
+- Tilt changes too small to see are ignored, so a phone lying still does not redraw the card.

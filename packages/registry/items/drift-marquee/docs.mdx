@@ -1,0 +1,29 @@
+## Usage
+
+```tsx
+import { DriftMarquee } from '@/components/kinetik/drift-marquee';
+
+<DriftMarquee itemWidth={160} height={200}>
+  {covers.map((c) => (
+    <Image key={c.id} source={{ uri: c.url }} style={{ flex: 1, borderRadius: 16 }} />
+  ))}
+</DriftMarquee>;
+```
+
+Every child becomes an item `itemWidth` wide that fills the row's height. The row repeats itself to fill the width, so even a few items loop without a gap.
+
+## When to use
+
+- Showcases and landing screens: covers, logos, artworks, testimonials.
+- A lively background row that people can also play with.
+
+## When not to use
+
+- Content people need to read or tap precisely. It keeps moving.
+- Inside horizontal scroll views; both want the sideways drag.
+
+## Notes
+
+- `speed` is in points per second; set it to 0 for a row that only moves when dragged.
+- A fling eases back to the drift; `lean` sets how far items tilt at speed.
+- Pass `active={false}` while the row is off-screen to stop its frame callback.

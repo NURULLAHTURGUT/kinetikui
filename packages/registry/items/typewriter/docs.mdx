@@ -1,0 +1,29 @@
+## Usage
+
+```tsx
+import { Typewriter } from '@/components/kinetik/typewriter';
+
+<Typewriter
+  prefix="Find your way to "
+  phrases={['Huacachina.', 'White Sands.', 'the edge of Fiji.']}
+/>;
+```
+
+A single string is typed once and then rests with a blinking caret. Several phrases are typed, held for `hold` ms, erased and replaced; pass `loop={false}` to stop on the last one.
+
+## When to use
+
+- Hero headlines that show a range of things in one line: destinations, use cases, audiences.
+- Assistant or terminal-like moments where text arriving is part of the story.
+
+## When not to use
+
+- Anything people must read in full right away: instructions, errors, prices.
+- Long paragraphs. Typing them out only makes people wait; use Word Cascade.
+
+## Notes
+
+- Typing is uneven on purpose, with a beat after spaces and a longer one after punctuation.
+- The caret stays solid while text is moving and blinks only at rest, as in an editor.
+- The line grows as it types; give it room (or a `minHeight`) so the layout below does not jump.
+- With reduced motion whole phrases swap after each hold.

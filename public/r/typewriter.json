@@ -1,0 +1,60 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "typewriter",
+  "type": "registry:item",
+  "title": "Typewriter",
+  "description": "Text typed out with a human rhythm; several phrases are typed, held, erased and replaced in turn.",
+  "categories": [
+    "text"
+  ],
+  "dependencies": [],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/typewriter.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/typewriter.tsx",
+      "content": "import { useEffect, useRef, useState } from 'react';\nimport { Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type TypewriterProps = {\n  /** One phrase, or several typed in turn. */\n  phrases: string | readonly string[];\n  /** Fixed text before the typed part, e.g. \"Find your way to \". */\n  prefix?: string;\n  /** Average time per character while typing, in ms. Defaults to 55. */\n  speed?: number;\n  /** Time per character while erasing, in ms. Defaults to 26. */\n  eraseSpeed?: number;\n  /** How long a finished phrase stays before it is erased, in ms. Defaults to 1800. */\n  hold?: number;\n  /** Go back to the first phrase after the last. Defaults to true. */\n  loop?: boolean;\n  /** Caret shape. Defaults to `bar`. */\n  caret?: 'bar' | 'block' | 'underscore' | 'none';\n  /** Caret colour. Defaults to the theme azure. */\n  caretColor?: string;\n  /** Called with a phrase's index once it is fully typed. */\n  onPhraseTyped?: (index: number) => void;\n  style?: StyleProp<TextStyle>;\n  /** Style of the prefix, on top of `style`. */\n  prefixStyle?: StyleProp<TextStyle>;\n  containerStyle?: StyleProp<ViewStyle>;\n};\n\ntype Mode = 'typing' | 'holding' | 'erasing' | 'done';\n\nconst CARETS = { bar: '|', block: '▍', underscore: '_', none: '' } as const;\n/** Caret blink half-period, in ms. */\nconst BLINK = 530;\n\n/**\n * Text typed out a character at a time with a human rhythm: a little uneven,\n * pausing after punctuation. Several phrases are typed, held, erased and\n * replaced in turn. The caret stays solid while typing and blinks at rest.\n */\nexport function Typewriter({\n  phrases,\n  prefix,\n  speed = 55,\n  eraseSpeed = 26,\n  hold = 1800,\n  loop = true,\n  caret = 'bar',\n  caretColor,\n  onPhraseTyped,\n  style,\n  prefixStyle,\n  containerStyle,\n}: TypewriterProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const list = typeof phrases === 'string' ? [phrases] : phrases;\n  const signature = list.join('\\u0000');\n\n  const [state, setState] = useState<{ phrase: number; count: number; mode: Mode }>(() => ({\n    phrase: 0,\n    count: reduced ? (list[0]?.length ?? 0) : 0,\n    mode: reduced ? 'holding' : 'typing',\n  }));\n  const [blinkOn, setBlinkOn] = useState(true);\n\n  const typed = useRef(onPhraseTyped);\n  useEffect(() => {\n    typed.current = onPhraseTyped;\n  }, [onPhraseTyped]);\n\n  // A new set of phrases starts over.\n  const [seen, setSeen] = useState(signature);\n  if (seen !== signature) {\n    setSeen(signature);\n    setState({\n      phrase: 0,\n      count: reduced ? (list[0]?.length ?? 0) : 0,\n      mode: reduced ? 'holding' : 'typing',\n    });\n  }\n\n  const text = list[state.phrase] ?? '';\n  const many = list.length > 1;\n\n  // One step per timeout: type or erase a character, or move between phrases.\n  useEffect(() => {\n    const { phrase, count, mode } = state;\n    if (mode === 'done') return;\n    const last = phrase === list.length - 1;\n    let wait = 0;\n    let next: typeof state;\n\n    if (mode === 'typing' && count < text.length) {\n      // Uneven like a person: quicker inside words, a beat after spaces and punctuation.\n      const ch = text[count - 1] ?? '';\n      const pause = /[.,!?;:]/.test(ch) ? 5 : ch === ' ' ? 1.6 : 1;\n      wait = speed * pause * (0.6 + Math.random() * 0.8);\n      next = { phrase, count: count + 1, mode };\n    } else if (mode === 'typing') {\n      typed.current?.(phrase);\n      next = { phrase, count, mode: many && (loop || !last) ? 'holding' : 'done' };\n    } else if (mode === 'holding') {\n      wait = hold;\n      const after = (phrase + 1) % list.length;\n      if (!many || (!loop && last)) next = { phrase, count, mode: 'done' };\n      // With reduced motion phrases swap whole instead of being erased and retyped.\n      else if (reduced) next = { phrase: after, count: list[after]?.length ?? 0, mode };\n      else next = { phrase, count, mode: 'erasing' };\n    } else if (count > 0) {\n      wait = eraseSpeed;\n      next = { phrase, count: count - 1, mode };\n    } else {\n      next = { phrase: (phrase + 1) % list.length, count: 0, mode: 'typing' };\n    }\n\n    const id = setTimeout(() => setState(next), wait);\n    return () => clearTimeout(id);\n    // `list` is represented by `signature`.\n    // eslint-disable-next-line react-hooks/exhaustive-deps\n  }, [state, signature, speed, eraseSpeed, hold, loop, reduced]);\n\n  // The caret blinks only at rest; while the text moves it stays lit, like a real editor.\n  const resting = state.mode === 'holding' || state.mode === 'done';\n  useEffect(() => {\n    if (!resting || caret === 'none') return;\n    const id = setInterval(() => setBlinkOn((on) => !on), BLINK);\n    return () => clearInterval(id);\n  }, [resting, caret]);\n  const caretShown = !resting || blinkOn;\n\n  const base: StyleProp<TextStyle> = [\n    {\n      color: colors.text,\n      fontSize: font.size['2xl'],\n      fontWeight: font.weight.bold,\n      letterSpacing: -0.4,\n    },\n    style,\n  ];\n\n  return (\n    <View\n      accessible\n      accessibilityRole=\"text\"\n      // Screen readers get the whole phrase, never a half-typed one.\n      accessibilityLabel={`${prefix ?? ''}${text}`}\n      style={containerStyle}\n    >\n      <Text\n        style={base}\n        importantForAccessibility=\"no-hide-descendants\"\n        accessibilityElementsHidden\n      >\n        {prefix ? <Text style={prefixStyle}>{prefix}</Text> : null}\n        {text.slice(0, state.count)}\n        {caret !== 'none' ? (\n          <Text\n            style={{\n              color: caretColor ?? colors.azure,\n              opacity: caretShown ? 1 : 0,\n              fontWeight: caret === 'bar' ? font.weight.regular : undefined,\n            }}\n          >\n            {CARETS[caret]}\n          </Text>\n        ) : null}\n      </Text>\n    </View>\n  );\n}\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "text",
+    "web": "live",
+    "perf": {
+      "budget": "One timeout per character and a slow caret blink at rest. Plain text, so it wraps and scales like any other.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-12",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 19,
+          "baselineMs": 20,
+          "jankyPercent": 20.49,
+          "atRest": "animating",
+          "memoryMb": 158,
+          "notes": "Draws while it types, by design. Janky frames come from redrawing the demo card's full-size photo behind each new letter; frame times stay at p50 17 ms, p99 25 ms."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Whole phrases appear and swap after each hold; the caret still blinks at rest.",
+      "screenReader": "Reads as text with the whole current phrase, never a half-typed one.",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { Typewriter } from '@/components/kinetik/typewriter';\n\n<Typewriter\n  prefix=\"Find your way to \"\n  phrases={['Huacachina.', 'White Sands.', 'the edge of Fiji.']}\n/>;\n```\n\nA single string is typed once and then rests with a blinking caret. Several phrases are typed, held for `hold` ms, erased and replaced; pass `loop={false}` to stop on the last one.\n\n## When to use\n\n- Hero headlines that show a range of things in one line: destinations, use cases, audiences.\n- Assistant or terminal-like moments where text arriving is part of the story.\n\n## When not to use\n\n- Anything people must read in full right away: instructions, errors, prices.\n- Long paragraphs. Typing them out only makes people wait; use Word Cascade.\n\n## Notes\n\n- Typing is uneven on purpose, with a beat after spaces and a longer one after punctuation.\n- The caret stays solid while text is moving and blinks only at rest, as in an editor.\n- The line grows as it types; give it room (or a `minHeight`) so the layout below does not jump.\n- With reduced motion whole phrases swap after each hold.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add typewriter`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

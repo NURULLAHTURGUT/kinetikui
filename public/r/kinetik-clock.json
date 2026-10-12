@@ -1,0 +1,29 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "kinetik-clock",
+  "type": "registry:item",
+  "title": "Kinetik Clock",
+  "description": "useShaderClock: a pausable shader clock advanced on the UI thread, at 60 or 30 fps.",
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "src/lib/kinetik/hooks/use-shader-clock.ts",
+      "type": "registry:file",
+      "target": "~/lib/kinetik/hooks/use-shader-clock.ts",
+      "content": "import { useEffect } from 'react';\nimport { useFrameCallback, useSharedValue, type SharedValue } from 'react-native-reanimated';\n\nexport type ShaderClockOptions = {\n  /** Advance the clock. Pass false while off-screen or when effects are reduced. */\n  running: boolean;\n  /** Time multiplier. Defaults to 1. */\n  speed?: number;\n  /** 60 updates per second, or 30 to halve the GPU work of heavy shaders. Defaults to 60. */\n  frameRate?: 60 | 30;\n  /** Seconds the clock starts at (and holds at while stopped). Defaults to 0. */\n  start?: number;\n};\n\n/**\n * Seconds elapsed for a shader, advanced on the UI thread by a frame callback.\n * Stops completely (no per-frame work) while `running` is false.\n */\nexport function useShaderClock({\n  running,\n  speed = 1,\n  frameRate = 60,\n  start = 0,\n}: ShaderClockOptions): SharedValue<number> {\n  const time = useSharedValue(start);\n  const pending = useSharedValue(0);\n\n  const frame = useFrameCallback((info) => {\n    const dt = Math.min(0.1, (info.timeSincePreviousFrame ?? 16) / 1000);\n    if (frameRate === 30) {\n      // Accumulate and publish every other frame.\n      const acc = pending.get() + dt;\n      if (acc < 1 / 45) {\n        pending.set(acc);\n        return;\n      }\n      pending.set(0);\n      time.set(time.get() + acc * speed);\n      return;\n    }\n    time.set(time.get() + dt * speed);\n  }, false);\n\n  useEffect(() => {\n    frame.setActive(running);\n    // `frame` is stable for the component's lifetime.\n    // eslint-disable-next-line react-hooks/exhaustive-deps\n  }, [running]);\n\n  return time;\n}\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "shared",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "requires": "React Native New Architecture (Reanimated 4)"
+  }
+}

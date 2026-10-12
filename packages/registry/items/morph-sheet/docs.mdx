@@ -1,0 +1,35 @@
+## Usage
+
+```tsx
+import { MorphSheet } from '@/components/kinetik/morph-sheet';
+
+const [open, setOpen] = useState(false);
+
+<MorphSheet
+  open={open}
+  onOpenChange={setOpen}
+  snapPoints={[0.5, 0.92]}
+  accessibilityLabel="Share photo"
+  sheet={<ShareOptions />}
+>
+  <PhotoScreen onShare={() => setOpen(true)} />
+</MorphSheet>;
+```
+
+Wrap the screen in `MorphSheet` and pass the sheet's content as `sheet`. The sheet opens at `initialSnap`, settles at the nearest snap point when released (taking the flick into account) and closes when dragged or flicked below its lowest stop.
+
+## When to use
+
+- Secondary tasks over the current screen: share, filters, details, quick actions.
+- Content with a short and an expanded form, such as a preview that can grow into a full view.
+
+## When not to use
+
+- Primary navigation or long flows. Push a screen instead.
+- Content that needs its own vertical scrolling at the lowest stop; the drag and the scroll compete. Expand to the top stop first.
+
+## Notes
+
+- The screen behind is wrapped in a `BlurTargetView`, which Android needs for a real blur (`expo-blur`'s `blurMethod` falls back to a tint below Android 12).
+- While open the sheet is modal for screen readers and offers close, expand and collapse actions; the dimmed scrim is a close button.
+- A tick plays when the sheet settles at a new stop.

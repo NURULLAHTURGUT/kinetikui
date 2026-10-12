@@ -1,0 +1,40 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "donut-chart",
+  "title": "Donut Chart",
+  "description": "A ring of rounded slices that sweeps in; tap a slice to bring it forward and read its share in the middle.",
+  "category": "data",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["donut-chart.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Slice paths are built once per data change; the sweep and the selection are shared values read by one Skia canvas.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 21,
+        "p90Ms": 23,
+        "baselineMs": 20,
+        "jankyPercent": 2.69,
+        "atRest": "idle",
+        "memoryMb": 153
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The ring appears complete and selection changes without the bounce.",
+    "screenReader": "The ring reads as an image with every slice and value; legend rows are buttons with a selected state.",
+    "touchTarget": "Legend rows are 44 pt tall and full width; the ring itself is also tappable."
+  }
+}

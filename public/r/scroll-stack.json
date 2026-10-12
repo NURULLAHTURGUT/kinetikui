@@ -1,0 +1,62 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "scroll-stack",
+  "type": "registry:item",
+  "title": "Scroll Stack",
+  "description": "A scroll view whose cards pin to the top and pile up, the ones beneath shrinking and dimming as more land.",
+  "categories": [
+    "card"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/scroll-stack.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/scroll-stack.tsx",
+      "content": "import { Children, useState, type ReactNode } from 'react';\nimport { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  useAnimatedScrollHandler,\n  useAnimatedStyle,\n  useSharedValue,\n  type SharedValue,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type ScrollStackProps = {\n  /** The cards. Each child becomes one card of `cardHeight`. */\n  children: ReactNode;\n  /** Scrolls away above the stack. */\n  header?: ReactNode;\n  /** Height of every card. Defaults to 300. */\n  cardHeight?: number;\n  /** Space between cards before they stack. Defaults to 24. */\n  gap?: number;\n  /** How much of each stacked card stays visible above the next. Defaults to 12. */\n  peek?: number;\n  /** Where the stack pins, from the top of the scroll view. Defaults to 16. */\n  topInset?: number;\n  /** How much a covered card shrinks per card on top of it, 0–0.15. Defaults to 0.06. */\n  depth?: number;\n  /** Corner radius of the cards. Defaults to the theme `xl` radius. */\n  radius?: number;\n  style?: StyleProp<ViewStyle>;\n  contentContainerStyle?: StyleProp<ViewStyle>;\n};\n\n/**\n * A scroll view whose cards pin to the top and pile up: each one slides over\n * the last, and the cards underneath shrink and dim a little more with every\n * card that lands on them.\n */\nexport function ScrollStack({\n  children,\n  header,\n  cardHeight = 300,\n  gap = 24,\n  peek = 12,\n  topInset = 16,\n  depth = 0.06,\n  radius,\n  style,\n  contentContainerStyle,\n}: ScrollStackProps) {\n  const theme = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const cards = Children.toArray(children);\n  const n = cards.length;\n  const r = radius ?? theme.radius.xl;\n  const k = Math.max(0, Math.min(0.15, depth));\n\n  const y = useSharedValue(0);\n  const [headerH, setHeaderH] = useState(0);\n  const [viewH, setViewH] = useState(0);\n\n  const onScroll = useAnimatedScrollHandler((e) => {\n    y.set(e.contentOffset.y);\n  });\n\n  // Room under the last card so it can scroll up to its pinned place.\n  const tail = Math.max(0, viewH - cardHeight - topInset - (n - 1) * peek);\n  const stackH = n * cardHeight + (n - 1) * gap + tail;\n\n  return (\n    <Animated.ScrollView\n      onScroll={onScroll}\n      scrollEventThrottle={16}\n      showsVerticalScrollIndicator={false}\n      onLayout={(e) => setViewH(e.nativeEvent.layout.height)}\n      style={[styles.root, style]}\n      contentContainerStyle={contentContainerStyle}\n    >\n      {header ? (\n        <View onLayout={(e) => setHeaderH(e.nativeEvent.layout.height)}>{header}</View>\n      ) : null}\n      <View style={{ height: stackH }}>\n        {cards.map((card, i) => (\n          <Card\n            key={i}\n            index={i}\n            count={n}\n            y={y}\n            top={i * (cardHeight + gap)}\n            // Scroll position at which this card reaches its pinned place.\n            pin={headerH + i * (cardHeight + gap) - topInset - i * peek}\n            travel={cardHeight + gap - peek}\n            height={cardHeight}\n            depth={reduced ? 0 : k}\n            radius={r}\n          >\n            {card}\n          </Card>\n        ))}\n      </View>\n    </Animated.ScrollView>\n  );\n}\n\nfunction Card({\n  children,\n  index,\n  count,\n  y,\n  top,\n  pin,\n  travel,\n  height,\n  depth,\n  radius,\n}: {\n  children: ReactNode;\n  index: number;\n  count: number;\n  y: SharedValue<number>;\n  top: number;\n  pin: number;\n  travel: number;\n  height: number;\n  depth: number;\n  radius: number;\n}) {\n  const { colors, scheme, shadow } = useKinetikTheme();\n  const ink = scheme === 'dark' ? colors.background : colors.text;\n\n  const frame = useAnimatedStyle(() => {\n    const past = y.get() - pin;\n    // Cards that have landed on this one since it pinned.\n    const covered = Math.max(0, Math.min(count - 1 - index, past / travel));\n    return {\n      transform: [{ translateY: Math.max(0, past) }, { scale: 1 - depth * covered }],\n    };\n  });\n  const shade = useAnimatedStyle(() => {\n    const covered = Math.max(0, Math.min(count - 1 - index, (y.get() - pin) / travel));\n    return { opacity: Math.min(0.55, covered * (depth > 0 ? 0.22 : 0)) };\n  });\n\n  return (\n    <Animated.View\n      style={[\n        styles.card,\n        {\n          top,\n          height,\n          borderRadius: radius,\n          backgroundColor: colors.surface,\n          boxShadow: shadow.lg,\n        },\n        frame,\n      ]}\n    >\n      {children}\n      <Animated.View\n        pointerEvents=\"none\"\n        style={[StyleSheet.absoluteFill, { backgroundColor: ink }, shade]}\n      />\n    </Animated.View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  root: { flex: 1 },\n  card: {\n    position: 'absolute',\n    left: 0,\n    right: 0,\n    overflow: 'hidden',\n    transformOrigin: 'top',\n  },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "card",
+    "web": "live",
+    "perf": {
+      "budget": "One scroll offset drives a transform and an overlay per card on the UI thread; nothing renders while scrolling.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-12",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 22,
+          "baselineMs": 20,
+          "jankyPercent": 4.14,
+          "atRest": "idle",
+          "memoryMb": 149
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Cards still pin and stack, which is how the layout reads, but without shrinking or dimming.",
+      "screenReader": "A plain scroll view; cards are read in order and their content keeps its own roles.",
+      "touchTarget": "Cards are full width and `cardHeight` tall."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { ScrollStack } from '@/components/kinetik/scroll-stack';\n\n<ScrollStack cardHeight={320} header={<Intro />} contentContainerStyle={{ padding: 16 }}>\n  {chapters.map((c) => (\n    <Chapter key={c.id} chapter={c} />\n  ))}\n</ScrollStack>;\n```\n\nGive it a height (it fills its parent with `flex: 1`). Each child becomes a full-width card; `header` scrolls away above them.\n\n## When to use\n\n- A short sequence read one after another: chapters, steps, features, plans.\n- Landing and onboarding screens where the pile itself shows progress.\n\n## When not to use\n\n- Long feeds. Cards stay mounted, and a deep pile stops reading as a stack.\n- Cards of different heights; every card is `cardHeight` tall.\n\n## Notes\n\n- `peek` is how much of each stacked card stays visible above the next, so the pile shows how far you have come.\n- Covered cards shrink by `depth` per card on top of them and dim slightly.\n- The scroll indicator is hidden; the stack is its own progress.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add scroll-stack`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

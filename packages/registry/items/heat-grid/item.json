@@ -1,0 +1,40 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "heat-grid",
+  "title": "Heat Grid",
+  "description": "A calendar grid of days shaded by activity; the cells pop in as a wave and a drag reads any day.",
+  "category": "data",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["heat-grid.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Five paths, one per shade, rebuilt on the UI thread only during the intro wave; at rest the canvas is static.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 19,
+        "baselineMs": 20,
+        "jankyPercent": 7.66,
+        "atRest": "idle",
+        "memoryMb": 159
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Cells appear at once, without the wave.",
+    "screenReader": "An adjustable element: swipe up or down to step through days; the value reads the chosen day, or the total.",
+    "touchTarget": "The whole grid; cells are chosen by dragging, so their small size does not matter."
+  }
+}

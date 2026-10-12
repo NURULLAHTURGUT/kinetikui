@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "pulse-toggle",
+  "type": "registry:item",
+  "title": "Pulse Toggle",
+  "description": "A switch whose thumb stretches mid-flight, lands as a rounded square and pulses when it turns on.",
+  "categories": [
+    "interaction"
+  ],
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/pulse-toggle.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/pulse-toggle.tsx",
+      "content": "import { useEffect, useRef } from 'react';\nimport {\n  StyleSheet,\n  Text,\n  View,\n  type AccessibilityActionEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport { Gesture, GestureDetector } from 'react-native-gesture-handler';\nimport Animated, {\n  interpolate,\n  interpolateColor,\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring, timing } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget, withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type PulseToggleSize = 'sm' | 'md';\n\nexport type PulseToggleProps = {\n  value: boolean;\n  onValueChange: (value: boolean) => void;\n  /** Visible label. Tapping it toggles too. Also used as the accessibility label. */\n  label?: string;\n  /** Accessibility label when there is no visible label. */\n  accessibilityLabel?: string;\n  /** Secondary line under the label. */\n  description?: string;\n  disabled?: boolean;\n  /** Track colour when on. Defaults to the theme ember. */\n  activeColor?: string;\n  /** Defaults to `md`. */\n  size?: PulseToggleSize;\n  /** Plays a light tap when toggled. Defaults to true. */\n  haptics?: boolean;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst DIM: Record<PulseToggleSize, { w: number; h: number; thumb: number }> = {\n  sm: { w: 44, h: 26, thumb: 18 },\n  md: { w: 54, h: 32, thumb: 24 },\n};\n\n/**\n * A switch whose thumb changes shape as it travels: a circle stretches into a\n * pill mid-flight and lands as a rounded square, releasing a pulse ring when it\n * turns on.\n */\nexport function PulseToggle({\n  value,\n  onValueChange,\n  label,\n  accessibilityLabel,\n  description,\n  disabled = false,\n  activeColor,\n  size = 'md',\n  haptics = true,\n  style,\n}: PulseToggleProps) {\n  const { colors, font, space, shadow } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const on = activeColor ?? colors.ember;\n  const { w, h, thumb } = DIM[size];\n  const pad = (h - thumb) / 2;\n  const inner = w - pad * 2;\n\n  const progress = useSharedValue(value ? 1 : 0);\n  const pressed = useSharedValue(0);\n  const ring = useSharedValue(0);\n  const first = useRef(true);\n\n  useEffect(() => {\n    progress.set(\n      reduced\n        ? withTiming(value ? 1 : 0, timing('quick'))\n        : withSpring(value ? 1 : 0, spring('snappy')),\n    );\n    if (first.current) {\n      first.current = false;\n      return;\n    }\n    if (value && !reduced) {\n      ring.set(0);\n      ring.set(withTiming(1, timing('slow')));\n    }\n  }, [value, reduced, progress, ring]);\n\n  const toggle = () => {\n    haptic('tap');\n    onValueChange(!value);\n  };\n\n  const tap = Gesture.Tap()\n    .withTestId('pulse-toggle')\n    .enabled(!disabled)\n    .maxDuration(60_000)\n    .onBegin(() => {\n      pressed.set(withSpring(1, spring('snappy', reduced)));\n    })\n    .onFinalize(() => {\n      pressed.set(withSpring(0, spring('snappy', reduced)));\n    })\n    .onEnd((_e, success) => {\n      if (success) scheduleOnRN(toggle);\n    });\n\n  const onClear = withAlpha(on, 0);\n  const track = useAnimatedStyle(() => ({\n    backgroundColor: interpolateColor(progress.get(), [0, 1], [colors.track, on]),\n    borderColor: interpolateColor(progress.get(), [0, 1], [colors.borderStrong, onClear]),\n  }));\n\n  const thumbStyle = useAnimatedStyle(() => {\n    const p = progress.get();\n    // Stretch peaks mid-travel; pressing adds a little extra width.\n    const stretch = reduced ? 0 : Math.sin(Math.min(1, Math.max(0, p)) * Math.PI) * 0.55;\n    const width = thumb * (1 + stretch + pressed.get() * 0.18);\n    const x = pad + p * (inner - width);\n    return {\n      width,\n      transform: [{ translateX: x }],\n      borderRadius: interpolate(p, [0, 1], [thumb / 2, thumb * 0.3], 'clamp'),\n      backgroundColor: interpolateColor(p, [0, 1], [colors.textMuted, colors.highlight]),\n    };\n  });\n\n  const ringStyle = useAnimatedStyle(() => {\n    const t = ring.get();\n    return {\n      opacity: t === 0 ? 0 : (1 - t) * 0.55,\n      transform: [{ scale: 1 + t * 0.9 }],\n    };\n  });\n\n  const onAccessibilityAction = (e: AccessibilityActionEvent) => {\n    if (e.nativeEvent.actionName === 'activate' && !disabled) toggle();\n  };\n\n  const control = (\n    <View style={{ width: w, height: h }}>\n      <Animated.View\n        pointerEvents=\"none\"\n        style={[styles.ring, { borderRadius: h / 2, borderColor: on }, ringStyle]}\n      />\n      <Animated.View style={[styles.track, { width: w, height: h, borderRadius: h / 2 }, track]}>\n        <Animated.View\n          style={[\n            styles.thumb,\n            { height: thumb, top: pad - StyleSheet.hairlineWidth, boxShadow: shadow.sm },\n            thumbStyle,\n          ]}\n        />\n      </Animated.View>\n    </View>\n  );\n\n  return (\n    <GestureDetector gesture={tap}>\n      <View\n        collapsable={false}\n        accessible\n        accessibilityRole=\"switch\"\n        accessibilityLabel={label ?? accessibilityLabel}\n        accessibilityHint={description}\n        accessibilityState={{ checked: value, disabled }}\n        accessibilityActions={[{ name: 'activate' }]}\n        onAccessibilityAction={onAccessibilityAction}\n        hitSlop={label ? undefined : { top: 8, bottom: 8, left: 8, right: 8 }}\n        style={[\n          styles.row,\n          { minHeight: minTouchTarget, gap: space[4], opacity: disabled ? 0.45 : 1 },\n          label ? styles.stretch : null,\n          style,\n        ]}\n      >\n        {label ? (\n          <View style={styles.labels}>\n            <Text\n              style={{ color: colors.text, fontSize: font.size.md, fontWeight: font.weight.medium }}\n            >\n              {label}\n            </Text>\n            {description ? (\n              <Text style={{ color: colors.textMuted, fontSize: font.size.sm, marginTop: 2 }}>\n                {description}\n              </Text>\n            ) : null}\n          </View>\n        ) : null}\n        {control}\n      </View>\n    </GestureDetector>\n  );\n}\n\nconst styles = StyleSheet.create({\n  row: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start' },\n  stretch: { alignSelf: 'stretch' },\n  labels: { flex: 1 },\n  track: { borderWidth: StyleSheet.hairlineWidth, justifyContent: 'center' },\n  thumb: { position: 'absolute', left: 0 },\n  ring: { ...StyleSheet.absoluteFill, borderWidth: 2 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "interaction",
+    "web": "live",
+    "perf": {
+      "budget": "One spring and one 480 ms ring timing per toggle; nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-12",
+          "build": "release",
+          "frameMs": 18,
+          "p90Ms": 23,
+          "baselineMs": 20,
+          "jankyPercent": 2.96,
+          "atRest": "idle",
+          "memoryMb": 154
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Thumb slides with a short timing; no stretch and no pulse ring.",
+      "screenReader": "Switch role with checked and disabled states; the visible label is the accessible name.",
+      "touchTarget": "Row is at least 44 pt tall; a bare toggle gets an 8 pt hit slop."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { PulseToggle } from '@/components/kinetik/pulse-toggle';\n\nconst [enabled, setEnabled] = useState(false);\n\n<PulseToggle\n  label=\"Release alerts\"\n  description=\"A nudge when a new build is ready\"\n  value={enabled}\n  onValueChange={setEnabled}\n/>;\n```\n\nWith a `label` the whole row is the touch target and stretches to its container. Without one, give it an `accessibilityLabel`.\n\n## When to use\n\n- Settings that take effect immediately.\n- Places where a little personality is welcome: onboarding, preferences, playful products.\n\n## When not to use\n\n- Choices that only apply after a Save button. Use a checkbox.\n- More than two states. Use a segmented control.\n\n## Notes\n\n- `activeColor` changes the on colour per toggle; the thumb is always the theme highlight when on.\n- The pulse ring only plays when the user turns the switch on, not on first render.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add pulse-toggle`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "drift-marquee",
+  "title": "Drift Marquee",
+  "description": "An endless row that drifts on its own; drag it to scrub, fling it, and the items lean into the speed.",
+  "category": "card",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-gesture-handler", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["drift-marquee.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "A frame callback advances one offset on the UI thread; each item wraps around with a single transform. Pass active={false} off-screen to stop it.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 22,
+        "p90Ms": 25,
+        "baselineMs": 20,
+        "jankyPercent": 0,
+        "atRest": "animating",
+        "memoryMb": 188
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "No drift and no lean. The row still scrolls by dragging.",
+    "screenReader": "Each item is read once; the copies that fill the loop are hidden.",
+    "touchTarget": "The whole row is the drag area."
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "scramble-text",
+  "title": "Scramble Text",
+  "description": "Characters cycle through random glyphs and lock into place from left to right.",
+  "category": "text",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": [],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["scramble-text.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Re-renders one Text at ~18 Hz for `duration` ms, then stops. Deliberately not driven per frame through a TextInput: on Android Fabric that chains text-input states and can crash.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 22,
+        "baselineMs": 20,
+        "jankyPercent": 17.96,
+        "atRest": "animating",
+        "memoryMb": 155,
+        "notes": "Frames at rest in the measurement came from the demo cycling words; the effect stops once the text settles."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Shows the final text immediately.",
+    "screenReader": "Exposed as a single text element with the final string; the scrambling glyphs are hidden.",
+    "touchTarget": "Not interactive."
+  }
+}

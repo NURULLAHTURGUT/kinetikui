@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "shine-text",
+  "type": "registry:item",
+  "title": "Shine Text",
+  "description": "A line of text with a band of light sweeping across the glyphs.",
+  "categories": [
+    "text"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/shine-text.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/shine-text.tsx",
+      "content": "import {\n  Canvas,\n  LinearGradient,\n  Text as SkiaText,\n  matchFont,\n  vec,\n} from '@shopify/react-native-skia';\nimport { useEffect, useMemo } from 'react';\nimport {\n  Platform,\n  StyleSheet,\n  Text,\n  View,\n  type StyleProp,\n  type TextStyle,\n  type ViewStyle,\n} from 'react-native';\nimport {\n  Easing,\n  cancelAnimation,\n  useDerivedValue,\n  useSharedValue,\n  withDelay,\n  withRepeat,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type ShineTextProps = {\n  /** Single line of text. */\n  text: string;\n  /** Font size in pt. Defaults to 36. */\n  fontSize?: number;\n  /** Defaults to '800'. */\n  fontWeight?: TextStyle['fontWeight'];\n  /** Font family. Defaults to the system sans-serif. */\n  fontFamily?: string;\n  /** Base text colour. Defaults to the theme textMuted. */\n  color?: string;\n  /** Colour of the sheen. Defaults to the theme highlight. */\n  shineColor?: string;\n  /** Time for one sweep, in ms. Defaults to 1800. */\n  duration?: number;\n  /** Rest between sweeps, in ms. Defaults to 1400. */\n  pause?: number;\n  /** Stop sweeping, e.g. while off-screen. Defaults to true. */\n  active?: boolean;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst SYSTEM_FAMILY = Platform.select({ ios: 'Helvetica Neue', default: 'sans-serif' });\n\n/**\n * A single line of text with a band of light sweeping across it. The sheen\n * is a real gradient masked by the glyphs: Skia on iOS and Android, CSS\n * background-clip on the web.\n */\nexport function ShineText(props: ShineTextProps) {\n  return Platform.OS === 'web' ? <ShineTextWeb {...props} /> : <ShineTextNative {...props} />;\n}\n\nfunction useSheenColors(color?: string, shineColor?: string) {\n  const { colors } = useKinetikTheme();\n  return { base: color ?? colors.textMuted, shine: shineColor ?? colors.highlight };\n}\n\nfunction ShineTextNative({\n  text,\n  fontSize = 36,\n  fontWeight = '800',\n  fontFamily = SYSTEM_FAMILY,\n  color,\n  shineColor,\n  duration = 1800,\n  pause = 1400,\n  active = true,\n  style,\n}: ShineTextProps) {\n  const reduced = useReduceMotion();\n  const { base, shine } = useSheenColors(color, shineColor);\n  const font = useMemo(() => {\n    try {\n      return matchFont({ fontFamily, fontSize, fontWeight: fontWeight as never });\n    } catch {\n      // No such family on this device (or no Skia font manager).\n      return null;\n    }\n  }, [fontFamily, fontSize, fontWeight]);\n  // Without a matching system font (or a Skia runtime), fall back to plain text.\n  const measured = useMemo(() => {\n    if (!font) return null;\n    const metrics = font.getMetrics();\n    const ascent = Math.abs(metrics.ascent);\n    return {\n      width: Math.ceil(font.measureText(text).width) + 2,\n      ascent,\n      height: Math.ceil(ascent + Math.abs(metrics.descent) + 2),\n    };\n  }, [font, text]);\n  const width = measured?.width ?? 0;\n  const height = measured?.height ?? 0;\n  const ascent = measured?.ascent ?? 0;\n  const band = Math.max(fontSize * 2, width * 0.35);\n\n  const progress = useSharedValue(0);\n  useEffect(() => {\n    if (reduced || !active) {\n      cancelAnimation(progress);\n      progress.set(0);\n      return;\n    }\n    progress.set(0);\n    progress.set(\n      withRepeat(\n        withDelay(pause, withTiming(1, { duration, easing: Easing.inOut(Easing.cubic) })),\n        -1,\n      ),\n    );\n    return () => cancelAnimation(progress);\n  }, [reduced, active, duration, pause, progress]);\n\n  // The sheen starts left of the text and leaves past its right edge.\n  const start = useDerivedValue(() => vec(-band + progress.get() * (width + band), 0));\n  const end = useDerivedValue(() => vec(progress.get() * (width + band), height * 0.4));\n\n  if (!font || !measured) {\n    return (\n      <View accessible accessibilityRole=\"text\" accessibilityLabel={text} style={style}>\n        <Text numberOfLines={1} style={{ fontSize, fontWeight, fontFamily, color: base }}>\n          {text}\n        </Text>\n      </View>\n    );\n  }\n\n  return (\n    <View\n      accessible\n      accessibilityRole=\"text\"\n      accessibilityLabel={text}\n      style={[{ width, height }, style]}\n    >\n      <View\n        pointerEvents=\"none\"\n        style={StyleSheet.absoluteFill}\n        accessibilityElementsHidden\n        importantForAccessibility=\"no-hide-descendants\"\n      >\n        <Canvas style={StyleSheet.absoluteFill}>\n          <SkiaText x={0} y={ascent + 1} text={text} font={font} color={base}>\n            {!reduced && (\n              <LinearGradient\n                start={start}\n                end={end}\n                colors={[base, base, shine, base, base]}\n                positions={[0, 0.35, 0.5, 0.65, 1]}\n              />\n            )}\n          </SkiaText>\n        </Canvas>\n      </View>\n    </View>\n  );\n}\n\nfunction ShineTextWeb({\n  text,\n  fontSize = 36,\n  fontWeight = '800',\n  fontFamily,\n  color,\n  shineColor,\n  duration = 1800,\n  pause = 1400,\n  active = true,\n  style,\n}: ShineTextProps) {\n  const reduced = useReduceMotion();\n  const { base, shine } = useSheenColors(color, shineColor);\n  const cycle = duration + pause;\n  const sweepEnd = Math.round((pause / cycle) * 100);\n  const animate = active && !reduced;\n\n  // react-native-web passes these CSS properties through to the DOM.\n  const css = {\n    backgroundImage: `linear-gradient(110deg, ${base} 0%, ${base} 40%, ${shine} 50%, ${base} 60%, ${base} 100%)`,\n    backgroundSize: '250% 100%',\n    backgroundClip: 'text',\n    WebkitBackgroundClip: 'text',\n    color: 'transparent',\n    ...(animate\n      ? {\n          animationKeyframes: [\n            {\n              '0%': { backgroundPosition: '100% 0' },\n              [`${sweepEnd}%`]: { backgroundPosition: '100% 0' },\n              '100%': { backgroundPosition: '0% 0' },\n            },\n          ],\n          animationDuration: `${cycle}ms`,\n          animationIterationCount: 'infinite',\n          animationTimingFunction: 'ease-in-out',\n        }\n      : { backgroundPosition: '100% 0' }),\n  } as unknown as TextStyle;\n\n  return (\n    <View accessible accessibilityRole=\"text\" accessibilityLabel={text} style={style}>\n      <Text\n        numberOfLines={1}\n        importantForAccessibility=\"no\"\n        style={[{ fontSize, fontWeight, fontFamily, color: base }, css]}\n      >\n        {text}\n      </Text>\n    </View>\n  );\n}\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "text",
+    "web": "live",
+    "perf": {
+      "budget": "Native: one text draw with a moving gradient per frame while sweeping; idle between sweeps. Web: a CSS animation.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-12",
+          "build": "release",
+          "frameMs": 32,
+          "p90Ms": 36,
+          "baselineMs": 20,
+          "jankyPercent": 0.64,
+          "atRest": "animating",
+          "memoryMb": 155,
+          "notes": "Sweeps by design while active; pass active={false} to stop."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Plain text in the base colour, no sheen.",
+      "screenReader": "Exposed as a single text element with the full string.",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { ShineText } from '@/components/kinetik/shine-text';\n\n<ShineText text=\"Unlock Pro\" fontSize={40} />;\n```\n\nThe sheen is a real gradient masked by the glyphs: drawn with Skia on iOS and Android and with CSS `background-clip: text` on the web.\n\n## When to use\n\n- One premium or celebratory phrase: an upgrade, a reward, a limited offer.\n- Short, single-line labels and headlines.\n\n## When not to use\n\n- Body text or several lines. ShineText draws a single line.\n- More than one shining element on screen; the effect only works when it is rare.\n\n## Notes\n\n- `fontFamily` defaults to the system sans-serif; pass a family that is installed on the device (or loaded in the app) for custom type.\n- Between sweeps (`pause`) nothing animates. Pass `active={false}` while off-screen.\n- If no matching font is available the component falls back to plain text.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add shine-text`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

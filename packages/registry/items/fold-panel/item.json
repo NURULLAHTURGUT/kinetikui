@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "fold-panel",
+  "title": "Fold Panel",
+  "description": "A panel that unfolds in place: the body springs to its measured height and drifts in behind it.",
+  "category": "card",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["fold-panel.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One spring drives the height, the body, the chevron and the panel colour. The body is measured once per layout, not per frame.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 19,
+        "p90Ms": 32,
+        "baselineMs": 20,
+        "jankyPercent": 3.61,
+        "atRest": "idle",
+        "memoryMb": 152
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The body appears and disappears at once; the chevron flips without turning.",
+    "screenReader": "The header is a button with an expanded state; a folded body is hidden from screen readers.",
+    "touchTarget": "The header is at least 64 pt tall and full width."
+  }
+}

@@ -1,0 +1,29 @@
+## Usage
+
+```tsx
+import { MarkerHighlight } from '@/components/kinetik/marker-highlight';
+
+<MarkerHighlight
+  text="Plan trips together and keep every booking in one place."
+  highlights={['together', 'every booking']}
+/>;
+```
+
+Each phrase marks its first match after the previous one, so list them in reading order. `variant="underline"` draws a line under the words instead of painting behind them.
+
+## When to use
+
+- A sentence or two on a landing or onboarding screen where two or three phrases carry the message.
+- Pull quotes and summaries, to guide the eye to what matters.
+
+## When not to use
+
+- Body text and long articles. Marking everything marks nothing.
+- Search results. Matches should be visible at once, not sweep in.
+
+## Notes
+
+- Set `play` when the paragraph scrolls into view; it starts unmarked and sweeps when `play` turns true.
+- The ink runs word by word, so it follows the text across line breaks.
+- The marking is visual only; screen readers read the paragraph as plain text.
+- With reduced motion the phrases appear already marked.

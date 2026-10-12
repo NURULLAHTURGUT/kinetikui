@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "scroll-stack",
+  "title": "Scroll Stack",
+  "description": "A scroll view whose cards pin to the top and pile up, the ones beneath shrinking and dimming as more land.",
+  "category": "card",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["scroll-stack.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One scroll offset drives a transform and an overlay per card on the UI thread; nothing renders while scrolling.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 22,
+        "baselineMs": 20,
+        "jankyPercent": 4.14,
+        "atRest": "idle",
+        "memoryMb": 149
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Cards still pin and stack, which is how the layout reads, but without shrinking or dimming.",
+    "screenReader": "A plain scroll view; cards are read in order and their content keeps its own roles.",
+    "touchTarget": "Cards are full width and `cardHeight` tall."
+  }
+}

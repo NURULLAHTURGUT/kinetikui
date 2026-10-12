@@ -1,0 +1,27 @@
+## Usage
+
+```tsx
+import { RippleField } from '@/components/kinetik/ripple-field';
+
+<RippleField style={StyleSheet.absoluteFill}>
+  <Welcome />
+</RippleField>;
+```
+
+Every touch sends a wave through the dot grid; up to four waves overlap. The shader only runs while a wave is alive, so an untouched field costs nothing per frame.
+
+## When to use
+
+- Playful idle surfaces: welcome screens, empty states, a lock or splash screen.
+- Spaces where touching "nothing" should still feel responsive.
+
+## When not to use
+
+- Behind interactive lists or forms; every tap would ripple and distract.
+- As feedback for a specific action. Animate the control itself instead.
+
+## Notes
+
+- Touches are tracked without claiming the gesture, so buttons and scroll views on top keep working.
+- `haptics` adds a light tap per touch; it is off by default because the visual already answers the touch.
+- Under reduced motion the grid stays still.

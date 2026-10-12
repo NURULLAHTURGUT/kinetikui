@@ -1,0 +1,32 @@
+## Usage
+
+```tsx
+import { BloomMenu } from '@/components/kinetik/bloom-menu';
+
+<BloomMenu
+  style={{ position: 'absolute', right: 16, bottom: 24 }}
+  actions={[
+    { key: 'photo', label: 'Photo', icon: <CameraIcon />, onPress: addPhoto },
+    { key: 'note', label: 'Note', icon: <NoteIcon />, onPress: addNote },
+    { key: 'voice', label: 'Voice memo', icon: <MicIcon />, onPress: recordVoice },
+  ]}
+/>;
+```
+
+Position the menu with `style`, usually in a bottom corner. Its box holds the open menu but lets touches through where it is empty. `layout="arc"` fans icons around the button instead of stacking labelled rows.
+
+## When to use
+
+- A screen whose main job is creating things of a few kinds: a note, a photo, a voice memo.
+- When two to five creation actions would otherwise crowd a toolbar.
+
+## When not to use
+
+- A single action. Use a plain floating button.
+- Navigation. Use tabs or a dock; a floating menu hides where people can go.
+
+## Notes
+
+- Pass `open` and `onOpenChange` to dim the screen behind it or to close it when the user taps elsewhere; the demo does both.
+- Actions are listed nearest the button first. The arc layout has no visible labels, so keep its icons unmistakable.
+- With reduced motion the actions appear in place.

@@ -1,0 +1,46 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "ripple-field",
+  "title": "Ripple Field",
+  "description": "A dot-grid surface that ripples outward from every touch, drawn by a shader.",
+  "category": "background",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "kinetik-tokens",
+    "kinetik-motion",
+    "kinetik-haptics",
+    "kinetik-clock",
+    "kinetik-shaders"
+  ],
+  "files": ["ripple-field.tsx", "ripple-field.shader.ts"],
+  "web": "live",
+  "perf": {
+    "budget": "A full-surface shader runs only for 2.5 s after a touch; at rest the grid is drawn once and nothing runs per frame.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 28,
+        "p90Ms": 34,
+        "baselineMs": 20,
+        "jankyPercent": 0.83,
+        "atRest": "idle",
+        "memoryMb": 153
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "A static dot grid; touches do not start ripples.",
+    "screenReader": "Decorative: the canvas is hidden from assistive tech. Children stay accessible.",
+    "touchTarget": "The whole surface; it never claims the gesture from children or scroll views."
+  }
+}

@@ -1,0 +1,41 @@
+## Usage
+
+```tsx
+import { StatusButton, type ButtonStatus } from '@/components/kinetik/status-button';
+
+const [status, setStatus] = useState<ButtonStatus>('idle');
+
+<StatusButton
+  status={status}
+  successLabel="Paid"
+  onPress={async () => {
+    setStatus('loading');
+    try {
+      await pay();
+      setStatus('success');
+    } catch {
+      setStatus('error');
+    }
+  }}
+>
+  Pay $24.00
+</StatusButton>;
+```
+
+The button is controlled: you own `status`. Presses are ignored while loading and after success; an error state can be pressed again to retry. Return to `idle` when you are ready, for example a couple of seconds after success.
+
+## When to use
+
+- Actions that take a moment and can fail: paying, sending, saving to a server.
+- Places where the result should show where the person is already looking.
+
+## When not to use
+
+- Instant actions. A spinner that flashes for 50 ms reads as a glitch.
+- Long jobs (uploads, exports). Show real progress instead.
+
+## Notes
+
+- Widths are measured from the labels, so the button springs between their natural sizes.
+- A success or error haptic plays when the state changes.
+- With reduced motion the states cross-fade without the spring, spin or shake.

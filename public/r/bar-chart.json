@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "bar-chart",
+  "type": "registry:item",
+  "title": "Bar Chart",
+  "description": "Bars that spring up in a wave; drag across them and the one under the finger stays bright with its value.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/bar-chart.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/bar-chart.tsx",
+      "content": "import { useEffect, useState } from 'react';\nimport {\n  StyleSheet,\n  Text,\n  View,\n  type AccessibilityActionEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport { Gesture, GestureDetector } from 'react-native-gesture-handler';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withDelay,\n  withSpring,\n  withTiming,\n  type SharedValue,\n} from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring, timing } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type BarDatum = { label: string; value: number };\n\nexport type BarChartProps = {\n  data: readonly BarDatum[];\n  /** Height of the bars' area. Defaults to 180. */\n  height?: number;\n  /** Bar colour. Defaults to the theme ember. */\n  color?: string;\n  /** The value the tallest bar reaches. Defaults to the largest value. */\n  max?: number;\n  formatValue?: (value: number) => string;\n  /** Called with the selected bar, or null when the selection clears. */\n  onSelect?: (index: number | null) => void;\n  /** A tick as the finger moves from bar to bar. Defaults to true. */\n  haptics?: boolean;\n  /** A summary of what the chart shows, e.g. \"Steps per day this week\". */\n  accessibilityLabel: string;\n  style?: StyleProp<ViewStyle>;\n};\n\n/** Bars never get wider than this, however few there are. */\nconst BAR = 28;\n/** Room above the bars for the value label. */\nconst HEADROOM = 30;\n\n/**\n * Bars that spring up one after another. Drag across them to read values:\n * the bar under the finger stays bright, the rest step back, and its value\n * floats above it. Tap the selected bar again to clear.\n */\nexport function BarChart({\n  data,\n  height = 180,\n  color,\n  max,\n  formatValue = (v) => String(v),\n  onSelect,\n  haptics = true,\n  accessibilityLabel,\n  style,\n}: BarChartProps) {\n  const { colors, font, space } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const ink = color ?? colors.ember;\n  const n = data.length;\n  const top = max ?? Math.max(1, ...data.map((d) => d.value));\n\n  const [width, setWidth] = useState(0);\n  const [selected, setSelected] = useState<number | null>(null);\n  const index = useSharedValue(-1);\n  const start = useSharedValue(-1);\n\n  const choose = (i: number) => {\n    const next = i < 0 ? null : i;\n    setSelected(next);\n    if (next !== null) haptic('tick');\n    onSelect?.(next);\n  };\n  const move = (i: number) => {\n    'worklet';\n    if (i === index.get()) return;\n    index.set(i);\n    scheduleOnRN(choose, i);\n  };\n\n  const pick = (x: number) => {\n    'worklet';\n    if (n === 0 || width === 0) return -1;\n    return Math.max(0, Math.min(n - 1, Math.floor((x / width) * n)));\n  };\n\n  // While dragging, follow the finger; a bar that was just cleared by a tap\n  // stays clear until the finger moves to another bar.\n  const follow = (x: number) => {\n    'worklet';\n    const i = pick(x);\n    if (i !== start.get() || index.get() >= 0) move(i);\n  };\n\n  const pan = Gesture.Pan()\n    .withTestId('bar-chart')\n    .enabled(n > 0)\n    .minDistance(0)\n    .activeOffsetX([-2, 2])\n    .failOffsetY([-14, 14])\n    .onBegin((e) => {\n      start.set(index.get());\n      const i = pick(e.x);\n      // A tap on the selected bar clears the selection.\n      move(i === start.get() ? -1 : i);\n    })\n    .onStart((e) => {\n      follow(e.x);\n    })\n    .onUpdate((e) => {\n      follow(e.x);\n    });\n\n  const onAccessibilityAction = (e: AccessibilityActionEvent) => {\n    if (n === 0) return;\n    const current = selected ?? -1;\n    const next =\n      e.nativeEvent.actionName === 'increment'\n        ? Math.min(n - 1, current + 1)\n        : Math.max(0, current - 1);\n    index.set(next);\n    choose(next);\n  };\n\n  const focus = selected ?? -1;\n  const valueText =\n    selected !== null && data[selected]\n      ? `${data[selected]!.label}: ${formatValue(data[selected]!.value)}`\n      : undefined;\n\n  return (\n    <View style={style}>\n      <GestureDetector gesture={pan}>\n        <View\n          collapsable={false}\n          accessible\n          accessibilityRole=\"adjustable\"\n          accessibilityLabel={accessibilityLabel}\n          accessibilityValue={valueText ? { text: valueText } : undefined}\n          accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}\n          onAccessibilityAction={onAccessibilityAction}\n          onLayout={(e) => setWidth(e.nativeEvent.layout.width)}\n          style={[styles.plot, { height: height + HEADROOM, gap: n > 12 ? 4 : 10 }]}\n        >\n          {data.map((d, i) => (\n            <Bar\n              key={`${d.label}-${i}`}\n              index={i}\n              value={d.value}\n              max={top}\n              height={height}\n              color={ink}\n              focus={focus}\n              selection={index}\n              reduced={reduced}\n              label={selected === i ? formatValue(d.value) : null}\n            />\n          ))}\n        </View>\n      </GestureDetector>\n      <View style={[styles.labels, { gap: n > 12 ? 4 : 10, marginTop: space[2] }]}>\n        {data.map((d, i) => (\n          <Text\n            key={`${d.label}-${i}`}\n            numberOfLines={1}\n            style={[\n              styles.label,\n              {\n                color: selected === i ? colors.text : colors.textSubtle,\n                fontSize: font.size.xs,\n                fontWeight: selected === i ? font.weight.semibold : font.weight.regular,\n              },\n            ]}\n          >\n            {d.label}\n          </Text>\n        ))}\n      </View>\n    </View>\n  );\n}\n\nfunction Bar({\n  index,\n  value,\n  max,\n  height,\n  color,\n  focus,\n  selection,\n  reduced,\n  label,\n}: {\n  index: number;\n  value: number;\n  max: number;\n  height: number;\n  color: string;\n  focus: number;\n  selection: SharedValue<number>;\n  reduced: boolean;\n  label: string | null;\n}) {\n  const { colors, font, radius } = useKinetikTheme();\n  const target = Math.max(0, Math.min(1, value / max)) * height;\n  const h = useSharedValue(reduced ? target : 0);\n\n  // Grow in a wave from the left; later changes spring straight to the new value.\n  const first = useSharedValue(true);\n  useEffect(() => {\n    if (reduced) {\n      h.set(withTiming(target, timing('quick', true)));\n      return;\n    }\n    const grow = withSpring(target, spring('smooth'));\n    h.set(first.get() ? withDelay(index * 55, grow) : grow);\n    first.set(false);\n  }, [target, reduced, index, h, first]);\n\n  const bar = useAnimatedStyle(() => {\n    const s = selection.get();\n    const dim = s >= 0 && s !== index;\n    return {\n      height: Math.max(4, h.get()),\n      opacity: withTiming(dim ? 0.28 : 1, { duration: 160 }),\n    };\n  });\n  const tag = useAnimatedStyle(() => ({\n    transform: [{ translateY: -Math.max(4, h.get()) - 8 }],\n  }));\n\n  return (\n    <View style={styles.column}>\n      {/* A faint full-height track behind each bar shows how far it could go. */}\n      <View\n        style={[\n          styles.track,\n          { height, backgroundColor: colors.track, borderRadius: radius.sm, opacity: 0.55 },\n        ]}\n      />\n      <Animated.View\n        style={[styles.bar, { backgroundColor: color, borderRadius: radius.sm }, bar]}\n      />\n      {label !== null && focus === index ? (\n        <Animated.View pointerEvents=\"none\" style={[styles.tag, tag]}>\n          <View\n            style={{\n              backgroundColor: colors.text,\n              borderRadius: radius.xs,\n              paddingHorizontal: 7,\n              paddingVertical: 3,\n            }}\n          >\n            <Text\n              style={{\n                color: colors.background,\n                fontSize: font.size.xs,\n                fontWeight: font.weight.bold,\n                fontVariant: ['tabular-nums'],\n              }}\n            >\n              {label}\n            </Text>\n          </View>\n        </Animated.View>\n      ) : null}\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  plot: { flexDirection: 'row', alignItems: 'flex-end' },\n  column: { flex: 1, height: '100%', justifyContent: 'flex-end', alignItems: 'center' },\n  bar: { width: '100%', maxWidth: BAR },\n  track: { position: 'absolute', bottom: 0, width: '100%', maxWidth: BAR },\n  tag: { position: 'absolute', bottom: 0, alignItems: 'center', minWidth: 60 },\n  labels: { flexDirection: 'row' },\n  label: { flex: 1, textAlign: 'center' },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "One spring per bar when values change and one opacity timing per bar when the selection changes, all on the UI thread.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-12",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 23,
+          "baselineMs": 20,
+          "jankyPercent": 2.24,
+          "atRest": "idle",
+          "memoryMb": 152
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Bars reach their height with a short timing instead of the wave of springs.",
+      "screenReader": "Adjustable: swipe up and down to move between bars; each reads its label and value.",
+      "touchTarget": "The whole chart is the scrub area; each bar's column is a target."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { BarChart } from '@/components/kinetik/bar-chart';\n\n<BarChart\n  accessibilityLabel=\"Steps this week\"\n  data={days.map((d) => ({ label: d.short, value: d.steps }))}\n  formatValue={(v) => v.toLocaleString()}\n  onSelect={setDay}\n/>;\n```\n\nThe chart fills its parent's width and spaces the bars evenly. Bars grow from zero in a wave the first time and spring to new values when `data` changes. Pass `max` to keep the scale fixed across datasets, for example a daily goal.\n\n## When to use\n\n- Comparing a handful of categories or periods: days, months, teams, products.\n- Summaries where the exact value matters on demand but not all at once.\n\n## When not to use\n\n- Continuous trends with many points. Use Line Chart.\n- More than about 16 bars; they get too thin to touch.\n\n## Notes\n\n- The selection stays after the finger lifts; tap the selected bar to clear it.\n- A tick plays as the finger crosses from bar to bar.\n- Screen readers move between bars with the adjustable actions.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add bar-chart`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "stat-card",
+  "type": "registry:item",
+  "title": "Stat Card",
+  "description": "A key figure that counts up, with a change pill and a sparkline that draws itself in.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-count.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/stat-card.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/stat-card.tsx",
+      "content": "import {\n  Canvas,\n  Circle,\n  Group,\n  LinearGradient,\n  Path,\n  Skia,\n  rect,\n  vec,\n} from '@shopify/react-native-skia';\nimport { useEffect, useMemo, useState, type ReactNode } from 'react';\nimport { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  Easing,\n  useAnimatedStyle,\n  useDerivedValue,\n  useSharedValue,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useCountUp } from '../../lib/kinetik/hooks/use-count-up';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type StatCardProps = {\n  /** What the figure is, e.g. \"Visitors\". */\n  label: string;\n  value: number;\n  /** Formats the figure as it counts. Defaults to grouped whole numbers. */\n  formatValue?: (value: number) => string;\n  /** Change against the previous period as a fraction: 0.124 for +12.4%. */\n  delta?: number;\n  /** Lower is better, e.g. for a bounce rate: a fall shows as good news. */\n  invertDelta?: boolean;\n  /** Under the figure, e.g. \"vs last week\". */\n  caption?: string;\n  /** Recent values, oldest first, drawn as a sparkline along the bottom. */\n  trend?: readonly number[];\n  /** An icon before the label. */\n  icon?: ReactNode;\n  /** Sparkline colour. Defaults to the theme azure. */\n  color?: string;\n  /** Makes the card a button. */\n  onPress?: () => void;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst SPARK_H = 56;\n\nconst grouped = (v: number) => Math.round(v).toLocaleString('en-US');\nconst percent = (f: number) => `${Math.abs(f * 100).toFixed(1)}%`;\n\n/**\n * A key figure with its context: the number counts up to its value, a pill\n * shows the change in green or red, and a sparkline draws itself in along\n * the bottom of the card.\n */\nexport function StatCard({\n  label,\n  value,\n  formatValue = grouped,\n  delta,\n  invertDelta = false,\n  caption,\n  trend,\n  icon,\n  color,\n  onPress,\n  style,\n}: StatCardProps) {\n  const { colors, font, radius, space } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const ink = color ?? colors.azure;\n  const [width, setWidth] = useState(0);\n\n  const shown = useCountUp(value, { instant: reduced, duration: 1200 });\n  const up = (delta ?? 0) >= 0;\n  const good = up !== invertDelta;\n  const tone =\n    delta === undefined || delta === 0 ? colors.textMuted : good ? colors.success : colors.danger;\n\n  // Keyed on the values, not the array: a new array with the same numbers must not redraw.\n  const signature = trend?.join(',') ?? '';\n  const spark = useMemo(() => {\n    if (!trend || trend.length < 2 || width === 0) return null;\n    const lo = Math.min(...trend);\n    const hi = Math.max(...trend);\n    const span = hi - lo || 1;\n    // Bleeds off the left edge; stops short of the right so the end dot fits.\n    const reach = width - 10;\n    const pts = trend.map((v, i) => ({\n      x: (i / (trend.length - 1)) * reach,\n      y: 6 + (1 - (v - lo) / span) * (SPARK_H - 12),\n    }));\n    // Straight segments with rounded joins read cleaner than a curve at this size.\n    const line = Skia.PathBuilder.Make();\n    pts.forEach((p, i) => (i === 0 ? line.moveTo(p.x, p.y) : line.lineTo(p.x, p.y)));\n    const area = Skia.PathBuilder.MakeFromPath(line.build())\n      .lineTo(reach, SPARK_H)\n      .lineTo(0, SPARK_H)\n      .close()\n      .detach();\n    return { line: line.detach(), area, last: pts[pts.length - 1]! };\n    // `signature` stands in for `trend`.\n    // eslint-disable-next-line react-hooks/exhaustive-deps\n  }, [signature, width]);\n\n  const draw = useSharedValue(reduced ? 1 : 0);\n  useEffect(() => {\n    if (!spark) return;\n    if (reduced) {\n      draw.set(1);\n      return;\n    }\n    draw.set(0);\n    draw.set(withTiming(1, { duration: 1200, easing: Easing.bezier(0.2, 0, 0, 1) }));\n  }, [spark, reduced, draw]);\n  const reveal = useDerivedValue(() => rect(0, 0, width * draw.get(), SPARK_H));\n  const dot = useDerivedValue(() => (draw.get() > 0.98 ? 1 : 0));\n\n  const pressed = useSharedValue(0);\n  const shell = useAnimatedStyle(() => ({ transform: [{ scale: 1 - pressed.get() * 0.02 }] }));\n\n  const deltaText = delta === undefined ? null : `${up ? 'up' : 'down'} ${percent(delta)}`;\n  const name = [label, formatValue(value), deltaText, caption].filter(Boolean).join(', ');\n\n  const body = (\n    <>\n      <View style={[styles.head, { paddingHorizontal: space[5], paddingTop: space[5] }]}>\n        {icon}\n        <Text\n          numberOfLines={1}\n          style={{\n            flex: 1,\n            color: colors.textMuted,\n            fontSize: font.size.sm,\n            fontWeight: font.weight.medium,\n          }}\n        >\n          {label}\n        </Text>\n        {delta !== undefined ? (\n          <View\n            style={[\n              styles.pill,\n              { backgroundColor: withAlpha(tone, 0.14), borderRadius: radius.pill },\n            ]}\n          >\n            <View style={[styles.arrow, { borderColor: tone }, !up && styles.arrowDown]} />\n            <Text\n              style={{\n                color: tone,\n                fontSize: font.size.xs,\n                fontWeight: font.weight.semibold,\n                fontVariant: ['tabular-nums'],\n              }}\n            >\n              {percent(delta)}\n            </Text>\n          </View>\n        ) : null}\n      </View>\n      <View style={{ paddingHorizontal: space[5], paddingTop: space[2], gap: 2 }}>\n        <Text\n          numberOfLines={1}\n          adjustsFontSizeToFit\n          style={{\n            color: colors.text,\n            fontSize: font.size['3xl'],\n            fontWeight: font.weight.bold,\n            letterSpacing: -1.2,\n            fontVariant: ['tabular-nums'],\n          }}\n        >\n          {formatValue(shown)}\n        </Text>\n        {caption ? (\n          <Text style={{ color: colors.textSubtle, fontSize: font.size.xs }}>{caption}</Text>\n        ) : null}\n      </View>\n      {trend ? (\n        <View\n          pointerEvents=\"none\"\n          onLayout={(e) => setWidth(e.nativeEvent.layout.width)}\n          style={[styles.spark, { marginTop: space[3] }]}\n        >\n          {spark ? (\n            <Canvas style={StyleSheet.absoluteFill}>\n              <Group clip={reveal}>\n                <Path path={spark.area}>\n                  <LinearGradient\n                    start={vec(0, 0)}\n                    end={vec(0, SPARK_H)}\n                    colors={[withAlpha(ink, 0.28), withAlpha(ink, 0)]}\n                  />\n                </Path>\n                <Path\n                  path={spark.line}\n                  style=\"stroke\"\n                  strokeWidth={2}\n                  strokeJoin=\"round\"\n                  strokeCap=\"round\"\n                  color={ink}\n                />\n              </Group>\n              <Group opacity={dot}>\n                <Circle c={vec(spark.last.x, spark.last.y)} r={4.5} color={colors.surface} />\n                <Circle c={vec(spark.last.x, spark.last.y)} r={3} color={ink} />\n              </Group>\n            </Canvas>\n          ) : null}\n        </View>\n      ) : (\n        <View style={{ height: space[5] }} />\n      )}\n    </>\n  );\n\n  const frame = [\n    styles.card,\n    { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.xl },\n  ];\n\n  if (!onPress) {\n    return (\n      <View accessible accessibilityLabel={name} style={[frame, style]}>\n        {body}\n      </View>\n    );\n  }\n  return (\n    <Animated.View style={[shell, style]}>\n      <Pressable\n        onPress={onPress}\n        onPressIn={() => pressed.set(withSpring(1, spring('snappy', reduced)))}\n        onPressOut={() => pressed.set(withSpring(0, spring('bouncy', reduced)))}\n        accessibilityRole=\"button\"\n        accessibilityLabel={name}\n        style={frame}\n      >\n        {body}\n      </Pressable>\n    </Animated.View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  card: { borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },\n  head: { flexDirection: 'row', alignItems: 'center', gap: 8 },\n  pill: {\n    flexDirection: 'row',\n    alignItems: 'center',\n    gap: 4,\n    paddingHorizontal: 8,\n    paddingVertical: 3,\n  },\n  // A chevron made of two borders of a square, pointing up.\n  arrow: {\n    width: 6,\n    height: 6,\n    borderLeftWidth: 1.6,\n    borderTopWidth: 1.6,\n    transform: [{ translateY: 1.5 }, { rotate: '45deg' }],\n  },\n  arrowDown: { transform: [{ translateY: -1.5 }, { rotate: '225deg' }] },\n  spark: { height: SPARK_H },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "The sparkline is built once per data change and revealed by a clip on the UI thread; the figure re-renders only while it counts.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-12",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 22,
+          "baselineMs": 20,
+          "jankyPercent": 4.19,
+          "atRest": "idle",
+          "memoryMb": 157
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The figure and the sparkline appear complete.",
+      "screenReader": "One summary: label, value, change ('up 12.4%') and caption. A button when onPress is set.",
+      "touchTarget": "The whole card when it is pressable."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { StatCard } from '@/components/kinetik/stat-card';\n\n<StatCard\n  label=\"Visitors\"\n  value={24180}\n  delta={0.124}\n  caption=\"vs last week\"\n  trend={visitsPerDay}\n  onPress={openTraffic}\n/>;\n```\n\n`delta` is a fraction (0.124 for +12.4%). Rises are green and falls red; pass `invertDelta` for figures where lower is better, such as a bounce rate or a load time.\n\n## When to use\n\n- Dashboards and summaries: the handful of numbers someone checks first.\n- A figure that needs context to mean anything: its change and its recent shape.\n\n## When not to use\n\n- Many figures in a dense table. The count-up and the sparkline are for a few headline numbers.\n- Values without a sensible \"previous period\". Leave out `delta` rather than inventing one.\n\n## Notes\n\n- Changing `value` counts on from the current figure, so live updates read as movement, not jumps.\n- `formatValue` is applied to every counting frame; make sure it rounds (`v.toFixed(1)`, currency formatters).\n- With reduced motion the figure and the sparkline appear complete.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add stat-card`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

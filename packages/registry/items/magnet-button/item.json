@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "magnet-button",
+  "title": "Magnet Button",
+  "description": "A button that leans toward the finger from a field around it and presses on release.",
+  "category": "interaction",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["magnet-button.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Touch moves retarget two springs on the UI thread; nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 21,
+        "p90Ms": 24,
+        "baselineMs": 20,
+        "jankyPercent": 1.78,
+        "atRest": "idle",
+        "memoryMb": 149
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The button stays put and only dims slightly while the finger is over it.",
+    "screenReader": "Button role; 'activate' presses it.",
+    "touchTarget": "At least 52 pt tall; the field adds 40 pt of reach on every side."
+  }
+}

@@ -1,0 +1,26 @@
+## Usage
+
+```tsx
+import { GrainDrift } from '@/components/kinetik/grain-drift';
+
+<GrainDrift colors={['#FF6A3D', '#8FD8FF', '#1E2330', '#0B0D12']} style={{ height: 320 }}>
+  <NowPlaying />
+</GrainDrift>;
+```
+
+Four colour points drift on slow orbits and blend into a soft mesh gradient. A film grain, re-seeded 24 times a second like real film, sits on top. Set `grain={0}` for a clean gradient.
+
+## When to use
+
+- Media surfaces: now-playing cards, covers, story backgrounds.
+- Brand moments where a flat colour feels too static.
+
+## When not to use
+
+- Behind small or low-contrast text; the moving grain adds noise. Keep text large and on a solid backdrop.
+- Long lists. Use it for one hero surface.
+
+## Notes
+
+- Pass `active={false}` while off-screen; `frameRate={30}` halves the shader work.
+- Under reduced motion the gradient is drawn once and stays still.

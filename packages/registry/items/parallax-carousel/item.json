@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "parallax-carousel",
+  "title": "Parallax Carousel",
+  "description": "A paging carousel whose pictures drift inside their cards as they slide, with the centre card brought forward.",
+  "category": "card",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["parallax-carousel.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One drag offset drives three transforms per card on the UI thread; React renders only when the centre card changes.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-12",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 26,
+        "baselineMs": 20,
+        "jankyPercent": 3.5,
+        "atRest": "idle",
+        "memoryMb": 160
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Cards keep their size and the pictures stay put; cards settle without overshoot.",
+    "screenReader": "Each card is an image (or a button when onPress is set) named by its title or accessibilityLabel, with Next card and Previous card actions; the centre card is selected.",
+    "touchTarget": "Cards are at least half the carousel's width."
+  }
+}
