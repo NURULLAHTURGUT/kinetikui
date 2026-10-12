@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 
@@ -49,8 +49,9 @@ describe('ParallaxCarousel', () => {
         { state: State.END, translationX: -140, velocityX: -600 },
       ]);
     });
-    await flush();
-    expect(onIndexChange).toHaveBeenLastCalledWith(1);
+    // The row settles on a spring and reports cards as it passes them; wait for
+    // it to land rather than assume how fast the machine runs the spring.
+    await waitFor(() => expect(onIndexChange).toHaveBeenLastCalledWith(1), { timeout: 3000 });
   });
 
   it('presses cards and steps through them for screen readers', async () => {
