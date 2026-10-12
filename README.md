@@ -1,6 +1,40 @@
-# Kinetik UI
+<p align="center">
+  <a href="https://kinetik-ui.dev">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset=".github/assets/hero-dark.jpg" />
+      <img alt="Kinetik UI: motion parts for Expo" src=".github/assets/hero-light.jpg" width="100%" />
+    </picture>
+  </a>
+</p>
 
-[![npm](https://img.shields.io/npm/v/kinetik-ui)](https://www.npmjs.com/package/kinetik-ui) [![docs](https://img.shields.io/badge/docs-kinetik--ui.dev-black)](https://kinetik-ui.dev) [![license](https://img.shields.io/badge/license-MIT-black)](LICENSE)
+<h1 align="center">Kinetik UI</h1>
+
+<p align="center">
+  <strong>Motion parts for Expo.</strong><br />
+  49 animated components and 4 screen templates for React Native, copied into your app as source.
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/kinetik-ui"><img alt="npm" src="https://img.shields.io/npm/v/kinetik-ui?style=flat-square&color=000" /></a>
+  <img alt="Expo SDK 54+" src="https://img.shields.io/badge/Expo-SDK_54+-000?style=flat-square&logo=expo&logoColor=white" />
+  <img alt="React Native New Architecture" src="https://img.shields.io/badge/React_Native-New_Architecture-000?style=flat-square&logo=react&logoColor=61DAFB" />
+  <img alt="Reanimated 4" src="https://img.shields.io/badge/Reanimated-4-000?style=flat-square" />
+  <img alt="Skia" src="https://img.shields.io/badge/Skia-2-000?style=flat-square" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-000?style=flat-square&logo=typescript&logoColor=3178C6" />
+  <img alt="shadcn registry" src="https://img.shields.io/badge/shadcn-registry-000?style=flat-square" />
+  <img alt="MCP server" src="https://img.shields.io/badge/MCP-server-000?style=flat-square" />
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-000?style=flat-square" /></a>
+</p>
+
+<p align="center">
+  <a href="https://kinetik-ui.dev"><strong>kinetik-ui.dev</strong></a> ·
+  <a href="https://kinetik-ui.dev/components">Components</a> ·
+  <a href="https://kinetik-ui.dev/docs/getting-started">Documentation</a> ·
+  <a href="https://kinetik-ui.dev/registry">Registry</a> ·
+  <a href="https://www.npmjs.com/package/kinetik-ui">npm</a>
+</p>
+
+---
 
 > **Requires the React Native New Architecture** (Reanimated 4). The legacy architecture is not supported.
 
