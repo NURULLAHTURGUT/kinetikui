@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/NURULLAHTURGUT/kinetikui/security/advisories/new
+    about: Please report security problems privately, not in a public issue.
+  - name: Documentation
+    url: https://kinetik-ui.dev/docs/getting-started
+    about: Setup, every component's props and notes on when not to use it.

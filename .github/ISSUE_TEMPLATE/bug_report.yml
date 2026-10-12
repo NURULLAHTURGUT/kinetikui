@@ -1,0 +1,82 @@
+name: Bug report
+description: A component, the CLI or the docs site does not behave as documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. Security problems go through
+        [private vulnerability reporting](https://github.com/NURULLAHTURGUT/kinetikui/security/advisories/new), not here.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where is the problem?
+      options:
+        - A component or screen template
+        - The kinetik-ui CLI
+        - The MCP server
+        - The docs site (kinetik-ui.dev)
+    validations:
+      required: true
+
+  - type: input
+    id: component
+    attributes:
+      label: Component
+      description: Its name as in `npx kinetik-ui add <name>`, if it is about one.
+      placeholder: glint-card
+
+  - type: checkboxes
+    id: platforms
+    attributes:
+      label: Platforms where it happens
+      options:
+        - label: iOS
+        - label: Android
+        - label: Web (docs preview)
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      description: Screenshots or a screen recording help a lot with motion bugs.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. npx kinetik-ui add glint-card
+        2. Render <GlintCard /> inside a ScrollView
+        3. Drag the card
+    validations:
+      required: true
+
+  - type: textarea
+    id: versions
+    attributes:
+      label: Versions
+      description: Run `npx kinetik-ui doctor` and paste the output, or fill in what you know.
+      render: text
+      placeholder: |
+        kinetik-ui:
+        Expo SDK:
+        react-native:
+        react-native-reanimated:
+        @shopify/react-native-skia:
+        Device / OS:
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: The app uses the React Native New Architecture (Reanimated 4).
+          required: true
+        - label: I searched the existing issues.
+          required: true
