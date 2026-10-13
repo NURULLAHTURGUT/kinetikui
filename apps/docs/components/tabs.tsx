@@ -2,7 +2,7 @@
 
 import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 
-export type Tab = { id: string; title: string; content: ReactNode };
+export type Tab = { id: string; title: ReactNode; content: ReactNode };
 
 /**
  * A framed card with a label on the left and tabs on the right. Inactive

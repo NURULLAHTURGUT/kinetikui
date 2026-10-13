@@ -2,6 +2,7 @@ import type { Controls } from '@kinetik/registry/demo-kit/types';
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 
+import { BrandIcon, type BrandName } from '../components/brand-icons';
 import { CopyButton } from '../components/copy-button';
 import { ArrowDownIcon, ArrowRightIcon } from '../components/icons';
 import { KineticField } from '../components/kinetic-field';
@@ -52,38 +53,122 @@ const AGENT_SCRIPT: TerminalLine[] = [
 ];
 
 const MCP_SERVER = '{ "command": "npx", "args": ["-y", "kinetik-ui", "mcp"] }';
+const MCP_JSON = `{\n  "mcpServers": {\n    "kinetik-ui": ${MCP_SERVER}\n  }\n}`;
 
-const MCP_CLIENTS = [
+const MCP_CLIENTS: {
+  id: string;
+  title: string;
+  icon?: BrandName;
+  where: string;
+  config: string;
+}[] = [
   {
     id: 'claude-code',
     title: 'Claude Code',
+    icon: 'claude',
     where: 'Terminal',
     config: 'claude mcp add kinetik-ui -- npx -y kinetik-ui mcp',
   },
+  { id: 'cursor', title: 'Cursor', icon: 'cursor', where: '.cursor/mcp.json', config: MCP_JSON },
   {
-    id: 'cursor',
-    title: 'Cursor',
-    where: '.cursor/mcp.json',
-    config: `{\n  "mcpServers": {\n    "kinetik-ui": ${MCP_SERVER}\n  }\n}`,
+    id: 'codex',
+    title: 'Codex',
+    icon: 'codex',
+    where: 'Terminal (writes ~/.codex/config.toml)',
+    config: 'codex mcp add kinetik-ui -- npx -y kinetik-ui mcp',
+  },
+  {
+    id: 'opencode',
+    title: 'OpenCode',
+    icon: 'opencode',
+    where: 'opencode.json in your project root',
+    config: `{\n  "$schema": "https://opencode.ai/config.json",\n  "mcp": {\n    "kinetik-ui": {\n      "type": "local",\n      "command": ["npx", "-y", "kinetik-ui", "mcp"],\n      "enabled": true\n    }\n  }\n}`,
+  },
+  {
+    id: 'windsurf',
+    title: 'Windsurf',
+    icon: 'windsurf',
+    where: '~/.codeium/windsurf/mcp_config.json',
+    config: MCP_JSON,
   },
   {
     id: 'other',
-    title: 'Other clients',
-    where: 'Your MCP config (Claude Desktop, Windsurf, …)',
-    config: `{\n  "mcpServers": {\n    "kinetik-ui": ${MCP_SERVER}\n  }\n}`,
+    title: 'Other',
+    where: 'Claude Desktop, Gemini CLI, Cline and any MCP client',
+    config: MCP_JSON,
   },
 ];
 
-const MCP_TOOLS = [
-  { name: 'list_components', does: 'Every component and screen template, by category.' },
-  { name: 'search_components', does: 'Find components by what they do: "swipe cards", "loading".' },
-  { name: 'get_component', does: 'Usage guide, accessibility notes, dependencies and source.' },
-  { name: 'get_install_plan', does: 'The exact commands and setup notes for your project.' },
-  { name: 'get_tokens', does: 'Palettes, spacing, type, shadows and the motion presets.' },
+/** Clients drawn on the left of the MCP diagram, top to bottom. */
+const HUB_CLIENTS: { name: BrandName; title: string }[] = [
+  { name: 'claude', title: 'Claude' },
+  { name: 'codex', title: 'Codex' },
+  { name: 'cursor', title: 'Cursor' },
+  { name: 'gemini', title: 'Gemini' },
+  { name: 'opencode', title: 'OpenCode' },
+  { name: 'windsurf', title: 'Windsurf' },
+  { name: 'cline', title: 'Cline' },
 ];
+
+const MCP_TOOLS = [
+  { name: 'list_components', does: 'Browse' },
+  { name: 'search_components', does: 'Find' },
+  { name: 'get_component', does: 'Read source' },
+  { name: 'get_install_plan', does: 'Plan install' },
+  { name: 'get_tokens', does: 'Theme' },
+];
+
+const STEPS = [
+  { id: 'init', title: 'Init', note: 'Tokens and motion presets', command: 'npx kinetik-ui init' },
+  {
+    id: 'add',
+    title: 'Add',
+    note: 'Source and SDK-matched deps',
+    command: 'npx kinetik-ui add glint-card',
+  },
+  { id: 'ship', title: 'Ship', note: 'Your code. Change anything.' },
+] as const;
+
+/** Frame times for the UI-thread tile: the JS lane spikes, the UI lane stays flat. */
+const JS_FRAMES = [
+  30, 34, 28, 80, 36, 30, 95, 40, 32, 30, 70, 34, 28, 30, 100, 44, 30, 34, 62, 30, 28, 36, 86, 32,
+];
+const UI_FRAMES = JS_FRAMES.map((_, i) => 26 + ((i * 7) % 5));
+
+const HUB_HEIGHT = 384;
 
 /** Stagger index for entrance animations (read by CSS as --d). */
 const delay = (d: number) => ({ '--d': d }) as CSSProperties;
+
+/**
+ * Curves from each row on one side of the MCP diagram to its centre. The
+ * diagram is a fixed 384 px tall, so only the width stretches.
+ */
+function Beams({ count, out = false }: { count: number; out?: boolean }) {
+  const mid = HUB_HEIGHT / 2;
+  return (
+    <svg
+      className={`beams ${out ? 'beams-out' : ''}`}
+      viewBox={`0 0 200 ${HUB_HEIGHT}`}
+      preserveAspectRatio="none"
+      aria-hidden
+      focusable="false"
+    >
+      {Array.from({ length: count }, (_, i) => {
+        const y = ((i + 0.5) / count) * HUB_HEIGHT;
+        const d = out
+          ? `M0 ${mid} C100 ${mid} 100 ${y} 200 ${y}`
+          : `M0 ${y} C100 ${y} 100 ${mid} 200 ${mid}`;
+        return (
+          <g key={i} style={delay(i)}>
+            <path className="beam" d={d} pathLength={1} />
+            <path className="beam-pulse" d={d} pathLength={1} />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
 
 /** Splits a heading into words that blur and rise in one after another. */
 function Words({ text, start = 0 }: { text: string; start?: number }) {
@@ -190,143 +275,238 @@ export default function Home() {
           <h2 id="principles-title">
             <Words text="Built like the rest of your app." />
           </h2>
-          <p>Native motion primitives, your own source files, and the details done for you.</p>
         </header>
-        <div className="principles">
-          <article className="principle spot" data-reveal style={delay(0)}>
-            <div className="art art-thread" aria-hidden>
-              <span className="lane lane-js">
-                <i />
-                <i />
-                <i />
-              </span>
-              <span className="lane lane-ui">
-                <i />
-              </span>
+        <div className="pillars">
+          <article className="pillar pillar-wide spot" data-reveal style={delay(0)}>
+            <div className="pillar-art art-frames" aria-hidden>
+              {[
+                { lane: 'JS thread', state: 'busy', frames: JS_FRAMES, kind: 'js' },
+                { lane: 'UI thread', state: '60 fps', frames: UI_FRAMES, kind: 'ui' },
+              ].map((row) => (
+                <div key={row.kind} className={`frames frames-${row.kind}`}>
+                  <span className="frames-lane">{row.lane}</span>
+                  <span className="frames-bars">
+                    <span className="frames-track">
+                      {[...row.frames, ...row.frames].map((h, i) => (
+                        <i key={i} style={{ '--h': h } as CSSProperties} />
+                      ))}
+                    </span>
+                  </span>
+                  <span className="frames-state">{row.state}</span>
+                </div>
+              ))}
             </div>
             <h3>On the UI thread</h3>
-            <p>
-              Gestures, springs and shaders run as worklets, so a busy JavaScript thread never
-              stalls the animation.
-            </p>
+            <p>Gestures, springs and shaders stay smooth when JavaScript is busy.</p>
           </article>
-          <article className="principle spot" data-reveal style={delay(1)}>
-            <div className="art art-files" aria-hidden>
-              <span>components/</span>
-              <span>└ kinetik/</span>
-              <span className="file-new">&nbsp;&nbsp;└ glint-card.tsx</span>
+
+          <article className="pillar spot" data-reveal style={delay(1)}>
+            <div className="pillar-art art-editor" aria-hidden>
+              <span className="editor-tab">glint-card.tsx</span>
+              <span className="editor-lines">
+                {[62, 44, 78, 30, 56, 70, 38].map((w, i) => (
+                  <i key={i} className={i === 3 ? 'edit' : undefined} style={{ width: `${w}%` }} />
+                ))}
+              </span>
             </div>
-            <h3>Copied, not installed</h3>
-            <p>
-              The CLI writes TypeScript source into your project. You own the code and can change
-              anything.
-            </p>
+            <h3>Your source</h3>
+            <p>Copied into your project. Change anything.</p>
           </article>
-          <article className="principle spot" data-reveal style={delay(2)}>
-            <div className="art art-motion" aria-hidden>
-              <span className="ball" />
-              <span className="switch-art" />
+
+          <article className="pillar spot" data-reveal style={delay(2)}>
+            <div className="pillar-art art-a11y" aria-hidden>
+              <span className="a11y-bubble">Glint card, button</span>
+              <span className="a11y-target">
+                <span />
+              </span>
+              <span className="a11y-toggle">
+                Reduce motion <b />
+              </span>
             </div>
             <h3>Accessible by default</h3>
-            <p>
-              Every component has a reduced-motion version, screen-reader labels and roles, and 44
-              pt touch targets.
-            </p>
+            <p>Reduced motion, screen-reader labels, 44 pt targets.</p>
           </article>
-          <article className="principle spot" data-reveal style={delay(3)}>
-            <div className="art art-theme" aria-hidden>
-              <span className="swatch" />
-              <code>{"colors={{ ember: '#7C5CFF' }}"}</code>
+
+          <article className="pillar pillar-wide spot" data-reveal style={delay(3)}>
+            <div className="pillar-art art-brand" aria-hidden>
+              <span className="brand-code mono">
+                {'<KinetikProvider colors={{ ember: '}
+                <b />
+                {' }}>'}
+              </span>
+              <span className="brand-kit">
+                <span className="kit-button">Continue</span>
+                <span className="kit-switch" />
+                <span className="kit-bar">
+                  <span />
+                </span>
+                <span className="kit-chip">New</span>
+                <span className="kit-dots">
+                  <i />
+                  <i />
+                  <i />
+                </span>
+              </span>
             </div>
             <h3>One design language</h3>
-            <p>
-              Colours, spacing, type and three springs come from shared tokens. Brand everything
-              with one provider.
-            </p>
+            <p>Shared tokens and three springs. Rebrand everything in one place.</p>
           </article>
         </div>
       </section>
 
-      <section className="block how" aria-labelledby="how-title">
-        <div className="how-copy" data-reveal>
-          <span className="overline">How it works</span>
-          <h2 id="how-title">
-            <Words text="Two commands to motion." />
-          </h2>
-          <ol className="steps">
-            <li>
-              <strong>Init</strong>
-              <span>Adds the shared tokens and motion presets, and installs Reanimated.</span>
-            </li>
-            <li>
-              <strong>Add</strong>
-              <span>
-                Copies the components you pick and installs their native dependencies with{' '}
-                <code>expo install</code>, so versions always match your SDK.
-              </span>
-            </li>
-            <li>
-              <strong>Make it yours</strong>
-              <span>It is your code now. Restyle it, rename it, ship it.</span>
-            </li>
-          </ol>
+      <section className="block" aria-labelledby="how-title">
+        <header className="block-head block-head-row" data-reveal>
+          <div>
+            <span className="overline">How it works</span>
+            <h2 id="how-title">
+              <Words text="Two commands to motion." />
+            </h2>
+          </div>
           <Link className="button button-secondary" href="/docs/getting-started">
             Read the guide
+            <ArrowRightIcon className="button-icon" />
           </Link>
-        </div>
-        <div data-reveal style={delay(1)}>
-          <Terminal />
-        </div>
+        </header>
+        <ol className="flow">
+          {STEPS.map((step, i) => (
+            <li key={step.id} className="flow-step spot" data-reveal style={delay(i)}>
+              {i < STEPS.length - 1 ? <span className="flow-link" aria-hidden /> : null}
+              <div className={`flow-art flow-${step.id}`} aria-hidden>
+                {step.id === 'init' && (
+                  <span className="tokens">
+                    <i className="tok-swatch" />
+                    <i className="tok-swatch tok-azure" />
+                    <i className="tok-swatch tok-muted" />
+                    <i>spring</i>
+                    <i>16</i>
+                    <i>Aa</i>
+                  </span>
+                )}
+                {step.id === 'add' && (
+                  <span className="tree mono">
+                    <span>components/kinetik/</span>
+                    <span className="tree-file">└ glint-card.tsx</span>
+                    <span className="tree-deps">✓ expo install</span>
+                  </span>
+                )}
+                {step.id === 'ship' && (
+                  <span className="phone">
+                    <span className="phone-card" />
+                    <span className="phone-row" />
+                    <span className="phone-row short" />
+                    <span className="phone-tabs">
+                      <i />
+                    </span>
+                  </span>
+                )}
+              </div>
+              <div className="flow-head">
+                <span className="flow-index">{String(i + 1).padStart(2, '0')}</span>
+                <h3>{step.title}</h3>
+                <span className="flow-note">{step.note}</span>
+              </div>
+              {'command' in step ? (
+                <div className="command flow-command">
+                  <code>
+                    <span className="prompt">$ </span>
+                    {step.command}
+                  </code>
+                  <CopyButton text={step.command} />
+                </div>
+              ) : (
+                <div className="command flow-command flow-done">
+                  <code>components/kinetik/*.tsx</code>
+                  <span className="flow-check">✓</span>
+                </div>
+              )}
+            </li>
+          ))}
+        </ol>
       </section>
 
       <section className="block agents" id="mcp" aria-labelledby="agents-title">
-        <div className="agents-copy" data-reveal>
+        <header className="block-head" data-reveal>
           <span className="overline">MCP server</span>
           <h2 id="agents-title">
             <Words text="Built for AI agents." />
           </h2>
-          <p>
-            Kinetik ships a Model Context Protocol server. Claude, Cursor and any MCP client can
-            search the catalogue, read the source and plan the install, then add components the
-            right way: SDK-matched dependencies, your theme, reduced motion intact.
-          </p>
-          <TabsCard
-            className="agents-config"
-            label={<span className="mono">Add the server</span>}
-            tabs={MCP_CLIENTS.map((client) => ({
-              id: client.id,
-              title: client.title,
-              content: (
-                <div className="snippet">
-                  <span className="snippet-where">{client.where}</span>
-                  <pre>
-                    <code>{client.config}</code>
-                  </pre>
-                  <CopyButton text={client.config} />
-                </div>
-              ),
-            }))}
-          />
-          <p className="agents-more">
-            Also for agents: <a href="/llms.txt">/llms.txt</a>, a Markdown version of every page,
-            and <code>npx kinetik-ui agents</code> to teach your project&apos;s AGENTS.md.
-          </p>
+          <p>Your agent finds, reads and installs components the right way.</p>
+        </header>
+
+        <div className="hub" data-reveal>
+          <ul className="hub-clients" aria-label="Works with">
+            {HUB_CLIENTS.map((client, i) => (
+              <li key={client.name} className={`hub-client hub-${client.name}`} style={delay(i)}>
+                <BrandIcon name={client.name} size={18} />
+                <span>{client.title}</span>
+              </li>
+            ))}
+          </ul>
+          <Beams count={HUB_CLIENTS.length} />
+          <div className="hub-core">
+            <span className="hub-node">
+              <span className="hub-ring" aria-hidden />
+              <LogoMark width={64} />
+            </span>
+            <code className="hub-label">kinetik-ui mcp</code>
+          </div>
+          <Beams count={MCP_TOOLS.length} out />
+          <ul className="hub-tools" aria-label="MCP tools">
+            {MCP_TOOLS.map((tool, i) => (
+              <li key={tool.name} className="hub-tool" style={delay(i)}>
+                <code>{tool.name}</code>
+                <span>{tool.does}</span>
+              </li>
+            ))}
+          </ul>
         </div>
-        <div data-reveal style={delay(1)}>
-          <Terminal
-            script={AGENT_SCRIPT}
-            title="agent · my-expo-app"
-            label="An AI agent using the Kinetik MCP server to add a tab bar"
-          />
+
+        <div className="agents-grid">
+          <div className="agents-copy" data-reveal>
+            <TabsCard
+              className="agents-config"
+              label={<span className="mono">Add the server</span>}
+              tabs={MCP_CLIENTS.map((client) => ({
+                id: client.id,
+                title: (
+                  <span className="client-tab">
+                    {client.icon ? <BrandIcon name={client.icon} size={14} /> : null}
+                    {client.title}
+                  </span>
+                ),
+                content: (
+                  <div className="snippet">
+                    <span className="snippet-where">{client.where}</span>
+                    <pre>
+                      <code>{client.config}</code>
+                    </pre>
+                    <CopyButton text={client.config} />
+                  </div>
+                ),
+              }))}
+            />
+            <ul className="agents-extras">
+              <li>
+                <a href="/llms.txt">
+                  <code>/llms.txt</code>
+                </a>
+              </li>
+              <li>
+                <code>.md</code> on every page
+              </li>
+              <li>
+                <code>npx kinetik-ui agents</code>
+              </li>
+            </ul>
+          </div>
+          <div data-reveal style={delay(1)}>
+            <Terminal
+              script={AGENT_SCRIPT}
+              title="agent · my-expo-app"
+              label="An AI agent using the Kinetik MCP server to add a tab bar"
+            />
+          </div>
         </div>
-        <ul className="tools" aria-label="MCP tools">
-          {MCP_TOOLS.map((tool, i) => (
-            <li key={tool.name} className="tool spot" data-reveal style={delay(i)}>
-              <code>{tool.name}</code>
-              <span>{tool.does}</span>
-            </li>
-          ))}
-        </ul>
       </section>
 
       <section className="block" id="components" aria-labelledby="components-title">
