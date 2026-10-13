@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "choice-cards",
+  "type": "registry:item",
+  "title": "Choice Cards",
+  "description": "Option cards for a single choice: one selection ring glides between cards, stretching to fit each one.",
+  "categories": [
+    "input"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/choice-cards.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/choice-cards.tsx",
+      "content": "import { useEffect, useRef, useState } from 'react';\nimport {\n  Pressable,\n  StyleSheet,\n  Text,\n  View,\n  type LayoutRectangle,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  type SharedValue,\n} from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type ChoiceCardOption = {\n  value: string;\n  title: string;\n  description?: string;\n  /** Right-hand detail, such as a price. */\n  detail?: string;\n  /** A small label beside the title, e.g. \"Popular\". */\n  badge?: string;\n  disabled?: boolean;\n};\n\nexport type ChoiceCardsProps = {\n  options: readonly ChoiceCardOption[];\n  value: string;\n  onValueChange: (value: string) => void;\n  /** Names the group for screen readers, e.g. \"Delivery speed\". */\n  accessibilityLabel: string;\n  /** A tick when the choice changes. Defaults to true. */\n  haptics?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst GAP = 10;\nconst RING = 2;\n\n/**\n * Option cards for a single choice. One selection ring glides from card to\n * card and stretches to each card's height on the way, while the radio dot\n * inside the new card fills.\n */\nexport function ChoiceCards({\n  options,\n  value,\n  onValueChange,\n  accessibilityLabel,\n  haptics = true,\n  testID,\n  style,\n}: ChoiceCardsProps) {\n  const { colors, radius } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const [layouts, setLayouts] = useState<Record<string, LayoutRectangle>>({});\n  const top = useSharedValue(0);\n  const height = useSharedValue(0);\n  const placed = useRef(false);\n  const target = layouts[value];\n\n  useEffect(() => {\n    if (!target) return;\n    // The first placement is instant; after that the ring travels.\n    const snap = reduced || !placed.current;\n    placed.current = true;\n    top.set(snap ? target.y : withSpring(target.y, spring('smooth')));\n    height.set(snap ? target.height : withSpring(target.height, spring('smooth')));\n  }, [target, reduced, top, height]);\n\n  const ring = useAnimatedStyle(() => ({\n    opacity: height.get() > 0 ? 1 : 0,\n    top: top.get() - RING / 2,\n    height: height.get() + RING,\n  }));\n\n  return (\n    <View\n      testID={testID}\n      accessibilityRole=\"radiogroup\"\n      accessibilityLabel={accessibilityLabel}\n      style={[{ gap: GAP }, style]}\n    >\n      {options.map((option) => (\n        <Card\n          key={option.value}\n          option={option}\n          selected={option.value === value}\n          reduced={reduced}\n          onPress={() => {\n            if (option.value === value) return;\n            haptic('tick');\n            onValueChange(option.value);\n          }}\n          onLayout={(layout) =>\n            setLayouts((l) => {\n              const prev = l[option.value];\n              return prev && prev.y === layout.y && prev.height === layout.height\n                ? l\n                : { ...l, [option.value]: layout };\n            })\n          }\n        />\n      ))}\n      <Animated.View\n        pointerEvents=\"none\"\n        style={[\n          styles.ring,\n          { borderColor: colors.azure, borderRadius: radius.lg + RING / 2 },\n          ring,\n        ]}\n      />\n    </View>\n  );\n}\n\ntype CardProps = {\n  option: ChoiceCardOption;\n  selected: boolean;\n  reduced: boolean;\n  onPress: () => void;\n  onLayout: (layout: LayoutRectangle) => void;\n};\n\nfunction Card({ option, selected, reduced, onPress, onLayout }: CardProps) {\n  const { colors, font, radius, space } = useKinetikTheme();\n  const on = useSharedValue(selected ? 1 : 0);\n  const press = useSharedValue(0);\n  useEffect(() => {\n    on.set(withSpring(selected ? 1 : 0, spring('bouncy', reduced)));\n  }, [selected, reduced, on]);\n\n  const shell = useAnimatedStyle(() => ({ transform: [{ scale: 1 - press.get() * 0.015 }] }));\n\n  return (\n    <Pressable\n      onPress={onPress}\n      disabled={option.disabled}\n      onPressIn={() => press.set(withSpring(1, spring('snappy', reduced)))}\n      onPressOut={() => press.set(withSpring(0, spring('smooth', reduced)))}\n      onLayout={(e) => onLayout(e.nativeEvent.layout)}\n      accessibilityRole=\"radio\"\n      accessibilityLabel={[option.title, option.badge, option.detail, option.description]\n        .filter(Boolean)\n        .join(', ')}\n      accessibilityState={{ checked: selected, disabled: option.disabled }}\n    >\n      <Animated.View\n        style={[\n          styles.card,\n          {\n            backgroundColor: selected ? colors.surfaceRaised : colors.surface,\n            borderColor: colors.border,\n            borderRadius: radius.lg,\n            padding: space[4],\n            gap: space[3],\n            opacity: option.disabled ? 0.45 : 1,\n          },\n          shell,\n        ]}\n      >\n        <Radio on={on} />\n        <View style={styles.body}>\n          <View style={styles.titleRow}>\n            <Text\n              style={{\n                color: colors.text,\n                fontSize: font.size.md,\n                fontWeight: font.weight.semibold,\n              }}\n            >\n              {option.title}\n            </Text>\n            {option.badge ? (\n              <View\n                style={[\n                  styles.badge,\n                  { backgroundColor: colors.azureSoft, borderRadius: radius.pill },\n                ]}\n              >\n                <Text\n                  style={{\n                    color: colors.azure,\n                    fontSize: font.size.xs,\n                    fontWeight: font.weight.semibold,\n                  }}\n                >\n                  {option.badge}\n                </Text>\n              </View>\n            ) : null}\n          </View>\n          {option.description ? (\n            <Text style={{ color: colors.textMuted, fontSize: font.size.sm }}>\n              {option.description}\n            </Text>\n          ) : null}\n        </View>\n        {option.detail ? (\n          <Text\n            style={{\n              color: colors.text,\n              fontSize: font.size.md,\n              fontWeight: font.weight.semibold,\n              fontVariant: ['tabular-nums'],\n            }}\n          >\n            {option.detail}\n          </Text>\n        ) : null}\n      </Animated.View>\n    </Pressable>\n  );\n}\n\nfunction Radio({ on }: { on: SharedValue<number> }) {\n  const { colors } = useKinetikTheme();\n  const outer = useAnimatedStyle(() => ({\n    borderColor: on.get() > 0.5 ? colors.azure : colors.borderStrong,\n  }));\n  const inner = useAnimatedStyle(() => ({\n    transform: [{ scale: Math.max(0, on.get()) }],\n  }));\n  return (\n    <Animated.View style={[styles.radio, outer]}>\n      <Animated.View style={[styles.radioDot, { backgroundColor: colors.azure }, inner]} />\n    </Animated.View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  card: {\n    flexDirection: 'row',\n    alignItems: 'center',\n    borderWidth: StyleSheet.hairlineWidth,\n    minHeight: 64,\n  },\n  body: { flex: 1, gap: 2 },\n  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },\n  badge: { paddingHorizontal: 8, paddingVertical: 2 },\n  ring: { position: 'absolute', left: -RING / 2, right: -RING / 2, borderWidth: RING },\n  radio: {\n    width: 22,\n    height: 22,\n    borderRadius: 11,\n    borderWidth: 2,\n    alignItems: 'center',\n    justifyContent: 'center',\n  },\n  radioDot: { width: 10, height: 10, borderRadius: 5 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "input",
+    "web": "live",
+    "perf": {
+      "budget": "Plain views. One ring moves on two shared values, and each card has one for its radio. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 20,
+          "p90Ms": 27,
+          "baselineMs": 20,
+          "jankyPercent": 2.49,
+          "atRest": "idle",
+          "memoryMb": 150
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The ring jumps to the new card and the radio fills at once.",
+      "screenReader": "A radio group named by accessibilityLabel; each card is a radio that reads its title, badge, detail and description.",
+      "touchTarget": "Each card is the target, at least 64 pt tall."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { ChoiceCards } from '@/components/kinetik/choice-cards';\n\n<ChoiceCards\n  accessibilityLabel=\"Delivery\"\n  options={[\n    { value: 'standard', title: 'Standard', description: '3 to 5 days', detail: 'Free' },\n    { value: 'express', title: 'Express', description: 'Next day', detail: '$9', badge: 'Fast' },\n  ]}\n  value={delivery}\n  onValueChange={setDelivery}\n/>;\n```\n\n## When to use\n\n- A single choice between a few options that each need a line of explanation: plans, delivery speeds, payment methods.\n- Choices where a price or another figure helps people compare.\n\n## When not to use\n\n- More than five or six options. Use a list or a picker.\n- Options that need no explanation. Use a segmented control or plain radios.\n\n## Notes\n\n- Cards can have different heights; the ring stretches to each card as it travels.\n- `disabled` greys out an option and keeps it in the list, so people can see what is not available.\n- With reduced motion the ring jumps to the new card.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add choice-cards`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

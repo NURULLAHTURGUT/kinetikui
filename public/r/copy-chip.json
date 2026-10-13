@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "copy-chip",
+  "type": "registry:item",
+  "title": "Copy Chip",
+  "description": "A value with a copy button whose two pages fold into a check while a ring spreads and the outline turns green.",
+  "categories": [
+    "interaction"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/copy-chip.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/copy-chip.tsx",
+      "content": "import { useEffect, useRef, useState } from 'react';\nimport {\n  AccessibilityInfo,\n  Platform,\n  Pressable,\n  StyleSheet,\n  Text,\n  View,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  interpolateColor,\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { durations, easings, spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget } from '../../lib/kinetik/tokens/tokens';\n\nexport type CopyChipProps = {\n  /** The text to show and copy, e.g. a command, a link or a code. */\n  value: string;\n  /** Does the copying, e.g. `(v) => Clipboard.setStringAsync(v)` from expo-clipboard. */\n  onCopy: (value: string) => void | Promise<unknown>;\n  /** A short name read before the value, e.g. \"Install command\". */\n  label?: string;\n  /** Show the value in a monospaced face. Defaults to true. */\n  monospace?: boolean;\n  /** How long the copied state lasts, in ms. Defaults to 1600. */\n  resetAfter?: number;\n  /** A success haptic on copy. Defaults to true. */\n  haptics?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst mono = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });\n\n/**\n * A value with a copy button. Press it and the two pages of the copy glyph\n * fold into a check while a ring spreads from it and the outline turns\n * green, then it all eases back.\n */\nexport function CopyChip({\n  value,\n  onCopy,\n  label,\n  monospace = true,\n  resetAfter = 1600,\n  haptics = true,\n  testID,\n  style,\n}: CopyChipProps) {\n  const { colors, font, radius, space } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const [copied, setCopied] = useState(false);\n  const mounted = useRef(true);\n  useEffect(\n    () => () => {\n      mounted.current = false;\n    },\n    [],\n  );\n\n  const done = useSharedValue(0);\n  const ring = useSharedValue(0);\n  const press = useSharedValue(0);\n\n  useEffect(() => {\n    done.set(withSpring(copied ? 1 : 0, spring(copied ? 'bouncy' : 'smooth', reduced)));\n    if (!copied) return;\n    ring.set(0);\n    if (!reduced) ring.set(withTiming(1, { duration: durations.slow, easing: easings.standard }));\n    const id = setTimeout(() => setCopied(false), resetAfter);\n    return () => clearTimeout(id);\n  }, [copied, reduced, resetAfter, done, ring]);\n\n  const copy = async () => {\n    try {\n      await onCopy(value);\n    } catch {\n      haptic('error');\n      return;\n    }\n    if (!mounted.current) return;\n    haptic('success');\n    setCopied(true);\n    AccessibilityInfo.announceForAccessibility('Copied');\n  };\n\n  const shell = useAnimatedStyle(() => ({\n    borderColor: interpolateColor(done.get(), [0, 1], [colors.border, colors.success]),\n    transform: [{ scale: 1 - press.get() * 0.03 }],\n  }));\n  const pages = useAnimatedStyle(() => ({\n    opacity: 1 - Math.min(1, done.get() * 1.6),\n    transform: [\n      { scale: 1 - Math.min(1, Math.max(0, done.get())) * 0.5 },\n      { rotate: `${done.get() * -20}deg` },\n    ],\n  }));\n  const check = useAnimatedStyle(() => ({\n    opacity: Math.max(0, done.get() * 1.6 - 0.6),\n    transform: [{ rotate: '45deg' }, { scale: 0.4 + Math.max(0, done.get()) * 0.6 }],\n  }));\n  const ripple = useAnimatedStyle(() => ({\n    opacity: (1 - ring.get()) * 0.35 * (ring.get() > 0 ? 1 : 0),\n    transform: [{ scale: 0.6 + ring.get() * 1.1 }],\n  }));\n\n  return (\n    <Pressable\n      testID={testID}\n      onPress={copy}\n      onPressIn={() => press.set(withSpring(1, spring('snappy', reduced)))}\n      onPressOut={() => press.set(withSpring(0, spring('bouncy', reduced)))}\n      accessibilityRole=\"button\"\n      accessibilityLabel={`Copy ${label ? `${label}: ` : ''}${value}`}\n      accessibilityValue={copied ? { text: 'Copied' } : undefined}\n      style={style}\n    >\n      <Animated.View\n        style={[\n          styles.shell,\n          {\n            backgroundColor: colors.surface,\n            borderRadius: radius.md,\n            paddingLeft: space[4],\n            gap: space[2],\n          },\n          shell,\n        ]}\n      >\n        <Text\n          numberOfLines={1}\n          style={[\n            styles.value,\n            {\n              color: colors.text,\n              fontSize: font.size.sm,\n              fontFamily: monospace ? mono : undefined,\n            },\n          ]}\n        >\n          {value}\n        </Text>\n        <View style={styles.button}>\n          <Animated.View style={[styles.ring, { borderColor: colors.success }, ripple]} />\n          <Animated.View style={[styles.glyph, pages]}>\n            <View style={[styles.page, styles.back, { borderColor: colors.textMuted }]} />\n            <View\n              style={[\n                styles.page,\n                styles.front,\n                { borderColor: colors.text, backgroundColor: colors.surface },\n              ]}\n            />\n          </Animated.View>\n          <Animated.View style={[styles.check, { borderColor: colors.success }, check]} />\n        </View>\n      </Animated.View>\n    </Pressable>\n  );\n}\n\nconst styles = StyleSheet.create({\n  shell: {\n    flexDirection: 'row',\n    alignItems: 'center',\n    borderWidth: 1,\n    minHeight: minTouchTarget + 4,\n  },\n  value: { flex: 1 },\n  button: {\n    width: minTouchTarget,\n    height: minTouchTarget,\n    alignItems: 'center',\n    justifyContent: 'center',\n  },\n  ring: { position: 'absolute', width: 30, height: 30, borderRadius: 15, borderWidth: 2 },\n  glyph: { width: 18, height: 18 },\n  // Two pages: the back one peeks out above and to the left of the front one.\n  page: { position: 'absolute', width: 12, height: 13, borderRadius: 3, borderWidth: 1.6 },\n  back: { left: 0, top: 0 },\n  front: { left: 5, top: 5 },\n  check: {\n    position: 'absolute',\n    width: 7,\n    height: 13,\n    marginTop: -3,\n    borderBottomWidth: 2.2,\n    borderRightWidth: 2.2,\n  },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "interaction",
+    "web": "live",
+    "perf": {
+      "budget": "Plain views and three shared values; the glyph is drawn with borders. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 23,
+          "p90Ms": 27,
+          "baselineMs": 20,
+          "jankyPercent": 2.5,
+          "atRest": "idle",
+          "memoryMb": 148
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The glyph turns into a check in place, without the ring.",
+      "screenReader": "A button named \"Copy\" plus the label and value, whose value reads \"Copied\" while copied; \"Copied\" is also announced.",
+      "touchTarget": "The whole chip is the target, 48 pt tall."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport * as Clipboard from 'expo-clipboard';\n\nimport { CopyChip } from '@/components/kinetik/copy-chip';\n\n<CopyChip\n  label=\"Invite link\"\n  value=\"kinetik.app/join/north-studio\"\n  onCopy={(v) => Clipboard.setStringAsync(v)}\n/>;\n```\n\nKinetik does not depend on a clipboard library. Pass the copy function you already use, such as `setStringAsync` from expo-clipboard (`npx expo install expo-clipboard`).\n\n## When to use\n\n- Values people paste somewhere else: invite links, promo codes, commands, account numbers, addresses.\n- Long values that are tedious to select by hand on a phone.\n\n## When not to use\n\n- Secrets that should not sit on the clipboard, such as one-time passwords for other devices.\n- Values people only need to read. Show them as text.\n\n## Notes\n\n- `onCopy` may return a promise. The chip confirms only once it resolves; if it rejects, an error haptic plays and nothing changes.\n- The copied state lasts `resetAfter` ms (1.6 s by default), then eases back.\n- The value is truncated to one line on screen; screen readers get all of it.\n- With reduced motion the glyph turns into a check in place.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add copy-chip`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "usage-meter",
+  "title": "Usage Meter",
+  "description": "What fills an allowance: segments grow into the bar in turn as the figure counts up, and the rest warns near the limit.",
+  "category": "data",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-count"],
+  "files": ["usage-meter.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views: two shared values per segment, and a figure that re-renders on frames only while it counts. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 21,
+        "baselineMs": 20,
+        "jankyPercent": 3.63,
+        "atRest": "idle",
+        "memoryMb": 151
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The bar and the figure show their values at once.",
+    "screenReader": "One progress indicator named by the title, whose value reads the total, what is left and every segment.",
+    "touchTarget": "Not interactive."
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "range-slider",
+  "title": "Range Slider",
+  "description": "A two-ended slider for a range: the nearer end follows the finger with a value bubble, over an optional histogram.",
+  "category": "input",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["range-slider.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Thumbs and fill move on the UI thread. The readout and histogram re-render once per step while dragging; nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 21,
+        "baselineMs": 20,
+        "jankyPercent": 2.87,
+        "atRest": "idle",
+        "memoryMb": 142
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The ends jump to new values set from outside, and the thumbs do not swell; dragging still follows the finger.",
+    "screenReader": "Two adjustable elements (\"Price, Minimum\" and \"Price, Maximum\") with increment and decrement actions that never cross.",
+    "touchTarget": "The whole 44 pt track takes the drag and the nearer end follows. Each thumb's slop makes it 44 pt."
+  }
+}

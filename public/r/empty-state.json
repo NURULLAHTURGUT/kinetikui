@@ -1,0 +1,62 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "empty-state",
+  "type": "registry:item",
+  "title": "Empty State",
+  "description": "A calm empty screen: three cards rise and fan out, a blue dot lands, and the next step settles in beneath.",
+  "categories": [
+    "feedback"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/empty-state.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/empty-state.tsx",
+      "content": "import { useEffect, type ReactNode } from 'react';\nimport { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withDelay,\n  withSpring,\n  type SharedValue,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type EmptyStateAction = { label: string; onPress: () => void };\n\nexport type EmptyStateProps = {\n  title: string;\n  description?: string;\n  /** Drawn on the front card of the illustration, e.g. an inbox or search icon. */\n  icon?: ReactNode;\n  /** The next step, as a solid button. */\n  action?: EmptyStateAction;\n  /** A quieter alternative, as a text button. */\n  secondaryAction?: EmptyStateAction;\n  /** Replays the entrance when it changes, e.g. the current filter. */\n  playKey?: string | number;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst CARD_W = 112;\nconst CARD_H = 84;\n\n/**\n * A calm empty screen with somewhere to go next. Three cards rise and fan\n * out one after another, a blue dot lands on the front one, and the text and\n * actions settle in beneath. It plays once, then stays still.\n */\nexport function EmptyState({\n  title,\n  description,\n  icon,\n  action,\n  secondaryAction,\n  playKey,\n  testID,\n  style,\n}: EmptyStateProps) {\n  const { colors, font, radius, space, shadow } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const back = useSharedValue(0);\n  const middle = useSharedValue(0);\n  const front = useSharedValue(0);\n  const dot = useSharedValue(0);\n  const text = useSharedValue(0);\n\n  useEffect(() => {\n    const cards = [back, middle, front];\n    if (reduced) {\n      [...cards, dot, text].forEach((v) => v.set(1));\n      return;\n    }\n    [...cards, dot, text].forEach((v) => v.set(0));\n    cards.forEach((v, i) => v.set(withDelay(i * 90, withSpring(1, spring('smooth')))));\n    dot.set(withDelay(420, withSpring(1, spring('bouncy'))));\n    text.set(withDelay(200, withSpring(1, spring('smooth'))));\n  }, [reduced, playKey, back, middle, front, dot, text]);\n\n  const textStyle = useAnimatedStyle(() => ({\n    opacity: text.get(),\n    transform: [{ translateY: (1 - text.get()) * 10 }],\n  }));\n  const dotStyle = useAnimatedStyle(() => ({\n    opacity: Math.min(1, dot.get() * 2),\n    transform: [{ scale: dot.get() }],\n  }));\n\n  return (\n    <View testID={testID} style={[styles.root, { gap: space[5] }, style]}>\n      <View\n        style={styles.art}\n        accessibilityElementsHidden\n        importantForAccessibility=\"no-hide-descendants\"\n      >\n        {/* Back to front: the two behind turn away from the middle as they rise. */}\n        <Card\n          t={back}\n          angle={-9}\n          dx={-22}\n          background={colors.surface}\n          border={colors.border}\n          radius={radius.lg}\n        />\n        <Card\n          t={middle}\n          angle={8}\n          dx={22}\n          background={colors.surface}\n          border={colors.border}\n          radius={radius.lg}\n        />\n        <Card\n          t={front}\n          angle={0}\n          dx={0}\n          background={colors.surfaceRaised}\n          border={colors.borderStrong}\n          radius={radius.lg}\n          lift={10}\n          shadowStyle={shadow.md}\n        >\n          <View\n            style={[styles.tile, { backgroundColor: colors.azureSoft, borderRadius: radius.sm }]}\n          >\n            {icon}\n          </View>\n          <View style={{ flex: 1, gap: 6 }}>\n            <View style={[styles.bar, { width: '80%', backgroundColor: colors.track }]} />\n            <View style={[styles.bar, { width: '50%', backgroundColor: colors.track }]} />\n          </View>\n          <Animated.View\n            style={[\n              styles.dot,\n              { backgroundColor: colors.azure, borderColor: colors.surfaceRaised },\n              dotStyle,\n            ]}\n          />\n        </Card>\n      </View>\n\n      <Animated.View style={[styles.copy, { gap: space[2] }, textStyle]}>\n        <Text\n          accessibilityRole=\"header\"\n          style={[\n            styles.center,\n            { color: colors.text, fontSize: font.size.xl, fontWeight: font.weight.semibold },\n          ]}\n        >\n          {title}\n        </Text>\n        {description ? (\n          <Text\n            style={[\n              styles.center,\n              { color: colors.textMuted, fontSize: font.size.md, lineHeight: 22 },\n            ]}\n          >\n            {description}\n          </Text>\n        ) : null}\n        {action || secondaryAction ? (\n          <View style={[styles.actions, { marginTop: space[3], gap: space[1] }]}>\n            {action ? (\n              <Pressable\n                onPress={action.onPress}\n                accessibilityRole=\"button\"\n                style={({ pressed }) => [\n                  styles.primary,\n                  {\n                    backgroundColor: colors.ember,\n                    borderRadius: radius.pill,\n                    transform: [{ scale: pressed && !reduced ? 0.97 : 1 }],\n                  },\n                ]}\n              >\n                <Text\n                  style={{\n                    color: colors.onEmber,\n                    fontSize: font.size.md,\n                    fontWeight: font.weight.semibold,\n                  }}\n                >\n                  {action.label}\n                </Text>\n              </Pressable>\n            ) : null}\n            {secondaryAction ? (\n              <Pressable\n                onPress={secondaryAction.onPress}\n                accessibilityRole=\"button\"\n                style={({ pressed }) => [styles.secondary, { opacity: pressed ? 0.6 : 1 }]}\n              >\n                <Text\n                  style={{\n                    color: colors.textMuted,\n                    fontSize: font.size.sm,\n                    fontWeight: font.weight.semibold,\n                  }}\n                >\n                  {secondaryAction.label}\n                </Text>\n              </Pressable>\n            ) : null}\n          </View>\n        ) : null}\n      </Animated.View>\n    </View>\n  );\n}\n\ntype CardProps = {\n  t: SharedValue<number>;\n  angle: number;\n  dx: number;\n  background: string;\n  border: string;\n  radius: number;\n  lift?: number;\n  shadowStyle?: string;\n  children?: ReactNode;\n};\n\nfunction Card({\n  t,\n  angle,\n  dx,\n  background,\n  border,\n  radius,\n  lift = 0,\n  shadowStyle,\n  children,\n}: CardProps) {\n  const style = useAnimatedStyle(() => {\n    const p = t.get();\n    return {\n      opacity: Math.min(1, p * 1.5),\n      transform: [\n        { translateX: dx * p },\n        { translateY: (1 - p) * 26 - lift * p },\n        { rotate: `${angle * p}deg` },\n        { scale: 0.9 + p * 0.1 },\n      ],\n    };\n  });\n  return (\n    <Animated.View\n      style={[\n        styles.card,\n        {\n          backgroundColor: background,\n          borderColor: border,\n          borderRadius: radius,\n          boxShadow: shadowStyle,\n        },\n        style,\n      ]}\n    >\n      {children}\n    </Animated.View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  root: { alignItems: 'center', paddingVertical: 8 },\n  art: {\n    width: CARD_W + 60,\n    height: CARD_H + 30,\n    alignItems: 'center',\n    justifyContent: 'flex-end',\n  },\n  card: {\n    position: 'absolute',\n    bottom: 0,\n    width: CARD_W,\n    height: CARD_H,\n    borderWidth: StyleSheet.hairlineWidth,\n    padding: 12,\n    flexDirection: 'row',\n    alignItems: 'center',\n    gap: 10,\n  },\n  tile: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },\n  bar: { height: 6, borderRadius: 3 },\n  dot: {\n    position: 'absolute',\n    top: -6,\n    right: -6,\n    width: 16,\n    height: 16,\n    borderRadius: 8,\n    borderWidth: 3,\n  },\n  copy: { alignItems: 'center', maxWidth: 320 },\n  center: { textAlign: 'center' },\n  actions: { alignItems: 'center', alignSelf: 'stretch' },\n  primary: { height: 48, paddingHorizontal: 28, alignItems: 'center', justifyContent: 'center' },\n  secondary: {\n    minHeight: 48,\n    paddingHorizontal: 12,\n    alignItems: 'center',\n    justifyContent: 'center',\n  },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "feedback",
+    "web": "live",
+    "perf": {
+      "budget": "Plain views and five shared values that play once on mount. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 20,
+          "baselineMs": 20,
+          "jankyPercent": 2.89,
+          "atRest": "idle",
+          "memoryMb": 143
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Everything is in place from the start.",
+      "screenReader": "The illustration is hidden. The title is a header, followed by the description and the action buttons.",
+      "touchTarget": "The main button is 48 pt tall and the text button 48 pt."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { EmptyState } from '@/components/kinetik/empty-state';\n\n<EmptyState\n  icon={<BookmarkIcon color={theme.colors.azure} />}\n  title=\"No saved places yet\"\n  description=\"Tap the bookmark on any place you like and it will wait for you here.\"\n  action={{ label: 'Explore places', onPress: openExplore }}\n  secondaryAction={{ label: 'How saving works', onPress: openHelp }}\n/>;\n```\n\nThe illustration is made of three cards, with your `icon` on the front one, so it takes the theme's colours in light and dark without any artwork.\n\n## When to use\n\n- Lists and screens with nothing in them yet: a new account, an empty inbox, a search with no results.\n- Moments where the next step is clear and worth a button.\n\n## When not to use\n\n- While content is loading. Use Skeleton Sweep.\n- Errors. Say what went wrong and how to fix it instead.\n\n## Notes\n\n- The entrance plays once. Pass a new `playKey`, such as the current filter, to replay it when the reason for being empty changes.\n- Write the title as a plain statement and the description as what to do next.\n- With reduced motion everything is in place from the start.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add empty-state`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

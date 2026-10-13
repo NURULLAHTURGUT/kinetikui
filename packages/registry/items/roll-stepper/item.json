@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "roll-stepper",
+  "title": "Roll Stepper",
+  "description": "A number stepper whose figure rolls up or down with each step, speeds up while held and bumps at its limits.",
+  "category": "input",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["roll-stepper.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Two text views and one shared value per roll. Holding a button re-renders once per step, down to one step every 45 ms.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 19,
+        "baselineMs": 20,
+        "jankyPercent": 2.66,
+        "atRest": "idle",
+        "memoryMb": 166
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The figure changes in place, without the roll or the bump at the limits.",
+    "screenReader": "An adjustable value named by label, with increment and decrement actions, plus two buttons (Increase and Decrease) that report when a limit is reached.",
+    "touchTarget": "Both buttons are 44 pt circles."
+  }
+}

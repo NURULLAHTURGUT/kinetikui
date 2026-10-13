@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "step-tracker",
+  "title": "Step Tracker",
+  "description": "Progress through a multi-step flow: the line fills on a spring, steps take a check and the new one sends a ring.",
+  "category": "feedback",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["step-tracker.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views: one shared value for the line and three per step, changed only when the step changes. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "baselineMs": 20,
+        "jankyPercent": 3.43,
+        "atRest": "idle",
+        "memoryMb": 146
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The line, the checks and the current step change at once, without the ring.",
+    "screenReader": "Each step reads its label, its place and its status (\"Payment, step 3 of 4, current step\"). Finished steps are buttons when onStepPress is set.",
+    "touchTarget": "Each step's column is the target, at least 44 pt tall and a share of the width."
+  }
+}

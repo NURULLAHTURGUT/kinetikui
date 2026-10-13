@@ -6,6 +6,8 @@ const CATEGORY_ORDER = [
   'background',
   'card',
   'interaction',
+  'input',
+  'disclosure',
   'text',
   'navigation',
   'feedback',

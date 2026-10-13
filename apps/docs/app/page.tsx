@@ -16,6 +16,8 @@ const CATEGORY_TITLE: Record<string, string> = {
   background: 'Backgrounds',
   card: 'Cards',
   interaction: 'Interaction',
+  input: 'Inputs',
+  disclosure: 'Disclosure',
   text: 'Text',
   navigation: 'Navigation',
   feedback: 'Feedback',
@@ -330,7 +332,7 @@ export default function Home() {
         <header className="block-head" data-reveal>
           <span className="overline">Catalogue</span>
           <h2 id="components-title">
-            <Words text="Eight kinds of motion." />
+            <Words text="Ten kinds of motion." />
           </h2>
           <p>
             {componentCount} components and {screenCount} screen templates, each with a live demo, a

@@ -1,0 +1,31 @@
+## Usage
+
+```tsx
+import { ChoiceCards } from '@/components/kinetik/choice-cards';
+
+<ChoiceCards
+  accessibilityLabel="Delivery"
+  options={[
+    { value: 'standard', title: 'Standard', description: '3 to 5 days', detail: 'Free' },
+    { value: 'express', title: 'Express', description: 'Next day', detail: '$9', badge: 'Fast' },
+  ]}
+  value={delivery}
+  onValueChange={setDelivery}
+/>;
+```
+
+## When to use
+
+- A single choice between a few options that each need a line of explanation: plans, delivery speeds, payment methods.
+- Choices where a price or another figure helps people compare.
+
+## When not to use
+
+- More than five or six options. Use a list or a picker.
+- Options that need no explanation. Use a segmented control or plain radios.
+
+## Notes
+
+- Cards can have different heights; the ring stretches to each card as it travels.
+- `disabled` greys out an option and keeps it in the list, so people can see what is not available.
+- With reduced motion the ring jumps to the new card.

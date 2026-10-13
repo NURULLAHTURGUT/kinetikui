@@ -45,6 +45,8 @@ export const CATEGORIES = {
   background: 'Background',
   card: 'Card',
   interaction: 'Interaction',
+  input: 'Inputs',
+  disclosure: 'Disclosure',
   text: 'Text',
   navigation: 'Navigation',
   feedback: 'Feedback',

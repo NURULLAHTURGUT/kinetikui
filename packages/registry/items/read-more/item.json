@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "read-more",
+  "title": "Read More",
+  "description": "Long text folded to a few lines that fade out; Read more lets it out to full height as the fade dissolves.",
+  "category": "disclosure",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["read-more.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One text view and one shared value. The box's height animates, so content below it moves for the length of the spring; nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 20,
+        "baselineMs": 20,
+        "jankyPercent": 2.88,
+        "atRest": "idle",
+        "memoryMb": 142
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The text opens and folds at once.",
+    "screenReader": "The whole text is always read, folded or not. The toggle is a button with an expanded state.",
+    "touchTarget": "The toggle is at least 44 pt tall."
+  }
+}

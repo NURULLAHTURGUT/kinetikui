@@ -1,0 +1,30 @@
+## Usage
+
+```tsx
+import { StepTracker } from '@/components/kinetik/step-tracker';
+
+<StepTracker
+  steps={['Cart', 'Address', 'Payment', 'Review']}
+  current={step}
+  onStepPress={setStep}
+/>;
+```
+
+`current` is the index of the step in progress. Set it to `steps.length` when the flow is finished and every step shows a check.
+
+## When to use
+
+- Checkout, sign-up and setup flows with three to five steps.
+- Any flow where knowing how much is left keeps people going.
+
+## When not to use
+
+- More than five steps, or long labels. Show "Step 3 of 8" with a progress bar instead.
+- Flows whose steps can be done in any order. Use a checklist.
+
+## Notes
+
+- Steps share the width equally, so keep labels to a word or two.
+- With `onStepPress`, finished steps become buttons that go back. Steps ahead never respond.
+- A step changes a moment after the line starts to move, so the eye follows the fill to it.
+- With reduced motion everything changes at once.

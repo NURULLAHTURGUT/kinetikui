@@ -1,0 +1,62 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "read-more",
+  "type": "registry:item",
+  "title": "Read More",
+  "description": "Long text folded to a few lines that fade out; Read more lets it out to full height as the fade dissolves.",
+  "categories": [
+    "disclosure"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/read-more.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/read-more.tsx",
+      "content": "import { useEffect, useState } from 'react';\nimport {\n  Pressable,\n  StyleSheet,\n  Text,\n  View,\n  type StyleProp,\n  type TextStyle,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { gradient } from '../../lib/kinetik/tokens/gradient';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget, withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type ReadMoreProps = {\n  /** The text. Paragraphs can be separated with blank lines. */\n  children: string;\n  /** Lines shown while folded. Defaults to 3. */\n  lines?: number;\n  /** Defaults to 'Read more'. */\n  moreLabel?: string;\n  /** Defaults to 'Show less'. */\n  lessLabel?: string;\n  /** The colour behind the text, as `#RRGGBB`; the last line fades into it. Defaults to the theme surface. */\n  fadeColor?: string;\n  /** Controlled state. Leave unset to let the component keep its own. */\n  expanded?: boolean;\n  onExpandedChange?: (expanded: boolean) => void;\n  /** Style for the text. Set `lineHeight` here if you change the font size. */\n  textStyle?: StyleProp<TextStyle>;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\n/**\n * Long text folded to a few lines whose last line fades away. Read more\n * lets the text out to its full height on a spring while the fade dissolves;\n * Show less folds it back.\n */\nexport function ReadMore({\n  children,\n  lines = 3,\n  moreLabel = 'Read more',\n  lessLabel = 'Show less',\n  fadeColor,\n  expanded,\n  onExpandedChange,\n  textStyle,\n  testID,\n  style,\n}: ReadMoreProps) {\n  const { colors, font, space } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const [inner, setInner] = useState(false);\n  const isOpen = expanded ?? inner;\n  const [full, setFull] = useState(0);\n\n  const flat = StyleSheet.flatten([\n    {\n      color: colors.textMuted,\n      fontSize: font.size.md,\n      lineHeight: Math.round(font.size.md * 1.55),\n    },\n    textStyle,\n  ]);\n  const lineHeight = flat.lineHeight ?? Math.round((flat.fontSize ?? font.size.md) * 1.55);\n  const folded = lines * lineHeight;\n  // Only offer the toggle when there is more to read.\n  const long = full > folded + 1;\n\n  const t = useSharedValue(isOpen ? 1 : 0);\n  useEffect(() => {\n    t.set(withSpring(isOpen ? 1 : 0, spring('smooth', reduced)));\n  }, [isOpen, reduced, t]);\n\n  const toggle = () => {\n    const next = !isOpen;\n    if (expanded === undefined) setInner(next);\n    onExpandedChange?.(next);\n  };\n\n  // The text is laid out on its own (absolutely), so it is measured at its full height\n  // whatever the box's height is; the box alone does the folding.\n  const box = useAnimatedStyle(() => ({\n    height: full === 0 ? folded : long ? folded + (full - folded) * Math.max(0, t.get()) : full,\n  }));\n  const fade = useAnimatedStyle(() => ({ opacity: 1 - Math.min(1, Math.max(0, t.get()) * 1.5) }));\n  const chevron = useAnimatedStyle(() => ({\n    transform: [{ rotate: `${45 + t.get() * 180}deg` }, { translateY: t.get() * 2 - 2 }],\n  }));\n\n  const ground = fadeColor ?? colors.surface;\n\n  return (\n    <View testID={testID} style={style}>\n      <Animated.View style={[styles.box, box]}>\n        <Text\n          style={[flat, styles.text]}\n          onLayout={(e) => setFull(Math.ceil(e.nativeEvent.layout.height))}\n        >\n          {children}\n        </Text>\n        {long ? (\n          <Animated.View\n            pointerEvents=\"none\"\n            style={[\n              styles.fade,\n              { height: lineHeight * 1.6 },\n              gradient(`linear-gradient(to bottom, ${withAlpha(ground, 0)}, ${ground})`),\n              fade,\n            ]}\n          />\n        ) : null}\n      </Animated.View>\n      {long ? (\n        <Pressable\n          onPress={toggle}\n          accessibilityRole=\"button\"\n          accessibilityState={{ expanded: isOpen }}\n          style={({ pressed }) => [styles.toggle, { gap: space[2], opacity: pressed ? 0.6 : 1 }]}\n        >\n          <Text\n            style={{ color: colors.text, fontSize: font.size.sm, fontWeight: font.weight.semibold }}\n          >\n            {isOpen ? lessLabel : moreLabel}\n          </Text>\n          <Animated.View style={[styles.chevron, { borderColor: colors.text }, chevron]} />\n        </Pressable>\n      ) : null}\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  box: { overflow: 'hidden' },\n  text: { position: 'absolute', top: 0, left: 0, right: 0 },\n  fade: { position: 'absolute', left: 0, right: 0, bottom: 0 },\n  toggle: {\n    flexDirection: 'row',\n    alignItems: 'center',\n    alignSelf: 'flex-start',\n    minHeight: minTouchTarget,\n  },\n  // The bottom and right edges of a small square, turned to point down.\n  chevron: { width: 7, height: 7, borderRightWidth: 1.5, borderBottomWidth: 1.5 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "disclosure",
+    "web": "live",
+    "perf": {
+      "budget": "One text view and one shared value. The box's height animates, so content below it moves for the length of the spring; nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 20,
+          "baselineMs": 20,
+          "jankyPercent": 2.88,
+          "atRest": "idle",
+          "memoryMb": 142
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The text opens and folds at once.",
+      "screenReader": "The whole text is always read, folded or not. The toggle is a button with an expanded state.",
+      "touchTarget": "The toggle is at least 44 pt tall."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { ReadMore } from '@/components/kinetik/read-more';\n\n<ReadMore lines={3}>{listing.description}</ReadMore>;\n```\n\nThe last visible line fades into `fadeColor`, which defaults to the theme surface. Pass the colour behind the text, as `#RRGGBB`, when it sits on something else.\n\n## When to use\n\n- Descriptions, reviews and bios that are worth reading but should not push the rest of the screen down.\n- Lists of items where each has a long note.\n\n## When not to use\n\n- Text people must read, such as terms they agree to. Show it in full.\n- A single sentence. Folding saves nothing.\n\n## Notes\n\n- The toggle appears only when the text is longer than `lines`. Short text renders as it is.\n- Change `fontSize` with `textStyle` and set its `lineHeight` too, so the fold lands on a whole line.\n- Screen readers always get the whole text; the toggle is still offered so the screen matches what is read.\n- With reduced motion the text opens and folds at once.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add read-more`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

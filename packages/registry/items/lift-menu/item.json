@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "lift-menu",
+  "title": "Lift Menu",
+  "description": "Press and hold: the content sinks, then lifts above a dimmed screen while its actions unfold beneath it.",
+  "category": "disclosure",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-worklets"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["lift-menu.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "A transparent modal mounted only while lifted, holding a second copy of the content. One shared value runs the lift; nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "baselineMs": 20,
+        "jankyPercent": 1.25,
+        "atRest": "idle",
+        "memoryMb": 168
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The menu and the dimmed screen appear at once; the content does not sink or lift.",
+    "screenReader": "The content is a button with the hint \"Hold for actions\", and every action is offered as a custom action, so no long press is needed.",
+    "touchTarget": "The content itself is the target; menu rows are 46 pt tall."
+  }
+}

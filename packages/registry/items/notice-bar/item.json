@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "notice-bar",
+  "title": "Notice Bar",
+  "description": "A slim announcement bar whose messages take turns rolling in; closing it folds the bar shut.",
+  "category": "feedback",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-worklets"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["notice-bar.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views. A timer turns the message every few seconds and one shared value rolls it; between turns nothing runs.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 20,
+        "baselineMs": 20,
+        "jankyPercent": 1.91,
+        "atRest": "animating",
+        "memoryMb": 148,
+        "notes": "The frames at rest are the demo messages taking turns every 4 s."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Messages change in place and the bar disappears at once when closed.",
+    "screenReader": "Messages stop turning while a screen reader is on. Actions are links and the close button is named Dismiss.",
+    "touchTarget": "The bar and the close button are 44 pt tall; links get 8 pt of slop above and below."
+  }
+}

@@ -1,0 +1,35 @@
+## Usage
+
+```tsx
+import { CodeField } from '@/components/kinetik/code-field';
+
+const [code, setCode] = useState('');
+const [status, setStatus] = useState<'idle' | 'error' | 'success'>('idle');
+
+<CodeField
+  value={code}
+  onChangeText={setCode}
+  onComplete={async (c) => setStatus((await verify(c)) ? 'success' : 'error')}
+  status={status}
+  autoFocus
+/>;
+```
+
+Set `status` to `error` to shake the row, or `success` to send a ripple along it. Set it back to `idle` when the person starts typing again.
+
+## When to use
+
+- Verification codes sent by SMS, email or an authenticator app.
+- Short numeric PINs, with `secure`.
+
+## When not to use
+
+- Codes with letters, or longer than about eight characters. Use a plain text field.
+- Passwords. Use a password field, such as Password Meter.
+
+## Notes
+
+- One real `TextInput` covers the cells, so SMS autofill (`oneTimeCode` on iOS, `one-time-code` on Android), paste and the system keyboard work as usual. Everything but digits is dropped.
+- `onComplete` fires once, when the last digit lands. A pasted code that is too long is trimmed to `length`.
+- The caret blinks only while the field is focused and waiting for digits.
+- With reduced motion the digits appear in place and results change colour without moving.

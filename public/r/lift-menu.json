@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "lift-menu",
+  "type": "registry:item",
+  "title": "Lift Menu",
+  "description": "Press and hold: the content sinks, then lifts above a dimmed screen while its actions unfold beneath it.",
+  "categories": [
+    "disclosure"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/lift-menu.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/lift-menu.tsx",
+      "content": "import { useEffect, useRef, useState, type ReactNode } from 'react';\nimport {\n  Modal,\n  Pressable,\n  StyleSheet,\n  Text,\n  View,\n  useWindowDimensions,\n  type AccessibilityActionEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { durations, easings, spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type LiftMenuAction = {\n  key: string;\n  label: string;\n  /** Drawn after the label; receives the colour to use. */\n  icon?: (color: string) => ReactNode;\n  destructive?: boolean;\n  onPress: () => void;\n};\n\nexport type LiftMenuProps = {\n  /** The content that lifts: a card, a photo, a row. */\n  children: ReactNode;\n  actions: readonly LiftMenuAction[];\n  /** Names the content for screen readers. Its actions are offered as custom actions. */\n  accessibilityLabel: string;\n  /** A plain tap, e.g. to open the item. */\n  onPress?: () => void;\n  /** How long to hold before it lifts, in ms. Defaults to 380. */\n  delay?: number;\n  /** Menu width. Defaults to 240. */\n  menuWidth?: number;\n  /** A thud as it lifts. Defaults to true. */\n  haptics?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\ntype Rect = { x: number; y: number; width: number; height: number };\n\nconst ROW = 46;\nconst MARGIN = 16;\nconst GAP = 10;\nconst LIFT = 1.03;\n\n/**\n * A context menu that lifts its content. Press and hold: the content sinks a\n * little, then rises out of the page above a dimmed screen, moving up if it\n * must to make room, and its actions unfold beneath it.\n */\nexport function LiftMenu({\n  children,\n  actions,\n  accessibilityLabel,\n  onPress,\n  delay = 380,\n  menuWidth = 240,\n  haptics = true,\n  testID,\n  style,\n}: LiftMenuProps) {\n  const { colors, font, radius, shadow } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const window = useWindowDimensions();\n  const ref = useRef<View>(null);\n  const [rect, setRect] = useState<Rect | null>(null);\n  const [visible, setVisible] = useState(false);\n  const press = useSharedValue(0);\n  const t = useSharedValue(0);\n\n  const menuH = actions.length * ROW + 12;\n  // How far the content moves up so the menu fits below it.\n  const shift = rect\n    ? Math.max(\n        Math.min(0, window.height - MARGIN - (rect.y + rect.height + GAP + menuH)),\n        MARGIN - rect.y,\n      )\n    : 0;\n  const menuLeft = rect\n    ? rect.x + rect.width / 2 > window.width / 2\n      ? Math.max(MARGIN, rect.x + rect.width - menuWidth)\n      : Math.min(window.width - menuWidth - MARGIN, rect.x)\n    : 0;\n  const fromRight = rect ? rect.x + rect.width / 2 > window.width / 2 : false;\n\n  const lift = () => {\n    setRect(null);\n    setVisible(true);\n    haptic('thud');\n    ref.current?.measureInWindow((x, y, width, height) => setRect({ x, y, width, height }));\n  };\n\n  useEffect(() => {\n    if (!visible || !rect) return;\n    t.set(0);\n    t.set(reduced ? 1 : withSpring(1, spring('smooth')));\n  }, [visible, rect, reduced, t]);\n\n  const close = (then?: () => void) => {\n    const done = () => {\n      setVisible(false);\n      then?.();\n    };\n    if (reduced) {\n      t.set(0);\n      done();\n      return;\n    }\n    t.set(\n      withTiming(0, { duration: durations.base, easing: easings.exit }, (finished) => {\n        if (finished) scheduleOnRN(done);\n      }),\n    );\n  };\n\n  const source = useAnimatedStyle(() => ({\n    transform: [{ scale: 1 - press.get() * 0.03 }],\n  }));\n  const scrim = useAnimatedStyle(() => ({ opacity: Math.min(1, t.get()) }));\n  const preview = useAnimatedStyle(() => ({\n    transform: [{ translateY: shift * t.get() }, { scale: 0.97 + (LIFT - 0.97) * t.get() }],\n  }));\n  const menu = useAnimatedStyle(() => {\n    const p = Math.max(0, Math.min(1, (t.get() - 0.2) / 0.8));\n    return {\n      opacity: p,\n      transform: [{ translateY: shift * t.get() + (1 - p) * -10 }, { scale: 0.85 + p * 0.15 }],\n    };\n  });\n\n  const onAccessibilityAction = (e: AccessibilityActionEvent) => {\n    const name = e.nativeEvent.actionName;\n    if (name === 'activate') return onPress?.();\n    if (name === 'longpress') return lift();\n    actions.find((a) => a.key === name)?.onPress();\n  };\n\n  return (\n    <>\n      <Pressable\n        ref={ref}\n        testID={testID}\n        onPress={onPress}\n        onLongPress={lift}\n        delayLongPress={delay}\n        // The content sinks while held, so the lift reads as a release.\n        onPressIn={() => {\n          if (!reduced) press.set(withTiming(1, { duration: delay, easing: easings.standard }));\n        }}\n        onPressOut={() => press.set(withSpring(0, spring('smooth', reduced)))}\n        accessibilityRole=\"button\"\n        accessibilityLabel={accessibilityLabel}\n        accessibilityHint=\"Hold for actions\"\n        accessibilityActions={[\n          ...(onPress ? [{ name: 'activate' }] : []),\n          { name: 'longpress', label: 'Show actions' },\n          ...actions.map((a) => ({ name: a.key, label: a.label })),\n        ]}\n        onAccessibilityAction={onAccessibilityAction}\n        style={style}\n      >\n        <Animated.View style={[source, { opacity: visible ? 0 : 1 }]}>{children}</Animated.View>\n      </Pressable>\n\n      <Modal\n        visible={visible}\n        transparent\n        animationType=\"none\"\n        onRequestClose={() => close()}\n        statusBarTranslucent\n        navigationBarTranslucent\n      >\n        <View style={StyleSheet.absoluteFill} onAccessibilityEscape={() => close()}>\n          <Animated.View\n            style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }, scrim]}\n          >\n            <Pressable\n              style={StyleSheet.absoluteFill}\n              onPress={() => close()}\n              accessibilityRole=\"button\"\n              accessibilityLabel=\"Close actions\"\n            />\n          </Animated.View>\n\n          {rect ? (\n            <Animated.View\n              pointerEvents=\"none\"\n              importantForAccessibility=\"no-hide-descendants\"\n              accessibilityElementsHidden\n              style={[\n                styles.preview,\n                { left: rect.x, top: rect.y, width: rect.width, height: rect.height },\n                preview,\n              ]}\n            >\n              {children}\n            </Animated.View>\n          ) : null}\n\n          <Animated.View\n            style={[\n              styles.menu,\n              {\n                left: menuLeft,\n                top: rect ? rect.y + rect.height + GAP : 0,\n                width: menuWidth,\n                backgroundColor: colors.surfaceRaised,\n                borderColor: colors.border,\n                borderRadius: radius.lg,\n                boxShadow: shadow.lg,\n                opacity: rect ? undefined : 0,\n                transformOrigin: fromRight ? 'right top' : 'left top',\n              },\n              menu,\n            ]}\n          >\n            {actions.map((action, i) => {\n              const ink = action.destructive ? colors.danger : colors.text;\n              return (\n                <Pressable\n                  key={action.key}\n                  onPress={() => close(action.onPress)}\n                  accessibilityRole=\"menuitem\"\n                  accessibilityLabel={action.label}\n                  style={({ pressed }) => [\n                    styles.row,\n                    {\n                      borderRadius: radius.sm,\n                      backgroundColor: pressed ? withAlpha(ink, 0.08) : undefined,\n                    },\n                    i > 0 && {\n                      borderTopColor: colors.border,\n                      borderTopWidth: StyleSheet.hairlineWidth,\n                    },\n                  ]}\n                >\n                  <Text\n                    style={{ color: ink, fontSize: font.size.md, fontWeight: font.weight.medium }}\n                  >\n                    {action.label}\n                  </Text>\n                  {action.icon ? <View style={styles.icon}>{action.icon(ink)}</View> : null}\n                </Pressable>\n              );\n            })}\n          </Animated.View>\n        </View>\n      </Modal>\n    </>\n  );\n}\n\nconst styles = StyleSheet.create({\n  preview: { position: 'absolute' },\n  menu: { position: 'absolute', padding: 6, borderWidth: StyleSheet.hairlineWidth },\n  row: {\n    height: ROW,\n    flexDirection: 'row',\n    alignItems: 'center',\n    justifyContent: 'space-between',\n    paddingHorizontal: 12,\n  },\n  icon: { width: 20, alignItems: 'center' },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "disclosure",
+    "web": "live",
+    "perf": {
+      "budget": "A transparent modal mounted only while lifted, holding a second copy of the content. One shared value runs the lift; nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 18,
+          "baselineMs": 20,
+          "jankyPercent": 1.25,
+          "atRest": "idle",
+          "memoryMb": 168
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The menu and the dimmed screen appear at once; the content does not sink or lift.",
+      "screenReader": "The content is a button with the hint \"Hold for actions\", and every action is offered as a custom action, so no long press is needed.",
+      "touchTarget": "The content itself is the target; menu rows are 46 pt tall."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { LiftMenu } from '@/components/kinetik/lift-menu';\n\n<LiftMenu\n  accessibilityLabel={photo.title}\n  onPress={() => openPhoto(photo)}\n  actions={[\n    { key: 'share', label: 'Share', onPress: share },\n    { key: 'delete', label: 'Delete', destructive: true, onPress: remove },\n  ]}\n>\n  <PhotoTile photo={photo} />\n</LiftMenu>;\n```\n\nWrap any card, tile or row. A tap runs `onPress`; holding for `delay` ms lifts the content and shows its actions.\n\n## When to use\n\n- Shortcuts on items people already open with a tap: photos, messages, files, places.\n- Grids and lists where per-item buttons would crowd the layout.\n\n## When not to use\n\n- The only way to reach an action. Long presses are hard to discover, so offer the same actions elsewhere too, for example in a detail screen.\n- Content that changes while it is lifted, such as video. The lifted copy is a second render of `children`.\n\n## Notes\n\n- The lifted content is a copy of `children` rendered in a modal at the original's position; the original is hidden meanwhile. Keep `children` free of side effects on mount.\n- When there is no room for the menu below, the content moves up first. The menu opens towards the middle of the screen.\n- Every action is a custom accessibility action on the content, so screen reader users pick actions without holding.\n- With reduced motion nothing sinks or lifts; the menu appears at once.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add lift-menu`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

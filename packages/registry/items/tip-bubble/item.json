@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "tip-bubble",
+  "title": "Tip Bubble",
+  "description": "A short tip that grows out of its anchor from the arrow's point and closes by itself after a few seconds.",
+  "category": "disclosure",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["tip-bubble.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One shared value; the bubble is mounted only while open or fading. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 21,
+        "baselineMs": 20,
+        "jankyPercent": 2.88,
+        "atRest": "idle",
+        "memoryMb": 140
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The bubble appears and disappears without scaling.",
+    "screenReader": "The anchor is a button with an expanded state and the hint \"Shows a tip\"; the tip is announced when it opens, so focus stays on the anchor.",
+    "touchTarget": "The anchor's box is grown by 14 pt on every side, to at least 44 pt, without moving the layout."
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "notice-bar",
+  "type": "registry:item",
+  "title": "Notice Bar",
+  "description": "A slim announcement bar whose messages take turns rolling in; closing it folds the bar shut.",
+  "categories": [
+    "feedback"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/notice-bar.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/notice-bar.tsx",
+      "content": "import { useEffect, useState, type ReactNode } from 'react';\nimport {\n  AccessibilityInfo,\n  Platform,\n  Pressable,\n  StyleSheet,\n  Text,\n  View,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { durations, easings, spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget } from '../../lib/kinetik/tokens/tokens';\n\nexport type Notice = {\n  text: string;\n  /** A link after the text, e.g. \"See what's new\". */\n  action?: { label: string; onPress: () => void };\n};\n\nexport type NoticeBarProps = {\n  /** One or more messages; several take turns. */\n  messages: readonly Notice[];\n  /** Time each message stays, in ms. Defaults to 4500. */\n  interval?: number;\n  /** `azure` for news and offers, `neutral` for quieter notes. Defaults to `azure`. */\n  tone?: 'azure' | 'neutral';\n  /** Shown before the text, e.g. a small icon. */\n  leading?: ReactNode;\n  /** Shows a close button. Called once the bar has folded away. */\n  onDismiss?: () => void;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\n/**\n * A slim announcement bar. Several messages take turns, each rolling up and\n * out as the next rises in; holding the bar pauses it. Closing it folds the\n * bar shut so the content below slides up into its place.\n */\nexport function NoticeBar({\n  messages,\n  interval = 4500,\n  tone = 'azure',\n  leading,\n  onDismiss,\n  testID,\n  style,\n}: NoticeBarProps) {\n  const { colors, font, space } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const [index, setIndex] = useState(0);\n  const [prev, setPrev] = useState<number | null>(null);\n  const [held, setHeld] = useState(false);\n  const [screenReader, setScreenReader] = useState(false);\n  const [height, setHeight] = useState(0);\n  const [gone, setGone] = useState(false);\n  const t = useSharedValue(1);\n  const fold = useSharedValue(1);\n\n  const ink = tone === 'azure' ? colors.onAzure : colors.text;\n  const ground = tone === 'azure' ? colors.azure : colors.surfaceRaised;\n  const count = messages.length;\n\n  // Messages that move by themselves are hard to follow with a screen reader, so they wait.\n  useEffect(() => {\n    if (Platform.OS === 'web') return;\n    let live = true;\n    AccessibilityInfo.isScreenReaderEnabled()\n      .then((on) => live && setScreenReader(on))\n      .catch(() => {});\n    const sub = AccessibilityInfo.addEventListener('screenReaderChanged', setScreenReader);\n    return () => {\n      live = false;\n      sub.remove();\n    };\n  }, []);\n\n  const paused = held || screenReader || count < 2;\n  useEffect(() => {\n    if (paused) return;\n    const id = setTimeout(() => {\n      setPrev(index);\n      setIndex((index + 1) % count);\n    }, interval);\n    return () => clearTimeout(id);\n  }, [paused, index, count, interval]);\n\n  useEffect(() => {\n    if (prev === null) return;\n    t.set(0);\n    t.set(reduced ? 1 : withSpring(1, spring('smooth')));\n  }, [prev, index, reduced, t]);\n\n  const dismiss = () => {\n    const done = () => {\n      setGone(true);\n      onDismiss?.();\n    };\n    if (reduced) return done();\n    fold.set(\n      withTiming(0, { duration: durations.base, easing: easings.standard }, (finished) => {\n        if (finished) scheduleOnRN(done);\n      }),\n    );\n  };\n\n  const shell = useAnimatedStyle(() => ({\n    height: height > 0 && fold.get() < 1 ? height * fold.get() : undefined,\n    opacity: fold.get(),\n  }));\n  const outgoing = useAnimatedStyle(() => ({\n    opacity: 1 - t.get(),\n    transform: [{ translateY: -t.get() * 14 }],\n  }));\n  const incoming = useAnimatedStyle(() => ({\n    opacity: t.get(),\n    transform: [{ translateY: (1 - t.get()) * 14 }],\n  }));\n\n  if (gone || count === 0) return null;\n  const current = messages[index % count]!;\n  const old = prev !== null && prev !== index ? messages[prev % count] : undefined;\n\n  const line = (notice: Notice, interactive: boolean) => (\n    <View style={styles.line}>\n      <Text numberOfLines={1} style={[styles.text, { color: ink, fontSize: font.size.sm }]}>\n        {notice.text}\n      </Text>\n      {notice.action ? (\n        <Pressable\n          disabled={!interactive}\n          onPress={notice.action.onPress}\n          accessibilityRole=\"link\"\n          hitSlop={{ top: 8, bottom: 8 }}\n        >\n          <Text\n            style={{\n              color: ink,\n              fontSize: font.size.sm,\n              fontWeight: font.weight.semibold,\n              textDecorationLine: 'underline',\n            }}\n          >\n            {notice.action.label}\n          </Text>\n        </Pressable>\n      ) : null}\n    </View>\n  );\n\n  return (\n    <Animated.View\n      testID={testID}\n      onLayout={(e) => {\n        if (fold.get() === 1) setHeight(e.nativeEvent.layout.height);\n      }}\n      style={[styles.shell, { backgroundColor: ground }, shell, style]}\n    >\n      <Pressable\n        onPressIn={() => setHeld(true)}\n        onPressOut={() => setHeld(false)}\n        accessible={false}\n        style={[styles.bar, { paddingLeft: space[4], gap: space[2] }]}\n      >\n        {leading ? <View style={styles.leading}>{leading}</View> : null}\n        <View style={styles.window}>\n          {old ? (\n            <Animated.View\n              key={`o${prev}-${index}`}\n              style={[StyleSheet.absoluteFill, styles.center, outgoing]}\n              accessibilityElementsHidden\n              importantForAccessibility=\"no-hide-descendants\"\n            >\n              {line(old, false)}\n            </Animated.View>\n          ) : null}\n          <Animated.View\n            key={`i${index}`}\n            style={[StyleSheet.absoluteFill, styles.center, incoming]}\n          >\n            {line(current, true)}\n          </Animated.View>\n        </View>\n        {onDismiss ? (\n          <Pressable\n            onPress={dismiss}\n            accessibilityRole=\"button\"\n            accessibilityLabel=\"Dismiss\"\n            style={styles.close}\n          >\n            <View style={[styles.cross, { backgroundColor: ink }]} />\n            <View style={[styles.cross, styles.crossTurn, { backgroundColor: ink }]} />\n          </Pressable>\n        ) : (\n          <View style={{ width: space[4] }} />\n        )}\n      </Pressable>\n    </Animated.View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  shell: { overflow: 'hidden' },\n  bar: { flexDirection: 'row', alignItems: 'center', minHeight: minTouchTarget },\n  leading: { alignItems: 'center', justifyContent: 'center' },\n  window: { flex: 1, height: minTouchTarget, overflow: 'hidden' },\n  center: { justifyContent: 'center' },\n  line: { flexDirection: 'row', alignItems: 'center', gap: 8 },\n  text: { flexShrink: 1 },\n  close: {\n    width: minTouchTarget,\n    height: minTouchTarget,\n    alignItems: 'center',\n    justifyContent: 'center',\n  },\n  cross: {\n    position: 'absolute',\n    width: 14,\n    height: 1.75,\n    borderRadius: 1,\n    transform: [{ rotate: '45deg' }],\n  },\n  crossTurn: { transform: [{ rotate: '-45deg' }] },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "feedback",
+    "web": "live",
+    "perf": {
+      "budget": "Plain views. A timer turns the message every few seconds and one shared value rolls it; between turns nothing runs.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 20,
+          "baselineMs": 20,
+          "jankyPercent": 1.91,
+          "atRest": "animating",
+          "memoryMb": 148,
+          "notes": "The frames at rest are the demo messages taking turns every 4 s."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Messages change in place and the bar disappears at once when closed.",
+      "screenReader": "Messages stop turning while a screen reader is on. Actions are links and the close button is named Dismiss.",
+      "touchTarget": "The bar and the close button are 44 pt tall; links get 8 pt of slop above and below."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { NoticeBar } from '@/components/kinetik/notice-bar';\n\n<NoticeBar\n  messages={[\n    { text: 'Spring prints are here', action: { label: 'Browse', onPress: openCollection } },\n    { text: 'Free shipping on orders over $50' },\n  ]}\n  onDismiss={() => setShowBar(false)}\n/>;\n```\n\nWith more than one message they take turns every `interval` ms. Pass `onDismiss` to show a close button; it is called once the bar has folded away, so remove it from the tree there and remember the choice.\n\n## When to use\n\n- Short, timely news at the top of a screen: offers, new features, service notes.\n- Messages people may ignore without missing anything they need.\n\n## When not to use\n\n- Errors or anything that needs action. Use an inline alert or a toast.\n- More than three messages. Nobody waits for the fourth.\n\n## Notes\n\n- Holding the bar pauses it, and it stops turning while a screen reader is on, since moving text is hard to follow.\n- Text is cut to one line, so keep each message short; the action sits right after it.\n- With reduced motion messages change in place and the bar closes at once.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add notice-bar`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

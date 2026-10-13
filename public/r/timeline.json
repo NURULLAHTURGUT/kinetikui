@@ -1,0 +1,62 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "timeline",
+  "type": "registry:item",
+  "title": "Timeline",
+  "description": "Events along a rail: each node pops in turn, the line draws down to the next, and the text rises in beside it.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/timeline.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/timeline.tsx",
+      "content": "import { useEffect, type ReactNode } from 'react';\nimport { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withDelay,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { easings, spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type TimelineEvent = {\n  key: string;\n  title: string;\n  /** When it happened, already formatted, e.g. \"09:41\" or \"Yesterday\". */\n  time: string;\n  description?: string;\n  /** `current` rings the node in blue; `upcoming` leaves it hollow. Defaults to `done`. */\n  state?: 'done' | 'current' | 'upcoming';\n  /** Extra content under the description, e.g. a thumbnail or a button. */\n  children?: ReactNode;\n};\n\nexport type TimelineProps = {\n  events: readonly TimelineEvent[];\n  /** Replays the entrance when it changes. */\n  playKey?: string | number;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst RAIL = 24;\nconst NODE = 12;\n/** Time between one event arriving and the next. */\nconst STEP = 140;\n\n/**\n * Events in order along a rail. Each node pops in turn, the line draws down\n * from it to the next, and the event's text rises in beside it, so the eye\n * reads the story from the top.\n */\nexport function Timeline({ events, playKey, testID, style }: TimelineProps) {\n  const reduced = useReduceMotion();\n  return (\n    <View testID={testID} style={style}>\n      {events.map((event, i) => (\n        <Row\n          key={event.key}\n          event={event}\n          index={i}\n          last={i === events.length - 1}\n          reduced={reduced}\n          playKey={playKey}\n        />\n      ))}\n    </View>\n  );\n}\n\ntype RowProps = {\n  event: TimelineEvent;\n  index: number;\n  last: boolean;\n  reduced: boolean;\n  playKey?: string | number;\n};\n\nfunction Row({ event, index, last, reduced, playKey }: RowProps) {\n  const { colors, font, space } = useKinetikTheme();\n  const state = event.state ?? 'done';\n  const node = useSharedValue(reduced ? 1 : 0);\n  const line = useSharedValue(reduced ? 1 : 0);\n  const text = useSharedValue(reduced ? 1 : 0);\n\n  useEffect(() => {\n    if (reduced) {\n      node.set(1);\n      line.set(1);\n      text.set(1);\n      return;\n    }\n    node.set(0);\n    line.set(0);\n    text.set(0);\n    const at = index * STEP;\n    node.set(withDelay(at, withSpring(1, spring('bouncy'))));\n    text.set(withDelay(at + 40, withSpring(1, spring('smooth'))));\n    line.set(withDelay(at + 80, withTiming(1, { duration: STEP * 2, easing: easings.standard })));\n  }, [index, reduced, playKey, node, line, text]);\n\n  const dot = useAnimatedStyle(() => ({ transform: [{ scale: node.get() }] }));\n  const ring = useAnimatedStyle(() => ({\n    opacity: node.get() * 0.5,\n    transform: [{ scale: 0.5 + node.get() * 0.5 }],\n  }));\n  const fill = useAnimatedStyle(() => ({ height: `${Math.max(0, line.get()) * 100}%` }));\n  const body = useAnimatedStyle(() => ({\n    opacity: Math.min(1, text.get()),\n    transform: [{ translateX: (1 - text.get()) * 10 }],\n  }));\n\n  const nodeColor =\n    state === 'current' ? colors.azure : state === 'upcoming' ? 'transparent' : colors.ember;\n  const status = state === 'current' ? ', now' : state === 'upcoming' ? ', coming up' : '';\n\n  return (\n    <View style={styles.row}>\n      <View style={styles.rail}>\n        <View style={styles.nodeBox}>\n          {state === 'current' ? (\n            <Animated.View style={[styles.ring, { backgroundColor: colors.azureSoft }, ring]} />\n          ) : null}\n          <Animated.View\n            style={[\n              styles.node,\n              {\n                backgroundColor: nodeColor,\n                borderColor: state === 'upcoming' ? colors.borderStrong : nodeColor,\n              },\n              dot,\n            ]}\n          />\n        </View>\n        {!last ? (\n          <View style={[styles.line, { backgroundColor: colors.border }]}>\n            <Animated.View\n              style={[\n                styles.lineFill,\n                { backgroundColor: state === 'upcoming' ? colors.border : colors.borderStrong },\n                fill,\n              ]}\n            />\n          </View>\n        ) : null}\n      </View>\n      <Animated.View style={[styles.body, { paddingBottom: last ? 0 : space[5] }, body]}>\n        {/* The text is one element; children stay outside it so their own controls stay reachable. */}\n        <View\n          accessible\n          accessibilityLabel={`${event.time}, ${event.title}${event.description ? `. ${event.description}` : ''}${status}`}\n          style={{ gap: 2 }}\n        >\n          <View style={styles.head}>\n            <Text\n              style={{\n                flex: 1,\n                color: state === 'upcoming' ? colors.textMuted : colors.text,\n                fontSize: font.size.md,\n                fontWeight: font.weight.semibold,\n              }}\n            >\n              {event.title}\n            </Text>\n            <Text\n              style={{\n                color: state === 'current' ? colors.azure : colors.textSubtle,\n                fontSize: font.size.xs,\n                fontWeight: font.weight.medium,\n                fontVariant: ['tabular-nums'],\n              }}\n            >\n              {event.time}\n            </Text>\n          </View>\n          {event.description ? (\n            <Text style={{ color: colors.textMuted, fontSize: font.size.sm, lineHeight: 20 }}>\n              {event.description}\n            </Text>\n          ) : null}\n        </View>\n        {event.children ? <View style={{ marginTop: space[2] }}>{event.children}</View> : null}\n      </Animated.View>\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  row: { flexDirection: 'row', gap: 12 },\n  rail: { width: RAIL, alignItems: 'center' },\n  nodeBox: { width: RAIL, height: 22, alignItems: 'center', justifyContent: 'center' },\n  ring: { position: 'absolute', width: RAIL, height: RAIL, borderRadius: RAIL / 2 },\n  node: { width: NODE, height: NODE, borderRadius: NODE / 2, borderWidth: 2 },\n  line: { flex: 1, width: 2, marginVertical: 4, borderRadius: 1, overflow: 'hidden' },\n  lineFill: { width: '100%' },\n  body: { flex: 1 },\n  head: { flexDirection: 'row', alignItems: 'baseline', gap: 8, minHeight: 22 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "Plain views with three shared values per event, played once on mount. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 18,
+          "p90Ms": 21,
+          "baselineMs": 20,
+          "jankyPercent": 2.87,
+          "atRest": "idle",
+          "memoryMb": 147
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Every event is in place from the start.",
+      "screenReader": "Each event is one element that reads its time, title, description and whether it is happening now or coming up.",
+      "touchTarget": "Not interactive itself; content passed as children keeps its own targets."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { Timeline } from '@/components/kinetik/timeline';\n\n<Timeline\n  events={[\n    { key: 'placed', title: 'Order placed', time: 'Mon 09:12' },\n    { key: 'packed', title: 'Packed', time: 'Mon 16:40', description: 'Two prints and a frame.' },\n    { key: 'transit', title: 'On its way', time: 'Today', state: 'current' },\n    { key: 'delivered', title: 'Delivered', time: 'Thu', state: 'upcoming' },\n  ]}\n/>;\n```\n\nEvents are drawn in the order given. `state` sets the node: `done` (the default) is solid, `current` is blue with a soft ring, `upcoming` is hollow.\n\n## When to use\n\n- The history of one thing: an order, a ticket, a trip, a document's versions.\n- Short sequences, up to about a dozen events, read from top to bottom.\n\n## When not to use\n\n- Long activity feeds. Use a list grouped by day.\n- Steps people complete themselves. Use Step Tracker.\n\n## Notes\n\n- `time` is shown as given, so format it the way your app formats dates.\n- `children` adds content under an event, such as a thumbnail or a button; it keeps its own touch targets.\n- The entrance plays once; pass a new `playKey` to replay it.\n- With reduced motion every event is in place from the start.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add timeline`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

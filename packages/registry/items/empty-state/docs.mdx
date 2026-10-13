@@ -1,0 +1,31 @@
+## Usage
+
+```tsx
+import { EmptyState } from '@/components/kinetik/empty-state';
+
+<EmptyState
+  icon={<BookmarkIcon color={theme.colors.azure} />}
+  title="No saved places yet"
+  description="Tap the bookmark on any place you like and it will wait for you here."
+  action={{ label: 'Explore places', onPress: openExplore }}
+  secondaryAction={{ label: 'How saving works', onPress: openHelp }}
+/>;
+```
+
+The illustration is made of three cards, with your `icon` on the front one, so it takes the theme's colours in light and dark without any artwork.
+
+## When to use
+
+- Lists and screens with nothing in them yet: a new account, an empty inbox, a search with no results.
+- Moments where the next step is clear and worth a button.
+
+## When not to use
+
+- While content is loading. Use Skeleton Sweep.
+- Errors. Say what went wrong and how to fix it instead.
+
+## Notes
+
+- The entrance plays once. Pass a new `playKey`, such as the current filter, to replay it when the reason for being empty changes.
+- Write the title as a plain statement and the description as what to do next.
+- With reduced motion everything is in place from the start.

@@ -1,0 +1,37 @@
+## Usage
+
+```tsx
+import { RangeSlider } from '@/components/kinetik/range-slider';
+
+const [price, setPrice] = useState<[number, number]>([120, 380]);
+
+<RangeSlider
+  label="Per night"
+  value={price}
+  onValueChange={setPrice}
+  max={600}
+  step={10}
+  minDistance={50}
+  formatValue={(v) => `$${v}`}
+  histogram={bands}
+/>;
+```
+
+`histogram` takes one number per band across the range, such as how many results fall in each price band. Bars inside the range light up as it changes.
+
+## When to use
+
+- Filtering by a range: price, distance, duration, year built.
+- Ranges where seeing the spread of results helps people choose, with `histogram`.
+
+## When not to use
+
+- A single value. Use Elastic Slider.
+- Ranges people know exactly and want to type. Pair two number fields instead.
+
+## Notes
+
+- Touch anywhere on the track: the nearer end jumps there and follows the finger. When the ends meet, the one in the direction of the drag moves.
+- `minDistance` keeps the ends apart (one `step` by default). Screen reader actions respect it too.
+- `onValueChange` fires on each step while dragging and `onSlidingComplete` once on release, so you can filter live or only when the finger lifts.
+- With reduced motion, values set from outside jump into place and the held end does not swell.

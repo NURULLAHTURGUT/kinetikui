@@ -1,0 +1,33 @@
+## Usage
+
+```tsx
+import { FilterChips } from '@/components/kinetik/filter-chips';
+
+<FilterChips
+  accessibilityLabel="Filter by type"
+  options={[
+    { value: 'photos', label: 'Photos', count: 48 },
+    { value: 'videos', label: 'Videos', count: 6 },
+  ]}
+  value={types}
+  onValueChange={setTypes}
+/>;
+```
+
+Set `multiple={false}` for a single choice: the chips become radios and a press always leaves exactly one picked.
+
+## When to use
+
+- Narrowing a list or a grid by a few facets: type, place, status, size.
+- Picking interests or tags during onboarding.
+
+## When not to use
+
+- More than a dozen options. Use a searchable list.
+- Switching between views of the same content. Use tabs or a segmented control.
+
+## Notes
+
+- The chips wrap onto as many lines as they need. A picked chip grows by the width of its check, and the chips after it make room.
+- `count` is shown after the label in a quieter colour and read after it.
+- With reduced motion the chips change colour and show the check without growing.

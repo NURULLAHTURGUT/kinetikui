@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "compare-slider",
+  "title": "Compare Slider",
+  "description": "Two versions of a picture with a divider you drag to reveal either side; it nudges once to show it moves.",
+  "category": "card",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["compare-slider.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The divider and the clip move on the UI thread from one shared value; the pictures themselves never re-render. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 21,
+        "p90Ms": 26,
+        "baselineMs": 20,
+        "jankyPercent": 2.08,
+        "atRest": "idle",
+        "memoryMb": 151
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "No nudge on mount, and taps and screen reader steps move the divider without a spring.",
+    "screenReader": "One adjustable element named by accessibilityLabel; increment and decrement move the divider by a tenth and read how much of the first version shows.",
+    "touchTarget": "The whole picture takes the drag and taps."
+  }
+}

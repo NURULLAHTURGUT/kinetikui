@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "search-morph",
+  "type": "registry:item",
+  "title": "Search Morph",
+  "description": "A search button that stretches into a search field, with Cancel sliding in and results rising beneath.",
+  "categories": [
+    "input"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/search-morph.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/search-morph.tsx",
+      "content": "import { useEffect, useRef, useState, type ReactNode } from 'react';\nimport {\n  Pressable,\n  StyleSheet,\n  Text,\n  TextInput,\n  View,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  interpolateColor,\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type SearchMorphProps = {\n  value: string;\n  onChangeText: (value: string) => void;\n  /** Called from the keyboard's search key. */\n  onSubmit?: (value: string) => void;\n  /** Defaults to 'Search'. Also names the button and the field. */\n  placeholder?: string;\n  /** Controlled open state. Leave unset to let the component keep its own. */\n  open?: boolean;\n  defaultOpen?: boolean;\n  onOpenChange?: (open: boolean) => void;\n  /** Defaults to 'Cancel'. */\n  cancelLabel?: string;\n  /** Shown under the field while it is open, e.g. results or recent searches. */\n  children?: ReactNode;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\n/** A little over the 44 pt minimum, so pixel rounding never takes it below. */\nconst SIZE = 48;\nconst GAP = 12;\n\n/**\n * A search button that grows into a search field. The circle stretches\n * across the bar with the glass riding its left edge, Cancel slides in beside\n * it, and whatever you pass as children rises in underneath.\n */\nexport function SearchMorph({\n  value,\n  onChangeText,\n  onSubmit,\n  placeholder = 'Search',\n  open,\n  defaultOpen = false,\n  onOpenChange,\n  cancelLabel = 'Cancel',\n  children,\n  testID,\n  style,\n}: SearchMorphProps) {\n  const { colors, font, radius, space } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const [inner, setInner] = useState(defaultOpen);\n  const isOpen = open ?? inner;\n  const [width, setWidth] = useState(0);\n  const [cancelW, setCancelW] = useState(0);\n  const input = useRef<TextInput>(null);\n\n  const t = useSharedValue(isOpen ? 1 : 0);\n  useEffect(() => {\n    t.set(withSpring(isOpen ? 1 : 0, spring('smooth', reduced)));\n    if (isOpen) {\n      // Focus once the field has started to open, so the keyboard does not race the morph.\n      const id = setTimeout(() => input.current?.focus(), reduced ? 0 : 120);\n      return () => clearTimeout(id);\n    }\n    input.current?.blur();\n  }, [isOpen, reduced, t]);\n\n  const setOpen = (next: boolean) => {\n    if (open === undefined) setInner(next);\n    onOpenChange?.(next);\n  };\n  const cancel = () => {\n    onChangeText('');\n    setOpen(false);\n  };\n\n  const shell = useAnimatedStyle(() => {\n    const p = t.get();\n    return {\n      // Hidden until the bar is measured, so it never flashes at full width.\n      opacity: width === 0 ? 0 : 1,\n      left: Math.max(0, (width - SIZE) * (1 - p)),\n      right: (cancelW + GAP) * Math.max(0, p),\n      backgroundColor: interpolateColor(p, [0, 1], [colors.surfaceRaised, colors.surface]),\n      borderColor: interpolateColor(p, [0, 1], [colors.border, colors.borderStrong]),\n    };\n  });\n  const field = useAnimatedStyle(() => ({ opacity: Math.max(0, t.get() * 1.6 - 0.6) }));\n  const cancelStyle = useAnimatedStyle(() => ({\n    opacity: Math.max(0, t.get() * 2 - 1),\n    transform: [{ translateX: (1 - t.get()) * 24 }],\n  }));\n  const below = useAnimatedStyle(() => ({\n    opacity: Math.max(0, t.get() * 2 - 1),\n    transform: [{ translateY: (1 - t.get()) * -12 }],\n  }));\n\n  return (\n    <View testID={testID} style={style}>\n      <View style={styles.bar} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>\n        <Animated.View style={[styles.shell, { borderRadius: radius.pill }, shell]}>\n          <View style={styles.glass} pointerEvents=\"none\">\n            <View style={[styles.lens, { borderColor: colors.text }]} />\n            <View style={[styles.handle, { backgroundColor: colors.text }]} />\n          </View>\n          <Animated.View\n            style={[styles.field, field]}\n            pointerEvents={isOpen ? 'auto' : 'none'}\n            accessibilityElementsHidden={!isOpen}\n            importantForAccessibility={isOpen ? 'auto' : 'no-hide-descendants'}\n          >\n            <TextInput\n              ref={input}\n              value={value}\n              onChangeText={onChangeText}\n              onSubmitEditing={() => onSubmit?.(value)}\n              placeholder={placeholder}\n              placeholderTextColor={colors.textSubtle}\n              returnKeyType=\"search\"\n              autoCorrect={false}\n              accessibilityLabel={placeholder}\n              selectionColor={colors.azure}\n              style={[styles.input, { color: colors.text, fontSize: font.size.md }]}\n            />\n            {value ? (\n              <Pressable\n                onPress={() => {\n                  onChangeText('');\n                  input.current?.focus();\n                }}\n                accessibilityRole=\"button\"\n                accessibilityLabel=\"Clear search\"\n                style={styles.clear}\n              >\n                <View style={[styles.clearDot, { backgroundColor: colors.textSubtle }]}>\n                  <View style={[styles.cross, { backgroundColor: colors.surface }]} />\n                  <View\n                    style={[styles.cross, styles.crossTurn, { backgroundColor: colors.surface }]}\n                  />\n                </View>\n              </Pressable>\n            ) : null}\n          </Animated.View>\n          {!isOpen ? (\n            <Pressable\n              onPress={() => setOpen(true)}\n              accessibilityRole=\"button\"\n              accessibilityLabel={placeholder}\n              style={StyleSheet.absoluteFill}\n            />\n          ) : null}\n        </Animated.View>\n\n        <Animated.View\n          style={[styles.cancel, cancelStyle]}\n          pointerEvents={isOpen ? 'auto' : 'none'}\n          accessibilityElementsHidden={!isOpen}\n          importantForAccessibility={isOpen ? 'auto' : 'no-hide-descendants'}\n        >\n          <Pressable\n            onPress={cancel}\n            accessibilityRole=\"button\"\n            onLayout={(e) => setCancelW(e.nativeEvent.layout.width)}\n            style={({ pressed }) => [styles.cancelButton, { opacity: pressed ? 0.6 : 1 }]}\n          >\n            <Text\n              style={{\n                color: colors.azure,\n                fontSize: font.size.md,\n                fontWeight: font.weight.medium,\n              }}\n            >\n              {cancelLabel}\n            </Text>\n          </Pressable>\n        </Animated.View>\n      </View>\n\n      {children && isOpen ? (\n        <Animated.View style={[{ marginTop: space[3] }, below]}>{children}</Animated.View>\n      ) : null}\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  bar: { height: SIZE, justifyContent: 'center' },\n  shell: {\n    position: 'absolute',\n    top: 0,\n    bottom: 0,\n    borderWidth: StyleSheet.hairlineWidth,\n    overflow: 'hidden',\n  },\n  // The glass sits in the first 44 pt, so it reads the same closed and open.\n  glass: { position: 'absolute', left: 0, top: 0, width: SIZE, height: SIZE },\n  lens: {\n    position: 'absolute',\n    left: 16,\n    top: 15,\n    width: 13,\n    height: 13,\n    borderRadius: 7,\n    borderWidth: 2,\n  },\n  handle: {\n    position: 'absolute',\n    left: 26,\n    top: 27.5,\n    width: 7,\n    height: 2,\n    borderRadius: 1,\n    transform: [{ rotate: '45deg' }],\n  },\n  field: {\n    position: 'absolute',\n    left: SIZE - 4,\n    right: 0,\n    top: 0,\n    bottom: 0,\n    flexDirection: 'row',\n    alignItems: 'center',\n  },\n  input: { flex: 1, height: SIZE, paddingVertical: 0 },\n  clear: { width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' },\n  clearDot: {\n    width: 18,\n    height: 18,\n    borderRadius: 9,\n    alignItems: 'center',\n    justifyContent: 'center',\n  },\n  cross: { position: 'absolute', width: 9, height: 1.5, transform: [{ rotate: '45deg' }] },\n  crossTurn: { transform: [{ rotate: '-45deg' }] },\n  cancel: { position: 'absolute', right: 0, top: 0, bottom: 0, justifyContent: 'center' },\n  cancelButton: { minHeight: SIZE, justifyContent: 'center' },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "input",
+    "web": "live",
+    "perf": {
+      "budget": "One shared value drives the stretch, the field and Cancel. The shell's edges animate, so it lays out for the length of the spring; nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 18,
+          "p90Ms": 31,
+          "baselineMs": 20,
+          "jankyPercent": 10.4,
+          "atRest": "idle",
+          "memoryMb": 155,
+          "notes": "Measured with its own script (open, type, close) since the default gestures miss it; slower frames come from the keyboard opening and closing."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The field opens and closes in place.",
+      "screenReader": "A Search button that becomes a text field named by the placeholder, with Clear search and Cancel buttons. Hidden parts are hidden from screen readers.",
+      "touchTarget": "The button, the clear button and the bar are all 48 pt tall."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { SearchMorph } from '@/components/kinetik/search-morph';\n\n<SearchMorph value={query} onChangeText={setQuery} onSubmit={search} placeholder=\"Search places\">\n  <Results query={query} />\n</SearchMorph>;\n```\n\nGive it the width it may grow into, for example `style={{ flex: 1 }}` in a header row. Closed, it sits at the end of that space as a 44 pt circle.\n\n## When to use\n\n- Headers where search is useful but should not take a full row until it is wanted.\n- Lists and grids that filter as you type, with the results passed as children.\n\n## When not to use\n\n- Screens whose main job is search. Show the field open from the start.\n- Desktop-style toolbars with room to spare. A plain field is easier to find.\n\n## Notes\n\n- The field takes focus a moment after it starts to open, so the keyboard does not race the morph.\n- Cancel clears the text and closes. Control `open` with `onOpenChange` to hide a title while it is open, as the demo does.\n- Children are rendered only while open, so results do not run their queries in the background.\n- With reduced motion the field opens and closes in place.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add search-morph`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "swipe-row",
+  "title": "Swipe Row",
+  "description": "A list row with actions behind it; swipe far enough and the edge action takes over the row and runs.",
+  "category": "interaction",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["swipe-row.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The row and its actions move on the UI thread from three shared values; a dismissed row folds its height once. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 25,
+        "baselineMs": 20,
+        "jankyPercent": 2.06,
+        "atRest": "idle",
+        "memoryMb": 154
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The row still follows the finger, but opens, closes and dismisses without springs or the slide-away.",
+    "screenReader": "The row is one element named by accessibilityLabel, with every action offered as a custom action.",
+    "touchTarget": "Action buttons are 76 pt wide and as tall as the row."
+  }
+}

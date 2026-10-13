@@ -1,0 +1,35 @@
+## Usage
+
+```tsx
+import { PopMenu } from '@/components/kinetik/pop-menu';
+
+<PopMenu
+  accessibilityLabel="More actions"
+  items={[
+    { key: 'share', label: 'Share', onPress: share },
+    { key: 'rename', label: 'Rename', onPress: rename },
+    { key: 'delete', label: 'Delete', destructive: true, onPress: remove },
+  ]}
+>
+  <MoreIcon />
+</PopMenu>;
+```
+
+The children are the trigger's content. Each item can take an `icon`, a function that receives the colour to draw it in, so destructive rows draw red icons.
+
+## When to use
+
+- Secondary actions on a card, a row or a header: share, rename, move, delete.
+- A short list of actions that would crowd the screen as buttons.
+
+## When not to use
+
+- The main action of a screen. Show it as a button.
+- More than about seven items, or items with sub-menus. Use a sheet.
+
+## Notes
+
+- The menu opens in a transparent modal, so parents with `overflow: 'hidden'` cannot clip it. It is measured from the trigger and kept 12 pt inside the window, opening upwards when there is no room below.
+- The chosen action runs once the menu has closed, so an action that navigates or opens a sheet does not fight the closing animation.
+- Android's back button closes the menu.
+- With reduced motion the menu appears and closes in place.

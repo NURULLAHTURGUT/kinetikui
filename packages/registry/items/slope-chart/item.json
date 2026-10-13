@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "slope-chart",
+  "title": "Slope Chart",
+  "description": "Before and after on two axes: lines draw in, rises in blue, and new data slides every end to its new place.",
+  "category": "data",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["slope-chart.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One Skia canvas of lines and dots, driven by four shared values per series; labels are plain text placed by springs. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 21,
+        "baselineMs": 20,
+        "jankyPercent": 2.88,
+        "atRest": "idle",
+        "memoryMb": 154
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Lines appear drawn and move straight to new values.",
+    "screenReader": "One image whose name reads the title, both column headings and every series from start to end value.",
+    "touchTarget": "Labels take taps with 13 pt of slop above and below, so 44 pt rows."
+  }
+}

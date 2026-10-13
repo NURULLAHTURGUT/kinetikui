@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "plan-toggle",
+  "title": "Plan Toggle",
+  "description": "A billing-period toggle whose thumb slides and resizes, with a savings badge that pops and a price that rolls.",
+  "category": "input",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["plan-toggle.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views. The thumb moves on two shared values and the price on one; nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 21,
+        "baselineMs": 20,
+        "jankyPercent": 3.18,
+        "atRest": "idle",
+        "memoryMb": 140
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The thumb jumps, the badge does not pop and the price changes in place.",
+    "screenReader": "A radio group; each option reads its label and badge. The price is one text element, e.g. \"$14 / month\".",
+    "touchTarget": "Options are 44 pt tall."
+  }
+}

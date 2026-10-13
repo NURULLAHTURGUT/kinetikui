@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "copy-chip",
+  "title": "Copy Chip",
+  "description": "A value with a copy button whose two pages fold into a check while a ring spreads and the outline turns green.",
+  "category": "interaction",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["copy-chip.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views and three shared values; the glyph is drawn with borders. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 23,
+        "p90Ms": 27,
+        "baselineMs": 20,
+        "jankyPercent": 2.5,
+        "atRest": "idle",
+        "memoryMb": 148
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The glyph turns into a check in place, without the ring.",
+    "screenReader": "A button named \"Copy\" plus the label and value, whose value reads \"Copied\" while copied; \"Copied\" is also announced.",
+    "touchTarget": "The whole chip is the target, 48 pt tall."
+  }
+}

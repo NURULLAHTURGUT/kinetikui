@@ -1,0 +1,30 @@
+## Usage
+
+```tsx
+import { LetterMorph } from '@/components/kinetik/letter-morph';
+
+const label = following ? 'Following' : 'Follow';
+
+<Pressable accessibilityRole="button" accessibilityLabel={label} onPress={toggle}>
+  <LetterMorph text={label} textStyle={{ fontSize: 16 }} />
+</Pressable>;
+```
+
+Change `text` and the letters the old and new text share slide to their new places, while the others float away or rise in.
+
+## When to use
+
+- Labels that change state in place: Follow to Following, Save to Saved, Add to Added.
+- Short headlines that cycle through related words.
+
+## When not to use
+
+- Long text or paragraphs. Each letter is its own view.
+- Numbers that count. Use Odometer.
+
+## Notes
+
+- Letters are matched in order, so a letter is never pulled across another to reach its new place.
+- Each letter is drawn separately, so kerning pairs are not applied. It is rarely visible at label sizes; check it with your typeface at large sizes.
+- The label is read as one piece of text; the letters are hidden from screen readers. Inside a button, give the button the same `accessibilityLabel`.
+- With reduced motion the new text replaces the old at once.

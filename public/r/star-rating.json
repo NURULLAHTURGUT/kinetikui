@@ -1,0 +1,65 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "star-rating",
+  "type": "registry:item",
+  "title": "Star Rating",
+  "description": "Stars you tap or drag across; the fill sweeps from star to star and each one swells as it fills.",
+  "categories": [
+    "input"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/star-rating.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/star-rating.tsx",
+      "content": "import { Canvas, Group, Path, Skia, rect, type SkPath } from '@shopify/react-native-skia';\nimport { useEffect, useMemo } from 'react';\nimport {\n  StyleSheet,\n  View,\n  type AccessibilityActionEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport { Gesture, GestureDetector } from 'react-native-gesture-handler';\nimport {\n  useDerivedValue,\n  useSharedValue,\n  withDelay,\n  withSequence,\n  withTiming,\n  type SharedValue,\n} from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { easings } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget } from '../../lib/kinetik/tokens/tokens';\n\nexport type StarRatingProps = {\n  value: number;\n  /** Leave unset for a read-only rating. */\n  onValueChange?: (value: number) => void;\n  /** Number of stars. Defaults to 5. */\n  max?: number;\n  /** Allow half stars. Defaults to false. */\n  allowHalf?: boolean;\n  /** Tapping the current rating clears it. Defaults to true. */\n  clearable?: boolean;\n  /** Width of one star. Defaults to 32. */\n  size?: number;\n  /** Fill colour. Defaults to the theme azure. */\n  color?: string;\n  /** What is rated, read before the value, e.g. \"Your rating\". Defaults to 'Rating'. */\n  accessibilityLabel?: string;\n  /** A tick for each star crossed. Defaults to true. */\n  haptics?: boolean;\n  disabled?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\n/** A five-pointed star in a `size` box, its points a little short of the edges. */\nfunction starPath(size: number): SkPath {\n  const b = Skia.PathBuilder.Make();\n  const c = size / 2;\n  const outer = size * 0.5;\n  const inner = outer * 0.48;\n  const points = Array.from({ length: 10 }, (_, i) => {\n    const r = i % 2 === 0 ? outer : inner;\n    const a = -Math.PI / 2 + (i * Math.PI) / 5;\n    return { x: c + Math.cos(a) * r, y: c + 2 + Math.sin(a) * r };\n  });\n  // Rounded once here, with a curve through each corner, rather than by a path effect\n  // on every frame.\n  const ROUND = 0.16;\n  const towards = (from: { x: number; y: number }, to: { x: number; y: number }) => ({\n    x: from.x + (to.x - from.x) * ROUND,\n    y: from.y + (to.y - from.y) * ROUND,\n  });\n  points.forEach((p, i) => {\n    const prev = points[(i + 9) % 10]!;\n    const next = points[(i + 1) % 10]!;\n    const into = towards(p, prev);\n    const out = towards(p, next);\n    if (i === 0) b.moveTo(into.x, into.y);\n    else b.lineTo(into.x, into.y);\n    b.quadTo(p.x, p.y, out.x, out.y);\n  });\n  b.close();\n  return b.detach();\n}\n\n/**\n * Stars you tap or drag across. As the rating changes the fill runs from one\n * star to the next, and each one swells a little as it fills, so a new rating\n * reads as a sweep rather than a jump.\n */\nexport function StarRating({\n  value,\n  onValueChange,\n  max = 5,\n  allowHalf = false,\n  clearable = true,\n  size = 32,\n  color,\n  accessibilityLabel = 'Rating',\n  haptics = true,\n  disabled = false,\n  testID,\n  style,\n}: StarRatingProps) {\n  const { colors } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const fill = color ?? colors.azure;\n  const readOnly = !onValueChange;\n  const gap = Math.round(size * 0.22);\n  const width = max * size + (max - 1) * gap;\n  const unit = allowHalf ? 0.5 : 1;\n\n  const star = useMemo(() => starPath(size), [size]);\n  const level = useSharedValue(value);\n  const moving = useSharedValue(0);\n  const committed = useSharedValue(value);\n\n  useEffect(() => {\n    committed.set(value);\n    if (reduced) {\n      level.set(value);\n      return;\n    }\n    // About 70 ms per star crossed, so a big change still feels like a sweep.\n    const duration = Math.min(520, 120 + Math.abs(value - level.get()) * 70);\n    level.set(withTiming(value, { duration, easing: easings.standard }));\n    moving.set(withSequence(withTiming(1, { duration: 60 }), withDelay(duration, withTiming(0))));\n  }, [value, reduced, level, moving, committed]);\n\n  const valueAt = (x: number) => {\n    'worklet';\n    const i = Math.floor(x / (size + gap));\n    const within = (x - i * (size + gap)) / size;\n    const raw = i + (unit === 0.5 && within < 0.5 ? 0.5 : 1);\n    return Math.max(unit, Math.min(max, raw));\n  };\n\n  const emit = (next: number) => {\n    haptic('tick');\n    onValueChange?.(next);\n  };\n\n  const pan = Gesture.Pan()\n    .withTestId('star-rating')\n    .enabled(!readOnly && !disabled)\n    .activeOffsetX([-6, 6])\n    .failOffsetY([-12, 12])\n    .onUpdate((e) => {\n      const next = valueAt(e.x);\n      if (next !== committed.get()) {\n        committed.set(next);\n        scheduleOnRN(emit, next);\n      }\n    });\n  const tap = Gesture.Tap()\n    .withTestId('star-rating-tap')\n    .enabled(!readOnly && !disabled)\n    .onEnd((e) => {\n      const hit = valueAt(e.x);\n      const next = clearable && hit === committed.get() ? 0 : hit;\n      committed.set(next);\n      scheduleOnRN(emit, next);\n    });\n\n  const format = (v: number) => `${v} of ${max} stars`;\n  const onAccessibilityAction = (e: AccessibilityActionEvent) => {\n    if (readOnly || disabled) return;\n    const next = Math.max(\n      0,\n      Math.min(max, value + (e.nativeEvent.actionName === 'increment' ? unit : -unit)),\n    );\n    if (next !== value) emit(next);\n  };\n\n  const canvas = (\n    <Canvas style={{ width, height: size + 4 }}>\n      {Array.from({ length: max }, (_, i) => (\n        <Star\n          key={i}\n          index={i}\n          x={i * (size + gap)}\n          size={size}\n          path={star}\n          level={level}\n          moving={moving}\n          fill={fill}\n          track={colors.track}\n        />\n      ))}\n    </Canvas>\n  );\n\n  const a11y = readOnly\n    ? ({\n        accessible: true,\n        accessibilityRole: 'image',\n        accessibilityLabel: `${accessibilityLabel}: ${format(value)}`,\n      } as const)\n    : ({\n        accessible: true,\n        accessibilityRole: 'adjustable',\n        accessibilityLabel,\n        accessibilityValue: { min: 0, max, now: value, text: format(value) },\n        accessibilityState: { disabled },\n        accessibilityActions: [{ name: 'increment' }, { name: 'decrement' }],\n        onAccessibilityAction,\n      } as const);\n\n  return readOnly ? (\n    <View testID={testID} {...a11y} style={[{ width }, style]}>\n      {canvas}\n    </View>\n  ) : (\n    <GestureDetector gesture={Gesture.Exclusive(pan, tap)}>\n      <View\n        collapsable={false}\n        testID={testID}\n        {...a11y}\n        style={[styles.box, { width, opacity: disabled ? 0.45 : 1 }, style]}\n      >\n        {canvas}\n      </View>\n    </GestureDetector>\n  );\n}\n\ntype StarProps = {\n  index: number;\n  x: number;\n  size: number;\n  path: SkPath;\n  level: SharedValue<number>;\n  moving: SharedValue<number>;\n  fill: string;\n  track: string;\n};\n\nfunction Star({ index, x, size, path, level, moving, fill, track }: StarProps) {\n  // How full this star is, 0 to 1.\n  const share = useDerivedValue(() => Math.max(0, Math.min(1, level.get() - index)));\n  const clip = useDerivedValue(() => rect(0, 0, size * share.get(), size + 4));\n  const transform = useDerivedValue(() => {\n    // Swells while it fills, only during a change, so a resting half star stays flat.\n    const swell = 1 + Math.sin(share.get() * Math.PI) * 0.28 * moving.get();\n    return [{ scale: swell }];\n  });\n\n  return (\n    <Group transform={[{ translateX: x }]}>\n      <Group origin={{ x: size / 2, y: size / 2 + 2 }} transform={transform}>\n        <Path path={path} color={track} />\n        <Group clip={clip}>\n          <Path path={path} color={fill} />\n        </Group>\n      </Group>\n    </Group>\n  );\n}\n\nconst styles = StyleSheet.create({\n  box: { minHeight: minTouchTarget, justifyContent: 'center' },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "input",
+    "web": "live",
+    "perf": {
+      "budget": "One small Skia canvas for all the stars, driven by two shared values. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 20,
+          "p90Ms": 23,
+          "baselineMs": 20,
+          "jankyPercent": 1.8,
+          "atRest": "idle",
+          "memoryMb": 152
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The stars fill at once, without the sweep or the swell.",
+      "screenReader": "An adjustable value (\"3 of 5 stars\") with increment and decrement actions; read-only ratings are a single image with the value in its name.",
+      "touchTarget": "The row of stars is the target and at least 44 pt tall; each star is as wide as `size` plus the gap."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { StarRating } from '@/components/kinetik/star-rating';\n\n<StarRating accessibilityLabel=\"Your rating\" value={rating} onValueChange={setRating} />\n\n// Read-only, with half stars\n<StarRating accessibilityLabel=\"Average rating\" value={4.5} allowHalf size={14} />\n```\n\nLeave out `onValueChange` for a read-only rating. Tap a star to rate up to it, or drag across the row; tapping the current rating again clears it unless `clearable={false}`.\n\n## When to use\n\n- Asking for a quick rating after a stay, a ride, an order or an episode.\n- Showing an average rating beside a listing, read-only.\n\n## When not to use\n\n- Scales that need words at each step (disagree to agree). Use labelled options.\n- Precise scores. Use a stepper or a slider.\n\n## Notes\n\n- All the stars share one Skia canvas; the fill and the swell are driven by two shared values, so a rating in every row of a list stays light.\n- With `allowHalf` the left half of a star rates a half.\n- With reduced motion the stars fill at once.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add star-rating`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

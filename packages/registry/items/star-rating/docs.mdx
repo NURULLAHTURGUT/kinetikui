@@ -1,0 +1,28 @@
+## Usage
+
+```tsx
+import { StarRating } from '@/components/kinetik/star-rating';
+
+<StarRating accessibilityLabel="Your rating" value={rating} onValueChange={setRating} />
+
+// Read-only, with half stars
+<StarRating accessibilityLabel="Average rating" value={4.5} allowHalf size={14} />
+```
+
+Leave out `onValueChange` for a read-only rating. Tap a star to rate up to it, or drag across the row; tapping the current rating again clears it unless `clearable={false}`.
+
+## When to use
+
+- Asking for a quick rating after a stay, a ride, an order or an episode.
+- Showing an average rating beside a listing, read-only.
+
+## When not to use
+
+- Scales that need words at each step (disagree to agree). Use labelled options.
+- Precise scores. Use a stepper or a slider.
+
+## Notes
+
+- All the stars share one Skia canvas; the fill and the swell are driven by two shared values, so a rating in every row of a list stays light.
+- With `allowHalf` the left half of a star rates a half.
+- With reduced motion the stars fill at once.

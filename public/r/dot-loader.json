@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "dot-loader",
+  "type": "registry:item",
+  "title": "Dot Loader",
+  "description": "Loading dots that hop in a wave, breathe in a pulse, or sit in a chat bubble as a typing indicator.",
+  "categories": [
+    "feedback"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/dot-loader.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/dot-loader.tsx",
+      "content": "import { useEffect } from 'react';\nimport { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  cancelAnimation,\n  Easing,\n  useAnimatedStyle,\n  useSharedValue,\n  withRepeat,\n  withTiming,\n  type SharedValue,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type DotLoaderVariant = 'wave' | 'pulse' | 'typing';\n\nexport type DotLoaderProps = {\n  /** `wave` hops, `pulse` breathes, `typing` sits in a chat bubble. Defaults to `wave`. */\n  variant?: DotLoaderVariant;\n  /** Number of dots. Defaults to 3. */\n  count?: number;\n  /** Dot diameter. Defaults to 8. */\n  size?: number;\n  /** Dot colour. Defaults to the theme's muted text colour. */\n  color?: string;\n  /** One cycle, in ms. Defaults to 1100. */\n  period?: number;\n  /** Read by screen readers. Defaults to 'Loading'. */\n  accessibilityLabel?: string;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\n/**\n * Dots that say something is on its way. In a wave they hop one after\n * another, in a pulse they swell and brighten, and as typing they sit in a\n * chat bubble. One clock drives every dot.\n */\nexport function DotLoader({\n  variant = 'wave',\n  count = 3,\n  size = 8,\n  color,\n  period = 1100,\n  accessibilityLabel = 'Loading',\n  testID,\n  style,\n}: DotLoaderProps) {\n  const { colors, radius } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const clock = useSharedValue(0);\n  const ink = color ?? colors.textMuted;\n\n  useEffect(() => {\n    clock.set(0);\n    clock.set(withRepeat(withTiming(1, { duration: period, easing: Easing.linear }), -1, false));\n    return () => cancelAnimation(clock);\n  }, [period, clock]);\n\n  const dots = (\n    <View\n      style={[\n        styles.row,\n        { gap: size * 0.75, height: size * (variant === 'wave' && !reduced ? 2.2 : 1.6) },\n      ]}\n    >\n      {Array.from({ length: count }, (_, i) => (\n        <Dot\n          key={i}\n          index={i}\n          count={count}\n          size={size}\n          color={ink}\n          clock={clock}\n          variant={variant}\n          still={reduced}\n        />\n      ))}\n    </View>\n  );\n\n  return (\n    <View\n      testID={testID}\n      accessible\n      accessibilityRole=\"progressbar\"\n      accessibilityLabel={accessibilityLabel}\n      style={style}\n    >\n      {variant === 'typing' ? (\n        <View\n          style={[\n            styles.bubble,\n            {\n              backgroundColor: colors.surfaceRaised,\n              borderRadius: radius.lg,\n              borderBottomLeftRadius: radius.xs,\n              paddingHorizontal: size * 1.6,\n              paddingVertical: size * 1.1,\n            },\n          ]}\n        >\n          {dots}\n        </View>\n      ) : (\n        dots\n      )}\n    </View>\n  );\n}\n\ntype DotProps = {\n  index: number;\n  count: number;\n  size: number;\n  color: string;\n  clock: SharedValue<number>;\n  variant: DotLoaderVariant;\n  /** Reduced motion: dots brighten in turn but do not move. */\n  still: boolean;\n};\n\nfunction Dot({ index, count, size, color, clock, variant, still }: DotProps) {\n  const style = useAnimatedStyle(() => {\n    // Each dot runs a little behind the one before; the last third of the cycle is a rest.\n    const phase = (clock.get() - index * (0.6 / Math.max(1, count)) + 1) % 1;\n    const bump = phase < 0.6 ? Math.sin((phase / 0.6) * Math.PI) : 0;\n    if (still) return { opacity: 0.35 + bump * 0.65, transform: [] };\n    if (variant === 'pulse') {\n      return { opacity: 0.35 + bump * 0.65, transform: [{ scale: 0.7 + bump * 0.45 }] };\n    }\n    const hop = variant === 'typing' ? 0.45 : 0.75;\n    return {\n      opacity: 0.45 + bump * 0.55,\n      transform: [{ translateY: -bump * size * hop }],\n    };\n  });\n  return (\n    <Animated.View\n      style={[{ width: size, height: size, borderRadius: size / 2, backgroundColor: color }, style]}\n    />\n  );\n}\n\nconst styles = StyleSheet.create({\n  row: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center' },\n  bubble: { alignSelf: 'flex-start' },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "feedback",
+    "web": "live",
+    "perf": {
+      "budget": "One repeating shared value drives every dot on the UI thread. It animates for as long as it is shown, so unmount it when loading ends.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 22,
+          "p90Ms": 23,
+          "baselineMs": 20,
+          "jankyPercent": 0.13,
+          "atRest": "animating",
+          "memoryMb": 152,
+          "notes": "Animating at rest is the loader itself; unmount it when loading ends."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The dots stay in place and only brighten one after another.",
+      "screenReader": "One progress indicator named by accessibilityLabel (Loading by default), such as \"The host is typing\".",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { DotLoader } from '@/components/kinetik/dot-loader';\n\n<DotLoader />\n<DotLoader variant=\"pulse\" color={theme.colors.azure} />\n<DotLoader variant=\"typing\" accessibilityLabel=\"Mara is typing\" />\n```\n\n## When to use\n\n- Short waits inside a piece of the screen: a button, a card, a reply on its way.\n- Chat threads, with `variant=\"typing\"`.\n\n## When not to use\n\n- Waits with a known length. Show progress.\n- Loading a whole screen of content. Use Skeleton Sweep, which shows the shape of what is coming.\n\n## Notes\n\n- One shared value drives every dot on the UI thread; the JS thread is never involved.\n- Each cycle ends with a short rest, so the rhythm reads as calm rather than busy.\n- It keeps animating while mounted. Unmount it as soon as the wait is over.\n- With reduced motion the dots stay put and brighten in turn.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add dot-loader`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

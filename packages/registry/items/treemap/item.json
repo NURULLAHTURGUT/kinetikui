@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "treemap",
+  "title": "Treemap",
+  "description": "Sizes as nested, near-square tiles; tap a group and the map zooms into it as its parts open out inside.",
+  "category": "data",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["treemap.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views laid out with a squarified algorithm in JS; each tile springs four values while zooming. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 22,
+        "baselineMs": 20,
+        "jankyPercent": 2.88,
+        "atRest": "idle",
+        "memoryMb": 145
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Levels change in place, without the zoom.",
+    "screenReader": "Every tile reads its label, size and share; groups are buttons that say they have parts. The trail above has a Back to button for each level.",
+    "touchTarget": "Tiles are as big as their share; the trail's buttons are 44 pt tall. Keep small slices out of a tap-only flow."
+  }
+}

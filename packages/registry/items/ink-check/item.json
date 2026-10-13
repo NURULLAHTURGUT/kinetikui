@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "ink-check",
+  "title": "Ink Check",
+  "description": "A checkbox whose tick is inked in one stroke while the box fills, with an optional strike-through label.",
+  "category": "input",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["ink-check.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views: the tick is two rotated bars whose widths grow. No canvas, so a long list of them stays cheap. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 23,
+        "p90Ms": 27,
+        "baselineMs": 20,
+        "jankyPercent": 1.66,
+        "atRest": "idle",
+        "memoryMb": 147
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The box fills and the tick appears at once; the strike-through appears without sweeping.",
+    "screenReader": "A checkbox named by its label, with the description as its hint and a checked state.",
+    "touchTarget": "The whole row is the target, at least 44 pt tall."
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "letter-morph",
+  "type": "registry:item",
+  "title": "Letter Morph",
+  "description": "A label that morphs letter by letter: shared letters slide to new places as others float away or rise in.",
+  "categories": [
+    "text"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/letter-morph.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/letter-morph.tsx",
+      "content": "import { useEffect, useState } from 'react';\nimport {\n  StyleSheet,\n  Text,\n  View,\n  type StyleProp,\n  type TextStyle,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withDelay,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { durations, easings, spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type LetterMorphProps = {\n  /** The text. Change it and shared letters slide to their new places. */\n  text: string;\n  /** Style for the letters. Defaults to a large, semibold line in the theme text colour. */\n  textStyle?: StyleProp<TextStyle>;\n  /** Read by screen readers. Defaults to the text. */\n  accessibilityLabel?: string;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\ntype Glyph = { ch: string; key: string };\ntype Leaving = Glyph & { x: number };\n\nconst NBSP = String.fromCharCode(0xa0);\n\n/**\n * Gives every letter of `next` a key, reusing the key of the same letter in\n * `prev` when one is still to come, so shared letters keep their identity and\n * the rest enter or leave.\n */\nexport function matchGlyphs(prev: readonly Glyph[], next: string, makeKey: () => string): Glyph[] {\n  const used = new Array<boolean>(prev.length).fill(false);\n  let from = 0;\n  return Array.from(next).map((ch) => {\n    for (let k = from; k < prev.length; k++) {\n      if (!used[k] && prev[k]!.ch === ch) {\n        used[k] = true;\n        from = k + 1;\n        return { ch, key: prev[k]!.key };\n      }\n    }\n    return { ch, key: makeKey() };\n  });\n}\n\n/**\n * A label that morphs into its next text letter by letter. Letters the two\n * words share slide to their new places, the ones that go float up and fade,\n * and new ones rise in where they belong: Save becomes Saved, Follow becomes\n * Following.\n *\n * Each distinct character is measured once; after that every letter moves by\n * transform on the UI thread, so a change never lays the screen out again\n * frame by frame.\n */\nexport function LetterMorph({\n  text,\n  textStyle,\n  accessibilityLabel,\n  testID,\n  style,\n}: LetterMorphProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n\n  const letter = StyleSheet.flatten([\n    {\n      color: colors.text,\n      fontSize: font.size['2xl'],\n      fontWeight: font.weight.semibold,\n      letterSpacing: font.tracking.tight,\n    },\n    textStyle,\n  ]);\n  const styleKey = JSON.stringify(letter);\n\n  // Widths of the characters seen so far, for the current text style.\n  const [metrics, setMetrics] = useState<{\n    styleKey: string;\n    widths: Record<string, number>;\n    height: number;\n  }>({ styleKey, widths: {}, height: 0 });\n  if (metrics.styleKey !== styleKey) setMetrics({ styleKey, widths: {}, height: 0 });\n  const { widths } = metrics;\n\n  const place = (glyphs: readonly Glyph[]) => {\n    let x = 0;\n    return glyphs.map((g) => {\n      const at = x;\n      x += widths[g.ch] ?? 0;\n      return at;\n    });\n  };\n\n  // Keys for the current text, worked out again (from the previous keys) when it\n  // changes. Letters that are not kept leave from where they were.\n  const [state, setState] = useState(() => {\n    let n = 0;\n    return {\n      text,\n      glyphs: matchGlyphs([], text, () => `g${n++}`),\n      next: n,\n      leaving: [] as Leaving[],\n      batch: 0,\n    };\n  });\n  if (state.text !== text) {\n    let n = state.next;\n    const glyphs = matchGlyphs(state.glyphs, text, () => `g${n++}`);\n    const kept = new Set(glyphs.map((g) => g.key));\n    const before = place(state.glyphs);\n    const leaving = reduced\n      ? []\n      : state.glyphs.map((g, i) => ({ ...g, x: before[i]! })).filter((g) => !kept.has(g.key));\n    setState({ text, glyphs, next: n, leaving, batch: state.batch + 1 });\n  }\n\n  // Leaving letters are dropped once they have faded.\n  const { batch } = state;\n  const leavingCount = state.leaving.length;\n  useEffect(() => {\n    if (leavingCount === 0) return;\n    const id = setTimeout(\n      () => setState((s) => (s.batch === batch ? { ...s, leaving: [] } : s)),\n      durations.base,\n    );\n    return () => clearTimeout(id);\n  }, [batch, leavingCount]);\n\n  const missing = [...new Set(Array.from(text))].filter((ch) => widths[ch] === undefined);\n  const ready = missing.length === 0;\n  const xs = place(state.glyphs);\n  const last = state.glyphs[state.glyphs.length - 1];\n  const total = ready && last ? xs[xs.length - 1]! + (widths[last.ch] ?? 0) : 0;\n\n  const width = useSharedValue(total);\n  const sized = useSharedValue(false);\n  useEffect(() => {\n    if (!ready) return;\n    width.set(!sized.get() || reduced ? total : withSpring(total, spring('smooth')));\n    sized.set(true);\n  }, [ready, total, reduced, width, sized]);\n  const box = useAnimatedStyle(() => ({ width: width.get() }));\n\n  // Letters on screen when the component mounted appear without animating in.\n  const [firstKeys] = useState(() => new Set(state.glyphs.map((g) => g.key)));\n\n  return (\n    <View\n      testID={testID}\n      accessible\n      accessibilityRole=\"text\"\n      accessibilityLabel={accessibilityLabel ?? text}\n      style={style}\n    >\n      {/* Measures characters not seen before, out of sight. */}\n      {missing.length > 0 ? (\n        <View\n          style={styles.measure}\n          pointerEvents=\"none\"\n          importantForAccessibility=\"no-hide-descendants\"\n        >\n          {missing.map((ch) => (\n            <Text\n              key={ch}\n              style={letter}\n              onLayout={(e) => {\n                const { width: w, height: h } = e.nativeEvent.layout;\n                setMetrics((m) =>\n                  m.styleKey !== styleKey || m.widths[ch] !== undefined\n                    ? m\n                    : { ...m, widths: { ...m.widths, [ch]: w }, height: Math.max(m.height, h) },\n                );\n              }}\n            >\n              {ch === ' ' ? NBSP : ch}\n            </Text>\n          ))}\n        </View>\n      ) : null}\n      <Animated.View style={[{ height: metrics.height || undefined }, box]}>\n        {ready\n          ? [\n              ...state.leaving.map((g) => (\n                <Letter\n                  key={`${g.key}-out`}\n                  ch={g.ch}\n                  x={g.x}\n                  leave\n                  animateIn={false}\n                  reduced={reduced}\n                  style={letter}\n                />\n              )),\n              ...state.glyphs.map((g, i) => (\n                <Letter\n                  key={g.key}\n                  ch={g.ch}\n                  x={xs[i]!}\n                  leave={false}\n                  animateIn={!firstKeys.has(g.key)}\n                  reduced={reduced}\n                  style={letter}\n                />\n              )),\n            ]\n          : null}\n      </Animated.View>\n    </View>\n  );\n}\n\ntype LetterProps = {\n  ch: string;\n  x: number;\n  leave: boolean;\n  animateIn: boolean;\n  reduced: boolean;\n  style: TextStyle;\n};\n\nfunction Letter({ ch, x, leave, animateIn, reduced, style }: LetterProps) {\n  const tx = useSharedValue(x);\n  const shown = useSharedValue(leave || !animateIn || reduced ? 1 : 0);\n\n  useEffect(() => {\n    tx.set(reduced ? x : withSpring(x, spring('smooth')));\n  }, [x, reduced, tx]);\n  useEffect(() => {\n    if (leave) {\n      shown.set(withTiming(0, { duration: durations.quick, easing: easings.exit }));\n    } else if (shown.get() < 1) {\n      shown.set(\n        withDelay(60, withTiming(1, { duration: durations.base, easing: easings.standard })),\n      );\n    }\n  }, [leave, shown]);\n\n  const motion = useAnimatedStyle(() => {\n    const p = shown.get();\n    // New letters rise into place; leaving ones keep rising as they fade.\n    const dy = leave ? -(1 - p) * 10 : (1 - p) * 10;\n    return { opacity: p, transform: [{ translateX: tx.get() }, { translateY: dy }] };\n  });\n\n  return (\n    <Animated.Text\n      style={[style, styles.letter, motion]}\n      accessibilityElementsHidden\n      importantForAccessibility=\"no\"\n    >\n      {ch === ' ' ? NBSP : ch}\n    </Animated.Text>\n  );\n}\n\nconst styles = StyleSheet.create({\n  measure: { position: 'absolute', opacity: 0, flexDirection: 'row', left: 0, top: 0 },\n  letter: { position: 'absolute', left: 0, top: 0 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "text",
+    "web": "live",
+    "perf": {
+      "budget": "One text view per letter, moved by transforms on the UI thread; each new character is measured once. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 18,
+          "p90Ms": 27,
+          "baselineMs": 20,
+          "jankyPercent": 9.36,
+          "atRest": "animating",
+          "memoryMb": 161,
+          "notes": "The demo changes the headline every 1.8 s, so it draws at rest; the long p99 frame is the first appearance of a new character, which is measured once."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The new text replaces the old at once.",
+      "screenReader": "One text element that reads the whole label; the letters themselves are hidden.",
+      "touchTarget": "Not interactive itself; put it inside a button for actions."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { LetterMorph } from '@/components/kinetik/letter-morph';\n\nconst label = following ? 'Following' : 'Follow';\n\n<Pressable accessibilityRole=\"button\" accessibilityLabel={label} onPress={toggle}>\n  <LetterMorph text={label} textStyle={{ fontSize: 16 }} />\n</Pressable>;\n```\n\nChange `text` and the letters the old and new text share slide to their new places, while the others float away or rise in.\n\n## When to use\n\n- Labels that change state in place: Follow to Following, Save to Saved, Add to Added.\n- Short headlines that cycle through related words.\n\n## When not to use\n\n- Long text or paragraphs. Each letter is its own view.\n- Numbers that count. Use Odometer.\n\n## Notes\n\n- Letters are matched in order, so a letter is never pulled across another to reach its new place.\n- Each letter is drawn separately, so kerning pairs are not applied. It is rarely visible at label sizes; check it with your typeface at large sizes.\n- The label is read as one piece of text; the letters are hidden from screen readers. Inside a button, give the button the same `accessibilityLabel`.\n- With reduced motion the new text replaces the old at once.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add letter-morph`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

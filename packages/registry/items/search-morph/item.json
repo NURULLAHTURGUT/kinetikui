@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "search-morph",
+  "title": "Search Morph",
+  "description": "A search button that stretches into a search field, with Cancel sliding in and results rising beneath.",
+  "category": "input",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["search-morph.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One shared value drives the stretch, the field and Cancel. The shell's edges animate, so it lays out for the length of the spring; nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 31,
+        "baselineMs": 20,
+        "jankyPercent": 10.4,
+        "atRest": "idle",
+        "memoryMb": 155,
+        "notes": "Measured with its own script (open, type, close) since the default gestures miss it; slower frames come from the keyboard opening and closing."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The field opens and closes in place.",
+    "screenReader": "A Search button that becomes a text field named by the placeholder, with Clear search and Cancel buttons. Hidden parts are hidden from screen readers.",
+    "touchTarget": "The button, the clear button and the bar are all 48 pt tall."
+  }
+}

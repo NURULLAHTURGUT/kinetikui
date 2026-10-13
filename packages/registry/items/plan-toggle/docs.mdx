@@ -1,0 +1,35 @@
+## Usage
+
+```tsx
+import { PlanPrice, PlanToggle } from '@/components/kinetik/plan-toggle';
+
+<PlanToggle
+  accessibilityLabel="Billing period"
+  options={[
+    { value: 'monthly', label: 'Monthly' },
+    { value: 'yearly', label: 'Yearly', badge: 'Save 20%' },
+  ]}
+  value={period}
+  onValueChange={setPeriod}
+/>
+<PlanPrice amount={period === 'yearly' ? 10 : 12} suffix="/ month" />
+```
+
+The file exports two components: `PlanToggle` for the period and `PlanPrice` for a figure that rolls up or down to its new amount. Use them together or apart.
+
+## When to use
+
+- Pricing pages and paywalls with monthly and yearly billing.
+- Any two or three options where one carries a saving worth pointing out.
+
+## When not to use
+
+- More than three options. Use Choice Cards.
+- Settings that are on or off. Use a switch.
+
+## Notes
+
+- The thumb resizes to each option, so labels of different lengths are fine.
+- A badge pops when its option is picked and turns from a tint to solid azure.
+- `PlanPrice` takes a `format` function for other currencies, e.g. `(a) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(a)`.
+- With reduced motion the thumb jumps and the price changes in place.

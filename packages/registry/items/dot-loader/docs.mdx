@@ -1,0 +1,26 @@
+## Usage
+
+```tsx
+import { DotLoader } from '@/components/kinetik/dot-loader';
+
+<DotLoader />
+<DotLoader variant="pulse" color={theme.colors.azure} />
+<DotLoader variant="typing" accessibilityLabel="Mara is typing" />
+```
+
+## When to use
+
+- Short waits inside a piece of the screen: a button, a card, a reply on its way.
+- Chat threads, with `variant="typing"`.
+
+## When not to use
+
+- Waits with a known length. Show progress.
+- Loading a whole screen of content. Use Skeleton Sweep, which shows the shape of what is coming.
+
+## Notes
+
+- One shared value drives every dot on the UI thread; the JS thread is never involved.
+- Each cycle ends with a short rest, so the rhythm reads as calm rather than busy.
+- It keeps animating while mounted. Unmount it as soon as the wait is over.
+- With reduced motion the dots stay put and brighten in turn.

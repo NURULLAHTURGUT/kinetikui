@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "filter-chips",
+  "title": "Filter Chips",
+  "description": "Chips that change shape when picked: a check slides in, the chip grows to fit and its outline turns to a tint.",
+  "category": "input",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["filter-chips.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One shared value per chip. A picked chip's width animates, so the row lays out again for the length of the spring; nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 22,
+        "baselineMs": 20,
+        "jankyPercent": 1.73,
+        "atRest": "idle",
+        "memoryMb": 152
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Chips change colour and show the check at once, without growing.",
+    "screenReader": "Checkboxes with a checked state, or radios with a selected state when `multiple` is false. Counts are read after the label.",
+    "touchTarget": "40 pt chips drawn inside 48 pt targets."
+  }
+}

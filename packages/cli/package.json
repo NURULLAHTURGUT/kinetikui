@@ -1,6 +1,6 @@
 {
   "name": "kinetik-ui",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Add Kinetik UI motion components to an Expo project: copies the source, installs SDK-compatible dependencies, and serves the registry to AI agents over MCP.",
   "license": "MIT",
   "homepage": "https://kinetik-ui.dev",

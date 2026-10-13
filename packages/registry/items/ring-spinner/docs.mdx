@@ -1,0 +1,26 @@
+## Usage
+
+```tsx
+import { RingSpinner } from '@/components/kinetik/ring-spinner';
+
+<RingSpinner accessibilityLabel="Syncing" status={done ? 'success' : 'loading'} />
+
+// A known amount of work
+<RingSpinner accessibilityLabel="Upload" progress={sent / total} />
+```
+
+## When to use
+
+- Waits inside a card, a row or a button, where a spinner should also show how it ended.
+- Uploads and downloads with a known size, with `progress`.
+
+## When not to use
+
+- Loading whole screens of content. Use Skeleton Sweep.
+- Very short waits, under about half a second. Nothing at all feels faster.
+
+## Notes
+
+- The arc grows and shrinks as it turns, and its tail carries over from one cycle to the next, so the motion never jumps.
+- Set `status` to `success` or `error` and the ring closes, changes colour and draws a check or a cross. The clock stops then, so a settled spinner costs nothing.
+- With reduced motion it shows a still quarter arc while loading, and results appear without drawing in.

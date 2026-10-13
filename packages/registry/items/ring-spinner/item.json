@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "ring-spinner",
+  "title": "Ring Spinner",
+  "description": "A spinner whose arc stretches as it turns, fills to a known amount, and closes into a check or a cross.",
+  "category": "feedback",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["ring-spinner.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One small Skia canvas driven by one clock on the UI thread while it spins. The clock stops once it shows progress, success or an error.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 21,
+        "p90Ms": 25,
+        "baselineMs": 20,
+        "jankyPercent": 0.55,
+        "atRest": "animating",
+        "memoryMb": 153,
+        "notes": "The demo upload ring keeps counting, so it draws at rest; a settled spinner stops its clock."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "A still quarter arc while loading; progress, the check and the cross appear without drawing in.",
+    "screenReader": "A progress indicator named by accessibilityLabel. It reports a percentage when given progress, reads Done or Failed when it settles, and announces the result.",
+    "touchTarget": "Not interactive."
+  }
+}

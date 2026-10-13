@@ -1,0 +1,33 @@
+## Usage
+
+```tsx
+import { UsageMeter } from '@/components/kinetik/usage-meter';
+
+<UsageMeter
+  title="Storage"
+  unit="GB"
+  total={256}
+  segments={[
+    { label: 'Photos', value: 92 },
+    { label: 'Video', value: 48 },
+    { label: 'Apps', value: 21 },
+  ]}
+/>;
+```
+
+## When to use
+
+- Allowances made of parts: storage, data plans, seats, a monthly budget.
+- Anywhere people need to see what is taking up the space before they free some.
+
+## When not to use
+
+- A single value against a limit. Use Gauge Meter or a plain progress bar.
+- Shares of a whole that has no limit. Use Waffle Chart or Donut Chart.
+
+## Notes
+
+- The remainder turns amber at `warnAt` (85% by default) and red, reading "over", past the allowance. The bar stops at its end.
+- Segments grow in one after another from the left; change a value and its segment, and every one after it, springs to the new place.
+- The figure counts up with `useCountUp` from Kinetik Count.
+- With reduced motion the bar and figure show their values at once.

@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "pop-menu",
+  "title": "Pop Menu",
+  "description": "A menu that unfolds from its trigger's corner, rows sliding in one by one, with a highlight under the finger.",
+  "category": "disclosure",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-worklets"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["pop-menu.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "A transparent modal with plain views, mounted only while open; one shared value opens it and one tracks the pressed row.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 20,
+        "baselineMs": 20,
+        "jankyPercent": 2.61,
+        "atRest": "idle",
+        "memoryMb": 141
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The menu appears and closes in place, without growing or the rows sliding.",
+    "screenReader": "The trigger is a button with an expanded state; items are menu items, disabled ones marked as such. The modal keeps focus inside; a Close menu button covers the backdrop and the escape gesture closes it.",
+    "touchTarget": "The trigger is at least 44 pt and each row is 46 pt tall."
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "page-dots",
+  "type": "registry:item",
+  "title": "Page Dots",
+  "description": "Page dots that follow the scroll: a worm that stretches to the next page, or a dot that widens into a pill.",
+  "categories": [
+    "navigation"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/page-dots.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/page-dots.tsx",
+      "content": "import { useEffect } from 'react';\nimport {\n  Pressable,\n  StyleSheet,\n  View,\n  type AccessibilityActionEvent,\n  type GestureResponderEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  type SharedValue,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget } from '../../lib/kinetik/tokens/tokens';\n\n/** Side padding of the touch area. */\nconst PAD = 8;\n\nexport type PageDotsProps = {\n  count: number;\n  /** The current page. With `progress`, still pass it: screen readers and taps read it. */\n  index?: number;\n  /**\n   * The scroll position in pages (1.5 is halfway from the second page to the\n   * third), e.g. from `useAnimatedScrollHandler`. The dots then follow the\n   * finger instead of jumping from page to page.\n   */\n  progress?: SharedValue<number>;\n  /** Tapping a dot, or a screen reader swipe, asks for that page. */\n  onPageChange?: (index: number) => void;\n  /** `worm` stretches between dots; `expand` widens the current dot. Defaults to `worm`. */\n  variant?: 'worm' | 'expand';\n  /** Dot diameter. Defaults to 8. */\n  size?: number;\n  /** Colour of the current page. Defaults to the theme azure. */\n  color?: string;\n  /** Names the pager. Defaults to 'Page'. */\n  accessibilityLabel?: string;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\n/**\n * Page dots that move with the scroll. As a worm, the current dot stretches\n * toward the next page and its tail catches up; expanded, the current dot\n * widens into a pill and hands the width over as you swipe.\n */\nexport function PageDots({\n  count,\n  index = 0,\n  progress,\n  onPageChange,\n  variant = 'worm',\n  size = 8,\n  color,\n  accessibilityLabel = 'Page',\n  testID,\n  style,\n}: PageDotsProps) {\n  const { colors } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const ink = color ?? colors.azure;\n  const gap = size;\n  const step = size + gap;\n  const wide = size * 3;\n\n  // Without a scroll position, follow `index` on a spring.\n  const own = useSharedValue(index);\n  useEffect(() => {\n    own.set(withSpring(index, spring('smooth', reduced)));\n  }, [index, reduced, own]);\n  const at = progress ?? own;\n\n  const current = Math.max(0, Math.min(count - 1, Math.round(index)));\n  const pick = (e: GestureResponderEvent) => {\n    if (!onPageChange) return;\n    // Relative to the pressable (the dots ignore touches), less its side padding.\n    const x = e.nativeEvent.locationX - PAD;\n    const extra = variant === 'expand' ? wide - size : 0;\n    const i = Math.round((x - size / 2 - (x > current * step ? extra : 0)) / step);\n    onPageChange(Math.max(0, Math.min(count - 1, i)));\n  };\n  const onAccessibilityAction = (e: AccessibilityActionEvent) => {\n    if (!onPageChange) return;\n    const next = current + (e.nativeEvent.actionName === 'increment' ? 1 : -1);\n    if (next >= 0 && next < count) onPageChange(next);\n  };\n\n  const worm = useAnimatedStyle(() => {\n    const p = Math.max(0, Math.min(count - 1, at.get()));\n    const i = Math.floor(p);\n    const f = p - i;\n    // The head leads over the first half of the move, the tail catches up over the second.\n    const head = i + Math.min(1, f * 2);\n    const tail = i + Math.max(0, f * 2 - 1);\n    return { left: tail * step, width: (head - tail) * step + size };\n  });\n\n  const row = (\n    <View pointerEvents=\"none\" style={[styles.row, { gap, height: size }]}>\n      {Array.from({ length: count }, (_, i) =>\n        variant === 'expand' ? (\n          <ExpandDot\n            key={i}\n            index={i}\n            at={at}\n            size={size}\n            wide={wide}\n            ink={ink}\n            track={colors.track}\n          />\n        ) : (\n          <View\n            key={i}\n            style={{\n              width: size,\n              height: size,\n              borderRadius: size / 2,\n              backgroundColor: colors.track,\n            }}\n          />\n        ),\n      )}\n      {variant === 'worm' ? (\n        <Animated.View\n          style={[\n            styles.worm,\n            { height: size, borderRadius: size / 2, backgroundColor: ink },\n            worm,\n          ]}\n        />\n      ) : null}\n    </View>\n  );\n\n  return (\n    <Pressable\n      testID={testID}\n      onPress={pick}\n      disabled={!onPageChange}\n      accessible\n      accessibilityRole=\"adjustable\"\n      accessibilityLabel={accessibilityLabel}\n      accessibilityValue={{\n        min: 1,\n        max: count,\n        now: current + 1,\n        text: `${current + 1} of ${count}`,\n      }}\n      accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}\n      onAccessibilityAction={onAccessibilityAction}\n      style={[styles.hit, style]}\n    >\n      {row}\n    </Pressable>\n  );\n}\n\ntype ExpandDotProps = {\n  index: number;\n  at: SharedValue<number>;\n  size: number;\n  wide: number;\n  ink: string;\n  track: string;\n};\n\nfunction ExpandDot({ index, at, size, wide, ink, track }: ExpandDotProps) {\n  const fill = useAnimatedStyle(() => {\n    const near = Math.max(0, 1 - Math.abs(at.get() - index));\n    return { width: size + (wide - size) * near, opacity: 0.25 + near * 0.75 };\n  });\n  return (\n    <View style={{ height: size, borderRadius: size / 2, backgroundColor: track }}>\n      <Animated.View\n        style={[{ height: size, borderRadius: size / 2, backgroundColor: ink }, fill]}\n      />\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  hit: {\n    minHeight: minTouchTarget,\n    justifyContent: 'center',\n    alignSelf: 'center',\n    paddingHorizontal: PAD,\n  },\n  row: { flexDirection: 'row', alignItems: 'center' },\n  worm: { position: 'absolute', top: 0 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "navigation",
+    "web": "live",
+    "perf": {
+      "budget": "Reads the scroll position as a shared value on the UI thread, so it follows the finger without re-rendering. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 21,
+          "baselineMs": 20,
+          "jankyPercent": 2.02,
+          "atRest": "idle",
+          "memoryMb": 147
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Driven by the scroll, it still follows the finger; without a scroll position it jumps between pages.",
+      "screenReader": "An adjustable value (\"Page, 2 of 5\") whose increment and decrement ask for the next and previous page.",
+      "touchTarget": "The whole row is the target, 44 pt tall; a tap picks the nearest dot."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';\n\nimport { PageDots } from '@/components/kinetik/page-dots';\n\nconst progress = useSharedValue(0);\nconst onScroll = useAnimatedScrollHandler((e) => progress.set(e.contentOffset.x / pageWidth));\n\n<Animated.ScrollView horizontal pagingEnabled onScroll={onScroll} scrollEventThrottle={16}>\n  {pages}\n</Animated.ScrollView>\n<PageDots count={pages.length} index={page} progress={progress} onPageChange={scrollToPage} />\n```\n\nPass the scroll position as `progress` and the dots follow the finger on the UI thread. Without it, they spring to `index`.\n\n## When to use\n\n- Paging carousels, onboarding screens and photo viewers with up to about ten pages.\n- Showing where you are in a short, swipeable sequence.\n\n## When not to use\n\n- Many pages. Show \"3 of 24\" instead.\n- As the only way to move between pages. Keep the swipe, and add buttons where it helps.\n\n## Notes\n\n- `worm` stretches the current dot towards the next page and lets its tail catch up; `expand` widens the current dot and hands the width over as you swipe.\n- With `onPageChange`, a tap picks the nearest dot and screen reader swipes ask for the next or previous page. Scroll your pager there.\n- Keep `index` in step with the scroll (round the position), since screen readers and taps read it.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add page-dots`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

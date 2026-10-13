@@ -1,0 +1,31 @@
+## Usage
+
+```tsx
+import { NoticeBar } from '@/components/kinetik/notice-bar';
+
+<NoticeBar
+  messages={[
+    { text: 'Spring prints are here', action: { label: 'Browse', onPress: openCollection } },
+    { text: 'Free shipping on orders over $50' },
+  ]}
+  onDismiss={() => setShowBar(false)}
+/>;
+```
+
+With more than one message they take turns every `interval` ms. Pass `onDismiss` to show a close button; it is called once the bar has folded away, so remove it from the tree there and remember the choice.
+
+## When to use
+
+- Short, timely news at the top of a screen: offers, new features, service notes.
+- Messages people may ignore without missing anything they need.
+
+## When not to use
+
+- Errors or anything that needs action. Use an inline alert or a toast.
+- More than three messages. Nobody waits for the fourth.
+
+## Notes
+
+- Holding the bar pauses it, and it stops turning while a screen reader is on, since moving text is hard to follow.
+- Text is cut to one line, so keep each message short; the action sits right after it.
+- With reduced motion messages change in place and the bar closes at once.

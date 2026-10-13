@@ -1,0 +1,33 @@
+## Usage
+
+```tsx
+import { SplitButton } from '@/components/kinetik/split-button';
+
+<SplitButton
+  options={[
+    { value: 'merge', label: 'Merge', description: 'Keep every commit' },
+    { value: 'squash', label: 'Squash and merge', description: 'One commit on main' },
+  ]}
+  value={method}
+  onValueChange={setMethod}
+  onPress={(m) => merge(m)}
+/>;
+```
+
+The main half runs `onPress` with the chosen value. Picking another option in the menu only changes the choice; people press the button to run it, so a pick in the menu never acts by surprise.
+
+## When to use
+
+- One default action with two to five close variants: publish now or schedule, merge methods, export formats.
+- Actions where people tend to stick with their last choice. Persist `value` to remember it.
+
+## When not to use
+
+- Unrelated actions. Use Pop Menu.
+- Two options of equal weight. Use two buttons.
+
+## Notes
+
+- Every label is measured once, out of sight, so the button springs straight to the right width.
+- The menu opens in a transparent modal under the button's right edge and stays 12 pt inside the window.
+- With reduced motion the label and width change at once.

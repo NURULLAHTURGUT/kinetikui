@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "password-meter",
+  "title": "Password Meter",
+  "description": "A new-password field whose strength meter fills segment by segment while each rule below ticks off.",
+  "category": "input",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["password-meter.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One shared value for the meter and one per rule, changed on keystrokes only. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 21,
+        "baselineMs": 20,
+        "jankyPercent": 2.88,
+        "atRest": "idle",
+        "memoryMb": 144
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The meter and the rule ticks change at once, without filling or popping.",
+    "screenReader": "A secure text field named by its label, a Show password / Hide password button, and each rule read as met or not met. Changes in strength are announced.",
+    "touchTarget": "The field is 52 pt tall; the reveal button is at least 44 pt."
+  }
+}

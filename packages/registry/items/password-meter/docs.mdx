@@ -1,0 +1,29 @@
+## Usage
+
+```tsx
+import { PasswordMeter, passwordStrength } from '@/components/kinetik/password-meter';
+
+<PasswordMeter value={password} onChangeText={setPassword} placeholder="At least 8 characters" />;
+
+const canContinue = passwordStrength(password) >= 3;
+```
+
+`passwordStrength` gives the same 0 to 4 score the meter shows, so a form can require Good or better before it continues.
+
+## When to use
+
+- Creating or changing a password: sign up, reset, account settings.
+- Anywhere a password policy should be visible while typing rather than after a failed submit.
+
+## When not to use
+
+- Signing in. Strength does not matter there; use a plain password field.
+- As your only check. Validate on the server too, and consider a breached-password list.
+
+## Notes
+
+- `rules` replaces the default four rules (length, mixed case, a number, a symbol). The score is the share of rules met, scaled to the four segments.
+- The meter takes one colour for the overall strength, red through amber and blue to green.
+- The field sets `textContentType="newPassword"` and `autoComplete="new-password"`, so password managers offer to generate one. Pass more input props through `inputProps`.
+- A change of strength is announced, but not every keystroke.
+- With reduced motion the meter and ticks change at once.

@@ -1,0 +1,32 @@
+## Usage
+
+```tsx
+import * as Clipboard from 'expo-clipboard';
+
+import { CopyChip } from '@/components/kinetik/copy-chip';
+
+<CopyChip
+  label="Invite link"
+  value="kinetik.app/join/north-studio"
+  onCopy={(v) => Clipboard.setStringAsync(v)}
+/>;
+```
+
+Kinetik does not depend on a clipboard library. Pass the copy function you already use, such as `setStringAsync` from expo-clipboard (`npx expo install expo-clipboard`).
+
+## When to use
+
+- Values people paste somewhere else: invite links, promo codes, commands, account numbers, addresses.
+- Long values that are tedious to select by hand on a phone.
+
+## When not to use
+
+- Secrets that should not sit on the clipboard, such as one-time passwords for other devices.
+- Values people only need to read. Show them as text.
+
+## Notes
+
+- `onCopy` may return a promise. The chip confirms only once it resolves; if it rejects, an error haptic plays and nothing changes.
+- The copied state lasts `resetAfter` ms (1.6 s by default), then eases back.
+- The value is truncated to one line on screen; screen readers get all of it.
+- With reduced motion the glyph turns into a check in place.

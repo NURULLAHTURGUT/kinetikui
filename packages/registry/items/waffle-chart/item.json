@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "waffle-chart",
+  "title": "Waffle Chart",
+  "description": "A ten-by-ten grid where each cell is one percent; cells fill in a wave and new data washes across the grid.",
+  "category": "data",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["waffle-chart.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "A hundred plain views read three shared values, so a wave updates a hundred styles per frame for about a second. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 21,
+        "baselineMs": 20,
+        "jankyPercent": 2.86,
+        "atRest": "idle",
+        "memoryMb": 158
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The grid appears filled and new data changes the colours at once.",
+    "screenReader": "One image whose name lists every slice and its share. Legend entries are buttons with a selected state.",
+    "touchTarget": "Legend entries are at least 44 pt tall."
+  }
+}

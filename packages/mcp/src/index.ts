@@ -47,6 +47,8 @@ const CATEGORIES = [
   'background',
   'card',
   'interaction',
+  'input',
+  'disclosure',
   'text',
   'navigation',
   'feedback',

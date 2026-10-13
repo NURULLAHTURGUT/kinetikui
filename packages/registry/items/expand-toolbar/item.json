@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "expand-toolbar",
+  "title": "Expand Toolbar",
+  "description": "Icon buttons where the picked one grows to show its name while its neighbours slide aside to make room.",
+  "category": "interaction",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["expand-toolbar.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One shared value per button; two widths animate on a change, so the row lays out for the length of the spring. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 22,
+        "p90Ms": 24,
+        "baselineMs": 20,
+        "jankyPercent": 0.7,
+        "atRest": "idle",
+        "memoryMb": 151,
+        "notes": "Measured with its own script that taps each tool in turn, since the default gestures miss the toolbar."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The picked button shows its label at once, without growing.",
+    "screenReader": "A toolbar of buttons named by their labels, the picked one marked as selected.",
+    "touchTarget": "Every button is at least 44 pt square."
+  }
+}

@@ -1,0 +1,33 @@
+## Usage
+
+```tsx
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+
+import { PageDots } from '@/components/kinetik/page-dots';
+
+const progress = useSharedValue(0);
+const onScroll = useAnimatedScrollHandler((e) => progress.set(e.contentOffset.x / pageWidth));
+
+<Animated.ScrollView horizontal pagingEnabled onScroll={onScroll} scrollEventThrottle={16}>
+  {pages}
+</Animated.ScrollView>
+<PageDots count={pages.length} index={page} progress={progress} onPageChange={scrollToPage} />
+```
+
+Pass the scroll position as `progress` and the dots follow the finger on the UI thread. Without it, they spring to `index`.
+
+## When to use
+
+- Paging carousels, onboarding screens and photo viewers with up to about ten pages.
+- Showing where you are in a short, swipeable sequence.
+
+## When not to use
+
+- Many pages. Show "3 of 24" instead.
+- As the only way to move between pages. Keep the swipe, and add buttons where it helps.
+
+## Notes
+
+- `worm` stretches the current dot towards the next page and lets its tail catch up; `expand` widens the current dot and hands the width over as you swipe.
+- With `onPageChange`, a tap picks the nearest dot and screen reader swipes ask for the next or previous page. Scroll your pager there.
+- Keep `index` in step with the scroll (round the position), since screen readers and taps read it.

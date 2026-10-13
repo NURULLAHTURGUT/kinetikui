@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "timeline",
+  "title": "Timeline",
+  "description": "Events along a rail: each node pops in turn, the line draws down to the next, and the text rises in beside it.",
+  "category": "data",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["timeline.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views with three shared values per event, played once on mount. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 21,
+        "baselineMs": 20,
+        "jankyPercent": 2.87,
+        "atRest": "idle",
+        "memoryMb": 147
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Every event is in place from the start.",
+    "screenReader": "Each event is one element that reads its time, title, description and whether it is happening now or coming up.",
+    "touchTarget": "Not interactive itself; content passed as children keeps its own targets."
+  }
+}

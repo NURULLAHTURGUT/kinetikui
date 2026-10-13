@@ -1,0 +1,26 @@
+## Usage
+
+```tsx
+import { ReadMore } from '@/components/kinetik/read-more';
+
+<ReadMore lines={3}>{listing.description}</ReadMore>;
+```
+
+The last visible line fades into `fadeColor`, which defaults to the theme surface. Pass the colour behind the text, as `#RRGGBB`, when it sits on something else.
+
+## When to use
+
+- Descriptions, reviews and bios that are worth reading but should not push the rest of the screen down.
+- Lists of items where each has a long note.
+
+## When not to use
+
+- Text people must read, such as terms they agree to. Show it in full.
+- A single sentence. Folding saves nothing.
+
+## Notes
+
+- The toggle appears only when the text is longer than `lines`. Short text renders as it is.
+- Change `fontSize` with `textStyle` and set its `lineHeight` too, so the fold lands on a whole line.
+- Screen readers always get the whole text; the toggle is still offered so the screen matches what is read.
+- With reduced motion the text opens and folds at once.

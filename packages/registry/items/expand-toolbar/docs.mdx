@@ -1,0 +1,34 @@
+## Usage
+
+```tsx
+import { ExpandToolbar } from '@/components/kinetik/expand-toolbar';
+
+<ExpandToolbar
+  accessibilityLabel="Note tools"
+  items={[
+    { key: 'pen', label: 'Sketch', icon: (c) => <PencilIcon color={c} /> },
+    { key: 'text', label: 'Text', icon: (c) => <TextIcon color={c} /> },
+    { key: 'photo', label: 'Photo', icon: (c) => <PhotoIcon color={c} /> },
+  ]}
+  value={tool}
+  onValueChange={setTool}
+/>;
+```
+
+Each `icon` is a function that receives the colour to draw in: azure for the picked tool and a muted grey for the rest.
+
+## When to use
+
+- Picking a mode or tool: drawing tools, editor modes, map layers, compact filters.
+- Places where icons alone are enough most of the time, but the current one should be spelled out.
+
+## When not to use
+
+- Navigating between screens. Use a tab bar, such as Dock Bar or Liquid Tabs.
+- More than five or six tools. The row gets too wide on a phone once one is expanded.
+
+## Notes
+
+- Labels are measured once, out of sight, so each button grows by exactly its label's width.
+- The toolbar sizes to its content. Centre it with `alignSelf: 'center'` or put it in a row.
+- With reduced motion the picked button shows its label without growing.

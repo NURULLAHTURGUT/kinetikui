@@ -1,0 +1,62 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "waffle-chart",
+  "type": "registry:item",
+  "title": "Waffle Chart",
+  "description": "A ten-by-ten grid where each cell is one percent; cells fill in a wave and new data washes across the grid.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/waffle-chart.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/waffle-chart.tsx",
+      "content": "import { useEffect, useMemo, useState } from 'react';\nimport { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  interpolateColor,\n  useAnimatedStyle,\n  useSharedValue,\n  withTiming,\n  type SharedValue,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { durations, easings } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type WaffleSlice = { label: string; value: number };\n\nexport type WaffleChartProps = {\n  /** Shares in percent. They may add up to less than 100; the rest stays empty. */\n  data: readonly WaffleSlice[];\n  /** One colour per slice. Defaults to azure, sky, the theme ink and grey. */\n  colors?: readonly string[];\n  /** Show the legend under the grid. Defaults to true. */\n  legend?: boolean;\n  /** What the chart shows, read first, e.g. \"Where the budget goes\". */\n  accessibilityLabel: string;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst GRID = 10;\nconst GAP = 3;\n/** Largest diagonal index in a 10 × 10 grid. */\nconst DIAGONALS = GRID * 2 - 2;\n\n/** Whole cells per slice that add up to the rounded total (largest remainder). */\nexport function waffleCells(values: readonly number[]): number[] {\n  const clamped = values.map((v) => Math.max(0, v));\n  const total = Math.min(100, Math.round(clamped.reduce((a, b) => a + b, 0)));\n  const floors = clamped.map((v) => Math.floor(v));\n  let left = total - floors.reduce((a, b) => a + b, 0);\n  const order = clamped.map((v, i) => ({ i, r: v - Math.floor(v) })).sort((a, b) => b.r - a.r);\n  for (const { i } of order) {\n    if (left <= 0) break;\n    floors[i]! += 1;\n    left -= 1;\n  }\n  // Never more than a hundred cells, whatever the input.\n  let over = floors.reduce((a, b) => a + b, 0) - 100;\n  for (let i = floors.length - 1; i >= 0 && over > 0; i--) {\n    const cut = Math.min(over, floors[i]!);\n    floors[i]! -= cut;\n    over -= cut;\n  }\n  return floors;\n}\n\n/**\n * A ten-by-ten grid where every cell is one percent. The cells fill in as a\n * wave from one corner, new data washes across the grid the same way, and\n * tapping a slice in the legend dims everything else.\n */\nexport function WaffleChart({\n  data,\n  colors: palette,\n  legend = true,\n  accessibilityLabel,\n  testID,\n  style,\n}: WaffleChartProps) {\n  const { colors, font, radius } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const [width, setWidth] = useState(0);\n  const [focus, setFocus] = useState(-1);\n  const inks = palette ?? [colors.azure, colors.sky, colors.ember, colors.ice];\n\n  const counts = useMemo(() => waffleCells(data.map((d) => d.value)), [data]);\n  // Slice index for each of the hundred cells, or -1 for empty ones.\n  const owners = useMemo(() => {\n    const out: number[] = [];\n    counts.forEach((n, i) => {\n      for (let k = 0; k < n; k++) out.push(i);\n    });\n    while (out.length < GRID * GRID) out.push(-1);\n    return out;\n  }, [counts]);\n  const cellColor = (owner: number) => (owner < 0 ? colors.track : inks[owner % inks.length]!);\n  const target = owners.map(cellColor);\n\n  // The colours before the latest change, so the cells can wash from old to new.\n  const key = target.join('|');\n  const [swap, setSwap] = useState({ key, from: target, to: target, wave: 0 });\n  if (swap.key !== key) {\n    setSwap({ key, from: swap.to, to: target, wave: swap.wave + 1 });\n  }\n  const from = swap.from;\n\n  const enter = useSharedValue(reduced ? 1 : 0);\n  const wash = useSharedValue(1);\n  const focused = useSharedValue(-1);\n\n  useEffect(() => {\n    enter.set(\n      reduced ? 1 : withTiming(1, { duration: durations.slow * 2, easing: easings.standard }),\n    );\n  }, [reduced, enter]);\n  useEffect(() => {\n    if (swap.wave === 0) return;\n    wash.set(0);\n    wash.set(\n      reduced ? 1 : withTiming(1, { duration: durations.slow * 2.2, easing: easings.standard }),\n    );\n  }, [swap.wave, reduced, wash]);\n  useEffect(() => {\n    focused.set(focus);\n  }, [focus, focused]);\n\n  // Rounded down a little, so ten cells always fit on a row whatever the pixel rounding.\n  const cell = width > 0 ? Math.floor(((width - GAP * (GRID - 1)) / GRID) * 10) / 10 : 0;\n  const summary = data.map((d) => `${d.label} ${Math.round(d.value)}%`).join(', ');\n\n  return (\n    <View testID={testID} style={[{ gap: 16 }, style]}>\n      <View\n        accessible\n        accessibilityRole=\"image\"\n        accessibilityLabel={`${accessibilityLabel}: ${summary}`}\n        onLayout={(e) => setWidth(e.nativeEvent.layout.width)}\n        style={[styles.grid, { gap: GAP }]}\n      >\n        {cell > 0\n          ? owners.map((owner, i) => (\n              <Cell\n                key={i}\n                size={cell}\n                order={Math.floor(i / GRID) + (i % GRID)}\n                owner={owner}\n                from={from[i] ?? target[i]!}\n                to={target[i]!}\n                enter={enter}\n                wash={wash}\n                focused={focused}\n                radius={Math.min(radius.xs, cell / 4)}\n              />\n            ))\n          : null}\n      </View>\n      {legend ? (\n        <View style={styles.legend}>\n          {data.map((d, i) => (\n            <Pressable\n              key={d.label}\n              onPress={() => setFocus((f) => (f === i ? -1 : i))}\n              accessibilityRole=\"button\"\n              accessibilityLabel={`${d.label}, ${Math.round(d.value)}%`}\n              accessibilityState={{ selected: focus === i }}\n              style={[styles.item, { opacity: focus === -1 || focus === i ? 1 : 0.4 }]}\n            >\n              <View\n                style={[styles.swatch, { backgroundColor: inks[i % inks.length], borderRadius: 3 }]}\n              />\n              <Text style={{ color: colors.textMuted, fontSize: font.size.sm }}>{d.label}</Text>\n              <Text\n                style={{\n                  color: colors.text,\n                  fontSize: font.size.sm,\n                  fontWeight: font.weight.semibold,\n                  fontVariant: ['tabular-nums'],\n                }}\n              >\n                {Math.round(d.value)}%\n              </Text>\n            </Pressable>\n          ))}\n        </View>\n      ) : null}\n    </View>\n  );\n}\n\ntype CellProps = {\n  size: number;\n  order: number;\n  owner: number;\n  from: string;\n  to: string;\n  enter: SharedValue<number>;\n  wash: SharedValue<number>;\n  focused: SharedValue<number>;\n  radius: number;\n};\n\nfunction Cell({ size, order, owner, from, to, enter, wash, focused, radius }: CellProps) {\n  const style = useAnimatedStyle(() => {\n    // Each diagonal starts a moment after the one before it.\n    const delay = (order / DIAGONALS) * 0.55;\n    const e = Math.max(0, Math.min(1, (enter.get() - delay) / 0.45));\n    const w = Math.max(0, Math.min(1, (wash.get() - delay) / 0.45));\n    const f = focused.get();\n    return {\n      backgroundColor: interpolateColor(w, [0, 1], [from, to]),\n      opacity: e * (f < 0 || f === owner ? 1 : 0.22),\n      transform: [{ scale: 0.4 + e * 0.6 - Math.sin(w * Math.PI) * 0.12 }],\n    };\n  });\n  return <Animated.View style={[{ width: size, height: size, borderRadius: radius }, style]} />;\n}\n\nconst styles = StyleSheet.create({\n  grid: { flexDirection: 'row', flexWrap: 'wrap', aspectRatio: 1 },\n  legend: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 16, rowGap: 0 },\n  item: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44 },\n  swatch: { width: 10, height: 10 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "A hundred plain views read three shared values, so a wave updates a hundred styles per frame for about a second. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 21,
+          "baselineMs": 20,
+          "jankyPercent": 2.86,
+          "atRest": "idle",
+          "memoryMb": 158
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The grid appears filled and new data changes the colours at once.",
+      "screenReader": "One image whose name lists every slice and its share. Legend entries are buttons with a selected state.",
+      "touchTarget": "Legend entries are at least 44 pt tall."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { WaffleChart } from '@/components/kinetik/waffle-chart';\n\n<WaffleChart\n  accessibilityLabel=\"Trip budget\"\n  data={[\n    { label: 'Stays', value: 46 },\n    { label: 'Flights', value: 28 },\n    { label: 'Food', value: 17 },\n  ]}\n/>;\n```\n\nValues are percentages. If they add up to less than 100, the remaining cells stay empty, which makes \"how much is left\" easy to see.\n\n## When to use\n\n- Parts of a whole that people should be able to count: budgets, survey answers, storage.\n- Small numbers of slices, up to about five.\n\n## When not to use\n\n- Values that do not add up to a whole. Use Bar Chart.\n- Precise comparisons between similar shares. Cells round to whole percent.\n\n## Notes\n\n- Shares are rounded to whole cells with the largest-remainder method, so the cells always add up to the rounded total and never past a hundred. `waffleCells` is exported if you need the same counts elsewhere.\n- Tap a legend entry to dim every other slice; tap it again to clear.\n- The grid is square and takes the width it is given.\n- With reduced motion the grid appears filled and changes colour at once.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add waffle-chart`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

@@ -1,0 +1,33 @@
+## Usage
+
+```tsx
+import { Timeline } from '@/components/kinetik/timeline';
+
+<Timeline
+  events={[
+    { key: 'placed', title: 'Order placed', time: 'Mon 09:12' },
+    { key: 'packed', title: 'Packed', time: 'Mon 16:40', description: 'Two prints and a frame.' },
+    { key: 'transit', title: 'On its way', time: 'Today', state: 'current' },
+    { key: 'delivered', title: 'Delivered', time: 'Thu', state: 'upcoming' },
+  ]}
+/>;
+```
+
+Events are drawn in the order given. `state` sets the node: `done` (the default) is solid, `current` is blue with a soft ring, `upcoming` is hollow.
+
+## When to use
+
+- The history of one thing: an order, a ticket, a trip, a document's versions.
+- Short sequences, up to about a dozen events, read from top to bottom.
+
+## When not to use
+
+- Long activity feeds. Use a list grouped by day.
+- Steps people complete themselves. Use Step Tracker.
+
+## Notes
+
+- `time` is shown as given, so format it the way your app formats dates.
+- `children` adds content under an event, such as a thumbnail or a button; it keeps its own touch targets.
+- The entrance plays once; pass a new `playKey` to replay it.
+- With reduced motion every event is in place from the start.

@@ -1,0 +1,41 @@
+## Usage
+
+```tsx
+import { Treemap } from '@/components/kinetik/treemap';
+
+<Treemap
+  accessibilityLabel="Trip spending"
+  rootLabel="All spending"
+  data={[
+    {
+      key: 'stays',
+      label: 'Stays',
+      children: [
+        { key: 'flat', label: 'Lisbon flat', value: 920 },
+        { key: 'cabin', label: 'Lake cabin', value: 640 },
+      ],
+    },
+    { key: 'tours', label: 'Tours', value: 380 },
+  ]}
+  formatValue={(v) => `€${v}`}
+/>;
+```
+
+Leaves take a `value`; groups take `children` and are sized by their sum. Nesting can go as deep as you like; each level is one tap.
+
+## When to use
+
+- Seeing which parts of a whole are big at a glance: spending, storage, sales by region.
+- Hierarchies people want to explore a level at a time.
+
+## When not to use
+
+- Comparing similar sizes precisely. Areas are hard to compare; use Bar Chart.
+- Many tiny parts. Tiles too small for a label are drawn without one.
+
+## Notes
+
+- Tiles are laid out with the squarified algorithm, so they stay as close to square as the sizes allow. `squarify` and `nodeValue` are exported.
+- Tapping a group zooms in: the tapped tile grows to fill the frame while its parts open out inside it. The trail above zooms back out the same way.
+- Tiles are shaded by rank, from solid azure for the biggest to a pale wash for the smallest.
+- With reduced motion levels change in place.

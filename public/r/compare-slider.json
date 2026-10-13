@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "compare-slider",
+  "type": "registry:item",
+  "title": "Compare Slider",
+  "description": "Two versions of a picture with a divider you drag to reveal either side; it nudges once to show it moves.",
+  "categories": [
+    "card"
+  ],
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/compare-slider.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/compare-slider.tsx",
+      "content": "import { useEffect, useState, type ReactNode } from 'react';\nimport {\n  StyleSheet,\n  Text,\n  View,\n  type AccessibilityActionEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport { Gesture, GestureDetector } from 'react-native-gesture-handler';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withDelay,\n  withSequence,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { easings, spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type CompareSliderProps = {\n  /** Shown left of the divider, e.g. the original photo. Fills the frame. */\n  before: ReactNode;\n  /** Shown right of the divider, e.g. the edited photo. Fills the frame. */\n  after: ReactNode;\n  /** Where the divider starts, 0 to 1. Defaults to 0.5. */\n  initial?: number;\n  /** Defaults to 'Before'. */\n  beforeLabel?: string;\n  /** Defaults to 'After'. */\n  afterLabel?: string;\n  /** Width over height. Defaults to 4 / 3. */\n  aspectRatio?: number;\n  /** Nudge the divider once on mount so people see it moves. Defaults to true. */\n  hint?: boolean;\n  /** Called when the finger lifts, with the divider's position, 0 to 1. */\n  onPositionChange?: (position: number) => void;\n  /** Names the comparison, e.g. \"Colour grade\". */\n  accessibilityLabel: string;\n  /** A tick at either end. Defaults to true. */\n  haptics?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst KNOB = 40;\nconst LINE = 2;\n\n/**\n * Two versions of a picture, one over the other, with a divider you drag\n * across to reveal either side. The labels step aside as the divider nears\n * them, and on first sight it nudges once to show that it moves.\n */\nexport function CompareSlider({\n  before,\n  after,\n  initial = 0.5,\n  beforeLabel = 'Before',\n  afterLabel = 'After',\n  aspectRatio = 4 / 3,\n  hint = true,\n  onPositionChange,\n  accessibilityLabel,\n  haptics = true,\n  testID,\n  style,\n}: CompareSliderProps) {\n  const { colors, font, radius, shadow } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const [width, setWidth] = useState(0);\n  const [shown, setShown] = useState(Math.round(initial * 100));\n  const pos = useSharedValue(initial);\n  const held = useSharedValue(0);\n  const atEdge = useSharedValue(0);\n\n  useEffect(() => {\n    if (!hint || reduced || width === 0) return;\n    pos.set(\n      withDelay(\n        500,\n        withSequence(\n          withTiming(Math.min(0.92, initial + 0.12), { duration: 420, easing: easings.inOut }),\n          withSpring(initial, spring('smooth')),\n        ),\n      ),\n    );\n  }, [hint, reduced, width, initial, pos]);\n\n  const report = (p: number) => {\n    setShown(Math.round(p * 100));\n    onPositionChange?.(p);\n  };\n  const tick = () => haptic('tick');\n\n  const moveTo = (x: number) => {\n    'worklet';\n    if (width === 0) return;\n    const p = Math.max(0, Math.min(1, x / width));\n    pos.set(p);\n    const edge = p === 0 || p === 1 ? 1 : 0;\n    if (edge !== atEdge.get()) {\n      atEdge.set(edge);\n      if (edge) scheduleOnRN(tick);\n    }\n  };\n\n  const pan = Gesture.Pan()\n    .withTestId('compare-slider')\n    .activeOffsetX([-6, 6])\n    .failOffsetY([-12, 12])\n    .onBegin(() => held.set(withSpring(1, spring('snappy', reduced))))\n    .onUpdate((e) => moveTo(e.x))\n    .onFinalize(() => {\n      held.set(withSpring(0, spring('smooth', reduced)));\n      scheduleOnRN(report, pos.get());\n    });\n  const tap = Gesture.Tap()\n    .withTestId('compare-slider-tap')\n    .onEnd((e) => {\n      if (width === 0) return;\n      const p = Math.max(0, Math.min(1, e.x / width));\n      pos.set(reduced ? p : withSpring(p, spring('smooth')));\n      scheduleOnRN(report, p);\n    });\n\n  const clip = useAnimatedStyle(() => ({ width: pos.get() * width }));\n  const divider = useAnimatedStyle(() => ({\n    transform: [{ translateX: pos.get() * width - LINE / 2 }],\n  }));\n  const knob = useAnimatedStyle(() => ({ transform: [{ scale: 1 + held.get() * 0.12 }] }));\n  // A label fades as the divider comes within a fifth of the width of it.\n  const leftTag = useAnimatedStyle(() => ({\n    opacity: Math.max(0, Math.min(1, (pos.get() - 0.12) / 0.2)),\n  }));\n  const rightTag = useAnimatedStyle(() => ({\n    opacity: Math.max(0, Math.min(1, (0.88 - pos.get()) / 0.2)),\n  }));\n\n  const onAccessibilityAction = (e: AccessibilityActionEvent) => {\n    const step = e.nativeEvent.actionName === 'increment' ? 0.1 : -0.1;\n    const p = Math.max(0, Math.min(1, Math.round((pos.get() + step) * 10) / 10));\n    pos.set(reduced ? p : withSpring(p, spring('smooth')));\n    report(p);\n  };\n\n  const tag = (text: string) => (\n    <View\n      style={[\n        styles.tag,\n        { backgroundColor: withAlpha(colors.background, 0.55), borderRadius: radius.pill },\n      ]}\n    >\n      <Text\n        style={{ color: colors.text, fontSize: font.size.xs, fontWeight: font.weight.semibold }}\n      >\n        {text}\n      </Text>\n    </View>\n  );\n\n  return (\n    <GestureDetector gesture={Gesture.Race(pan, tap)}>\n      <View\n        collapsable={false}\n        testID={testID}\n        accessible\n        accessibilityRole=\"adjustable\"\n        accessibilityLabel={accessibilityLabel}\n        accessibilityHint={`Shows more of ${beforeLabel} or ${afterLabel}`}\n        accessibilityValue={{\n          min: 0,\n          max: 100,\n          now: shown,\n          text: `${shown}% ${beforeLabel.toLowerCase()}`,\n        }}\n        accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}\n        onAccessibilityAction={onAccessibilityAction}\n        onLayout={(e) => setWidth(e.nativeEvent.layout.width)}\n        style={[\n          styles.frame,\n          { aspectRatio, borderRadius: radius.xl, backgroundColor: colors.surfaceSunken },\n          style,\n        ]}\n      >\n        <View style={StyleSheet.absoluteFill} pointerEvents=\"none\">\n          {after}\n        </View>\n        <Animated.View style={[styles.clip, clip]} pointerEvents=\"none\">\n          {/* Full width inside the clip, so the picture is cut, never squeezed. */}\n          <View style={[styles.full, { width }]}>{before}</View>\n        </Animated.View>\n\n        <Animated.View style={[styles.tagLeft, leftTag]} pointerEvents=\"none\">\n          {tag(beforeLabel)}\n        </Animated.View>\n        <Animated.View style={[styles.tagRight, rightTag]} pointerEvents=\"none\">\n          {tag(afterLabel)}\n        </Animated.View>\n\n        <Animated.View\n          pointerEvents=\"none\"\n          style={[styles.divider, { backgroundColor: colors.ember }, divider]}\n        >\n          <Animated.View\n            style={[styles.knob, { backgroundColor: colors.ember, boxShadow: shadow.md }, knob]}\n          >\n            <View style={[styles.arrow, styles.arrowLeft, { borderColor: colors.onEmber }]} />\n            <View style={[styles.arrow, styles.arrowRight, { borderColor: colors.onEmber }]} />\n          </Animated.View>\n        </Animated.View>\n      </View>\n    </GestureDetector>\n  );\n}\n\nconst styles = StyleSheet.create({\n  frame: { width: '100%', overflow: 'hidden' },\n  clip: { position: 'absolute', left: 0, top: 0, bottom: 0, overflow: 'hidden' },\n  full: { position: 'absolute', left: 0, top: 0, bottom: 0 },\n  tag: { paddingHorizontal: 10, paddingVertical: 4 },\n  tagLeft: { position: 'absolute', left: 12, top: 12 },\n  tagRight: { position: 'absolute', right: 12, top: 12 },\n  divider: {\n    position: 'absolute',\n    top: 0,\n    bottom: 0,\n    left: 0,\n    width: LINE,\n    alignItems: 'center',\n    justifyContent: 'center',\n  },\n  knob: {\n    width: KNOB,\n    height: KNOB,\n    borderRadius: KNOB / 2,\n    flexDirection: 'row',\n    alignItems: 'center',\n    justifyContent: 'center',\n    gap: 6,\n  },\n  arrow: { width: 7, height: 7, borderTopWidth: 2, borderLeftWidth: 2 },\n  arrowLeft: { transform: [{ rotate: '-45deg' }] },\n  arrowRight: { transform: [{ rotate: '135deg' }] },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "card",
+    "web": "live",
+    "perf": {
+      "budget": "The divider and the clip move on the UI thread from one shared value; the pictures themselves never re-render. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 21,
+          "p90Ms": 26,
+          "baselineMs": 20,
+          "jankyPercent": 2.08,
+          "atRest": "idle",
+          "memoryMb": 151
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "No nudge on mount, and taps and screen reader steps move the divider without a spring.",
+      "screenReader": "One adjustable element named by accessibilityLabel; increment and decrement move the divider by a tenth and read how much of the first version shows.",
+      "touchTarget": "The whole picture takes the drag and taps."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { CompareSlider } from '@/components/kinetik/compare-slider';\n\n<CompareSlider\n  accessibilityLabel=\"Colour grade\"\n  beforeLabel=\"Original\"\n  afterLabel=\"Graded\"\n  before={<Image source={original} style={StyleSheet.absoluteFill} />}\n  after={<Image source={graded} style={StyleSheet.absoluteFill} />}\n/>;\n```\n\n`before` and `after` fill the frame, one over the other. The divider shows `before` to its left and `after` to its right.\n\n## When to use\n\n- Showing what an edit, a filter or a restoration changed.\n- Before and after for renovations, cleaning, retouching, maps across years.\n\n## When not to use\n\n- Pictures that do not line up. Show them side by side.\n- More than two versions. Use a carousel.\n\n## Notes\n\n- The frame takes the width it is given and sets its height with `aspectRatio` (4:3 by default). Make both pictures fill it.\n- The `before` picture is cut by the divider, never squeezed.\n- Drag anywhere on the picture, or tap to jump the divider there. Vertical drags still scroll the page.\n- On first sight the divider nudges once to show that it moves; turn this off with `hint={false}`.\n- With reduced motion there is no nudge, and jumps happen without a spring.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add compare-slider`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

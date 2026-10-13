@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "split-button",
+  "title": "Split Button",
+  "description": "A primary action with alternatives behind a chevron; a new pick rolls into the label as the button resizes.",
+  "category": "interaction",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-worklets"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["split-button.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views; labels are measured once. The menu is a modal mounted only while open. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 21,
+        "baselineMs": 20,
+        "jankyPercent": 2.58,
+        "atRest": "idle",
+        "memoryMb": 140
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The label and width change at once, and the menu appears in place.",
+    "screenReader": "Two buttons: the action, named by the current label, and More options with an expanded state. Menu items read their description and mark the current one as selected.",
+    "touchTarget": "Both halves are 48 pt tall; the chevron half is 48 pt wide."
+  }
+}

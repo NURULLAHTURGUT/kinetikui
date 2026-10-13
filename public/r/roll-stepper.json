@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "roll-stepper",
+  "type": "registry:item",
+  "title": "Roll Stepper",
+  "description": "A number stepper whose figure rolls up or down with each step, speeds up while held and bumps at its limits.",
+  "categories": [
+    "input"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/roll-stepper.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/roll-stepper.tsx",
+      "content": "import { useEffect, useRef, useState } from 'react';\nimport {\n  Pressable,\n  StyleSheet,\n  Text,\n  View,\n  type AccessibilityActionEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withSequence,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget } from '../../lib/kinetik/tokens/tokens';\n\nexport type RollStepperProps = {\n  value: number;\n  onValueChange: (value: number) => void;\n  /** Defaults to 0. */\n  min?: number;\n  /** Defaults to 99. */\n  max?: number;\n  /** Defaults to 1. */\n  step?: number;\n  /** Names the stepper for screen readers, e.g. \"Guests\". */\n  label: string;\n  /** Formats the value, e.g. `(v) => \\`${v} nights\\``. */\n  formatValue?: (value: number) => string;\n  /** Keep stepping while a button is held, faster the longer it is held. Defaults to true. */\n  repeat?: boolean;\n  /** A tick on each step and a bump at the limits. Defaults to true. */\n  haptics?: boolean;\n  disabled?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst HEIGHT = 48;\n/** Hold this long before repeating, then repeat ever faster down to the floor. */\nconst HOLD_MS = 380;\nconst FIRST_MS = 140;\nconst FLOOR_MS = 45;\n\n/**\n * A number stepper whose value rolls: up from below when it grows, down from\n * above when it shrinks. Holding a button keeps it rolling and speeds it up;\n * at a limit the figure bumps against the end instead.\n */\nexport function RollStepper({\n  value,\n  onValueChange,\n  min = 0,\n  max = 99,\n  step = 1,\n  label,\n  formatValue = (v) => String(v),\n  repeat = true,\n  haptics = true,\n  disabled = false,\n  testID,\n  style,\n}: RollStepperProps) {\n  const { colors, font, radius, space } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n\n  // The figure on its way out, the direction of travel and a counter that restarts the roll.\n  const [roll, setRoll] = useState({ from: value, to: value, dir: 1, id: 0 });\n  if (roll.to !== value) {\n    setRoll({ from: roll.to, to: value, dir: value > roll.to ? 1 : -1, id: roll.id + 1 });\n  }\n  const t = useSharedValue(1);\n  const bump = useSharedValue(0);\n  // The latest value for steps fired from a held button, between renders.\n  const latest = useRef(value);\n  useEffect(() => {\n    latest.current = value;\n  }, [value]);\n\n  useEffect(() => {\n    if (roll.id === 0) return;\n    t.set(0);\n    t.set(reduced ? 1 : withSpring(1, spring('snappy')));\n  }, [roll.id, reduced, t]);\n\n  const nudge = (dir: number) => {\n    haptic('thud');\n    if (reduced) return;\n    bump.set(withSequence(withTiming(dir * 5, { duration: 70 }), withSpring(0, spring('bouncy'))));\n  };\n\n  const stepBy = (dir: 1 | -1) => {\n    const current = latest.current;\n    const next = Math.min(max, Math.max(min, current + dir * step));\n    // Round away float drift from fractional steps.\n    const clean = Number(next.toFixed(6));\n    if (clean === current) {\n      nudge(dir);\n      return false;\n    }\n    latest.current = clean;\n    haptic('tick');\n    onValueChange(clean);\n    return true;\n  };\n\n  // Hold to repeat: a pause, then steps that come faster and faster.\n  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);\n  const repeated = useRef(false);\n  const stop = () => {\n    if (timer.current) clearTimeout(timer.current);\n    timer.current = null;\n  };\n  useEffect(() => stop, []);\n  const start = (dir: 1 | -1) => {\n    repeated.current = false;\n    if (!repeat) return;\n    let delay = FIRST_MS;\n    const tick = () => {\n      repeated.current = true;\n      if (!stepBy(dir)) return stop();\n      delay = Math.max(FLOOR_MS, delay * 0.86);\n      timer.current = setTimeout(tick, delay);\n    };\n    timer.current = setTimeout(tick, HOLD_MS);\n  };\n\n  const outgoing = useAnimatedStyle(() => ({\n    opacity: 1 - t.get(),\n    transform: [{ translateY: -roll.dir * t.get() * HEIGHT * 0.55 }, { scale: 1 - t.get() * 0.2 }],\n  }));\n  const incoming = useAnimatedStyle(() => ({\n    opacity: t.get(),\n    transform: [\n      { translateY: roll.dir * (1 - t.get()) * HEIGHT * 0.55 },\n      { scale: 0.8 + t.get() * 0.2 },\n    ],\n  }));\n  const figure = useAnimatedStyle(() => ({ transform: [{ translateX: bump.get() }] }));\n\n  const onAccessibilityAction = (e: AccessibilityActionEvent) => {\n    if (disabled) return;\n    stepBy(e.nativeEvent.actionName === 'increment' ? 1 : -1);\n  };\n\n  const button = (dir: 1 | -1) => {\n    const atLimit = dir === 1 ? value >= max : value <= min;\n    return (\n      <Pressable\n        // Left undefined when enabled, so Pressable keeps the limit in accessibilityState;\n        // a press at the limit still bumps the figure.\n        disabled={disabled || undefined}\n        onPressIn={() => start(dir)}\n        onPressOut={stop}\n        onPress={() => {\n          if (!repeated.current) stepBy(dir);\n        }}\n        accessibilityRole=\"button\"\n        accessibilityLabel={`${dir === 1 ? 'Increase' : 'Decrease'} ${label}`}\n        accessibilityState={{ disabled: disabled || atLimit }}\n        style={({ pressed }) => [\n          styles.button,\n          {\n            borderRadius: radius.pill,\n            backgroundColor: pressed ? colors.surfaceSunken : colors.surfaceRaised,\n            opacity: atLimit ? 0.35 : 1,\n            transform: [{ scale: pressed && !reduced ? 0.92 : 1 }],\n          },\n        ]}\n      >\n        <View style={[styles.bar, { backgroundColor: colors.text }]} />\n        {dir === 1 ? (\n          <View style={[styles.bar, styles.vertical, { backgroundColor: colors.text }]} />\n        ) : null}\n      </Pressable>\n    );\n  };\n\n  const text = { color: colors.text, fontSize: font.size.xl, fontWeight: font.weight.semibold };\n  const widest = [formatValue(min), formatValue(max), formatValue(value)].reduce((a, b) =>\n    b.length > a.length ? b : a,\n  );\n\n  return (\n    <View\n      testID={testID}\n      style={[\n        styles.shell,\n        {\n          borderRadius: radius.pill,\n          borderColor: colors.border,\n          backgroundColor: colors.surface,\n          gap: space[2],\n          opacity: disabled ? 0.45 : 1,\n        },\n        style,\n      ]}\n    >\n      {button(-1)}\n      <View\n        accessible\n        accessibilityRole=\"adjustable\"\n        accessibilityLabel={label}\n        accessibilityValue={{ min, max, now: value, text: formatValue(value) }}\n        accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}\n        onAccessibilityAction={onAccessibilityAction}\n        style={styles.window}\n      >\n        {/* Sizes the window to the widest figure, so the buttons never shift. */}\n        <Text style={[text, styles.tabular, styles.sizer]} importantForAccessibility=\"no\">\n          {widest}\n        </Text>\n        <Animated.View style={[StyleSheet.absoluteFill, figure]}>\n          {roll.from !== roll.to ? (\n            <Animated.Text\n              key={`out-${roll.id}`}\n              numberOfLines={1}\n              style={[styles.figure, text, styles.tabular, outgoing]}\n            >\n              {formatValue(roll.from)}\n            </Animated.Text>\n          ) : null}\n          <Animated.Text\n            key={`in-${roll.id}`}\n            numberOfLines={1}\n            style={[styles.figure, text, styles.tabular, incoming]}\n          >\n            {formatValue(roll.to)}\n          </Animated.Text>\n        </Animated.View>\n      </View>\n      {button(1)}\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  shell: {\n    flexDirection: 'row',\n    alignItems: 'center',\n    padding: 4,\n    borderWidth: StyleSheet.hairlineWidth,\n    alignSelf: 'flex-start',\n  },\n  button: {\n    width: minTouchTarget,\n    height: minTouchTarget,\n    alignItems: 'center',\n    justifyContent: 'center',\n  },\n  bar: { width: 14, height: 2, borderRadius: 1 },\n  vertical: { position: 'absolute', transform: [{ rotate: '90deg' }] },\n  window: { minWidth: 64, height: HEIGHT, overflow: 'hidden', justifyContent: 'center' },\n  sizer: { opacity: 0, paddingHorizontal: 8, textAlign: 'center' },\n  figure: {\n    position: 'absolute',\n    left: 0,\n    right: 0,\n    top: 0,\n    bottom: 0,\n    textAlign: 'center',\n    textAlignVertical: 'center',\n    lineHeight: HEIGHT,\n  },\n  tabular: { fontVariant: ['tabular-nums'] },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "input",
+    "web": "live",
+    "perf": {
+      "budget": "Two text views and one shared value per roll. Holding a button re-renders once per step, down to one step every 45 ms.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 19,
+          "baselineMs": 20,
+          "jankyPercent": 2.66,
+          "atRest": "idle",
+          "memoryMb": 166
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The figure changes in place, without the roll or the bump at the limits.",
+      "screenReader": "An adjustable value named by label, with increment and decrement actions, plus two buttons (Increase and Decrease) that report when a limit is reached.",
+      "touchTarget": "Both buttons are 44 pt circles."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { RollStepper } from '@/components/kinetik/roll-stepper';\n\n<RollStepper label=\"Guests\" value={guests} onValueChange={setGuests} min={1} max={6} />;\n```\n\n`formatValue` changes what is shown and read aloud, for example ``(v) => `${v} kg` ``. The window is sized to the widest of the minimum, the maximum and the current value, so the buttons stay put.\n\n## When to use\n\n- Small counts changed a step at a time: guests, nights, quantities in a cart, sets and reps.\n- Values where the exact number matters more than speed of entry.\n\n## When not to use\n\n- Large ranges or rough values. Use a slider, such as Elastic Slider.\n- Numbers people already know and want to type, such as an amount of money. Use a text field.\n\n## Notes\n\n- Holding a button repeats after a short pause and speeds up to about twenty steps a second. Turn it off with `repeat={false}`.\n- At a limit the button dims and the figure bumps against the end, with a heavier haptic.\n- Fractional steps are rounded to six places, so 0.1 + 0.2 lands on 0.3.\n- With reduced motion the figure changes in place.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add roll-stepper`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

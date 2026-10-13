@@ -1,0 +1,35 @@
+## Usage
+
+```tsx
+import { SlopeChart } from '@/components/kinetik/slope-chart';
+
+<SlopeChart
+  accessibilityLabel="Share of trips"
+  fromLabel="2025"
+  toLabel="2026"
+  series={[
+    { label: 'Lisbon', from: 24, to: 31 },
+    { label: 'Kyoto', from: 30, to: 22 },
+  ]}
+  formatValue={(v) => `${v}%`}
+/>;
+```
+
+Each series is one line from its `from` value on the left to its `to` value on the right. The right-hand label shows the new value and the change.
+
+## When to use
+
+- Comparing two moments for a handful of items: this year against last, before and after a change.
+- When the direction and size of each change matters more than the path between.
+
+## When not to use
+
+- More than eight or so series. Labels crowd and lines tangle; use a sorted bar chart of the change.
+- Values over many points in time. Use Line Chart.
+
+## Notes
+
+- Labels on each side are spread apart so they never overlap, while dots stay at their true values.
+- Change `series` and every end slides to its new place on a spring. Lines are keyed by `label`.
+- Tap a label to bring that line forward and dim the rest; tap it again to clear.
+- With reduced motion the lines appear drawn and move without springs.

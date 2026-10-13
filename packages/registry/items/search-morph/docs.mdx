@@ -1,0 +1,28 @@
+## Usage
+
+```tsx
+import { SearchMorph } from '@/components/kinetik/search-morph';
+
+<SearchMorph value={query} onChangeText={setQuery} onSubmit={search} placeholder="Search places">
+  <Results query={query} />
+</SearchMorph>;
+```
+
+Give it the width it may grow into, for example `style={{ flex: 1 }}` in a header row. Closed, it sits at the end of that space as a 44 pt circle.
+
+## When to use
+
+- Headers where search is useful but should not take a full row until it is wanted.
+- Lists and grids that filter as you type, with the results passed as children.
+
+## When not to use
+
+- Screens whose main job is search. Show the field open from the start.
+- Desktop-style toolbars with room to spare. A plain field is easier to find.
+
+## Notes
+
+- The field takes focus a moment after it starts to open, so the keyboard does not race the morph.
+- Cancel clears the text and closes. Control `open` with `onOpenChange` to hide a title while it is open, as the demo does.
+- Children are rendered only while open, so results do not run their queries in the background.
+- With reduced motion the field opens and closes in place.

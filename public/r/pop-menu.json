@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "pop-menu",
+  "type": "registry:item",
+  "title": "Pop Menu",
+  "description": "A menu that unfolds from its trigger's corner, rows sliding in one by one, with a highlight under the finger.",
+  "categories": [
+    "disclosure"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/pop-menu.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/pop-menu.tsx",
+      "content": "import { useEffect, useRef, useState, type ReactNode } from 'react';\nimport {\n  Modal,\n  Pressable,\n  StyleSheet,\n  Text,\n  View,\n  useWindowDimensions,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  withTiming,\n  type SharedValue,\n} from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { durations, easings, spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget, withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type PopMenuItem = {\n  key: string;\n  label: string;\n  /** Drawn before the label; receives the colour to use. */\n  icon?: (color: string) => ReactNode;\n  /** Red, for actions that remove or leave. */\n  destructive?: boolean;\n  disabled?: boolean;\n  onPress: () => void;\n};\n\nexport type PopMenuProps = {\n  items: readonly PopMenuItem[];\n  /** The trigger's content, e.g. a \"more\" icon. */\n  children: ReactNode;\n  /** Names the trigger, e.g. \"More actions\". */\n  accessibilityLabel: string;\n  /** Which edge of the trigger the menu lines up with. Defaults to `end`. */\n  align?: 'start' | 'end';\n  /** Menu width. Defaults to 220. */\n  width?: number;\n  /** A tick on open. Defaults to true. */\n  haptics?: boolean;\n  testID?: string;\n  /** Style for the trigger. */\n  style?: StyleProp<ViewStyle>;\n};\n\ntype Anchor = { x: number; y: number; width: number; height: number };\n\nconst ROW = 46;\nconst MARGIN = 12;\n\n/**\n * A menu that unfolds from its trigger. The panel grows out of the trigger's\n * corner, the rows slide in one after another, and a highlight follows the\n * finger down the list before the chosen action runs.\n */\nexport function PopMenu({\n  items,\n  children,\n  accessibilityLabel,\n  align = 'end',\n  width = 220,\n  haptics = true,\n  testID,\n  style,\n}: PopMenuProps) {\n  const { colors, radius, shadow } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const window = useWindowDimensions();\n  const trigger = useRef<View>(null);\n  const [anchor, setAnchor] = useState<Anchor | null>(null);\n  const [visible, setVisible] = useState(false);\n  const t = useSharedValue(0);\n  const hover = useSharedValue(-1);\n\n  const height = items.length * ROW + 12;\n  const below = anchor ? anchor.y + anchor.height + 6 + height < window.height - MARGIN : true;\n  const left = anchor\n    ? Math.max(\n        MARGIN,\n        Math.min(\n          window.width - width - MARGIN,\n          align === 'end' ? anchor.x + anchor.width - width : anchor.x,\n        ),\n      )\n    : 0;\n  const top = anchor ? (below ? anchor.y + anchor.height + 6 : anchor.y - height - 6) : 0;\n\n  const open = () => {\n    hover.set(-1);\n    setAnchor(null);\n    setVisible(true);\n    haptic('tick');\n    // The panel stays invisible until the trigger has been measured, then grows from it.\n    trigger.current?.measureInWindow((x, y, w, h) => setAnchor({ x, y, width: w, height: h }));\n  };\n\n  useEffect(() => {\n    if (!visible || !anchor) return;\n    t.set(0);\n    t.set(reduced ? 1 : withSpring(1, spring('smooth')));\n  }, [visible, anchor, reduced, t]);\n\n  const close = (then?: () => void) => {\n    const done = () => {\n      setVisible(false);\n      then?.();\n    };\n    if (reduced) {\n      t.set(0);\n      done();\n      return;\n    }\n    t.set(\n      withTiming(0, { duration: durations.quick, easing: easings.exit }, (finished) => {\n        if (finished) scheduleOnRN(done);\n      }),\n    );\n  };\n\n  const panel = useAnimatedStyle(() => ({\n    opacity: Math.min(1, t.get() * 2),\n    transform: [{ scale: 0.82 + t.get() * 0.18 }],\n  }));\n\n  const originX = anchor ? Math.max(0, Math.min(width, anchor.x + anchor.width / 2 - left)) : width;\n\n  return (\n    <>\n      <Pressable\n        ref={trigger}\n        testID={testID}\n        onPress={open}\n        accessibilityRole=\"button\"\n        accessibilityLabel={accessibilityLabel}\n        accessibilityState={{ expanded: visible }}\n        style={({ pressed }) => [\n          styles.trigger,\n          {\n            borderRadius: radius.pill,\n            backgroundColor: pressed ? colors.surfaceSunken : undefined,\n          },\n          style,\n        ]}\n      >\n        {children}\n      </Pressable>\n\n      <Modal\n        visible={visible}\n        transparent\n        animationType=\"none\"\n        onRequestClose={() => close()}\n        statusBarTranslucent\n        navigationBarTranslucent\n      >\n        {/* The modal is its own window, so focus stays inside; escape closes it. */}\n        <View style={StyleSheet.absoluteFill} onAccessibilityEscape={() => close()}>\n          <Pressable\n            style={StyleSheet.absoluteFill}\n            onPress={() => close()}\n            accessibilityRole=\"button\"\n            accessibilityLabel=\"Close menu\"\n          />\n          <Animated.View\n            style={[\n              styles.panel,\n              {\n                left,\n                top,\n                width,\n                backgroundColor: colors.surfaceRaised,\n                borderColor: colors.border,\n                borderRadius: radius.lg,\n                boxShadow: shadow.lg,\n                transformOrigin: `${originX}px ${below ? '0%' : '100%'}`,\n              },\n              panel,\n            ]}\n          >\n            {items.map((item, i) => (\n              <Row\n                key={item.key}\n                item={item}\n                index={i}\n                count={items.length}\n                t={t}\n                hover={hover}\n                onSelect={() => close(item.onPress)}\n              />\n            ))}\n          </Animated.View>\n        </View>\n      </Modal>\n    </>\n  );\n}\n\ntype RowProps = {\n  item: PopMenuItem;\n  index: number;\n  count: number;\n  t: SharedValue<number>;\n  hover: SharedValue<number>;\n  onSelect: () => void;\n};\n\nfunction Row({ item, index, count, t, hover, onSelect }: RowProps) {\n  const { colors, font, radius } = useKinetikTheme();\n  const ink = item.destructive ? colors.danger : colors.text;\n\n  const row = useAnimatedStyle(() => {\n    // Rows arrive one after another as the panel opens.\n    const start = (index / Math.max(1, count)) * 0.45;\n    const p = Math.max(0, Math.min(1, (t.get() - start) / 0.55));\n    return { opacity: p, transform: [{ translateY: (1 - p) * -8 }] };\n  });\n  const highlight = useAnimatedStyle(() => ({ opacity: hover.get() === index ? 1 : 0 }));\n\n  return (\n    <Animated.View style={row}>\n      <Pressable\n        disabled={item.disabled}\n        onPressIn={() => hover.set(index)}\n        onPressOut={() => hover.set(-1)}\n        onPress={onSelect}\n        accessibilityRole=\"menuitem\"\n        accessibilityLabel={item.label}\n        accessibilityState={{ disabled: item.disabled }}\n        style={[styles.row, { opacity: item.disabled ? 0.4 : 1 }]}\n      >\n        <Animated.View\n          style={[\n            styles.highlight,\n            { backgroundColor: withAlpha(ink, 0.08), borderRadius: radius.sm },\n            highlight,\n          ]}\n        />\n        {item.icon ? <View style={styles.icon}>{item.icon(ink)}</View> : null}\n        <Text style={{ color: ink, fontSize: font.size.md, fontWeight: font.weight.medium }}>\n          {item.label}\n        </Text>\n      </Pressable>\n    </Animated.View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  trigger: {\n    minWidth: minTouchTarget,\n    minHeight: minTouchTarget,\n    alignItems: 'center',\n    justifyContent: 'center',\n  },\n  panel: { position: 'absolute', padding: 6, borderWidth: StyleSheet.hairlineWidth },\n  row: {\n    height: ROW,\n    flexDirection: 'row',\n    alignItems: 'center',\n    gap: 12,\n    paddingHorizontal: 12,\n  },\n  // A faint wash of the row's own ink, so destructive rows highlight in red.\n  highlight: { ...StyleSheet.absoluteFill },\n  icon: { width: 20, alignItems: 'center' },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "disclosure",
+    "web": "live",
+    "perf": {
+      "budget": "A transparent modal with plain views, mounted only while open; one shared value opens it and one tracks the pressed row.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 20,
+          "baselineMs": 20,
+          "jankyPercent": 2.61,
+          "atRest": "idle",
+          "memoryMb": 141
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The menu appears and closes in place, without growing or the rows sliding.",
+      "screenReader": "The trigger is a button with an expanded state; items are menu items, disabled ones marked as such. The modal keeps focus inside; a Close menu button covers the backdrop and the escape gesture closes it.",
+      "touchTarget": "The trigger is at least 44 pt and each row is 46 pt tall."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { PopMenu } from '@/components/kinetik/pop-menu';\n\n<PopMenu\n  accessibilityLabel=\"More actions\"\n  items={[\n    { key: 'share', label: 'Share', onPress: share },\n    { key: 'rename', label: 'Rename', onPress: rename },\n    { key: 'delete', label: 'Delete', destructive: true, onPress: remove },\n  ]}\n>\n  <MoreIcon />\n</PopMenu>;\n```\n\nThe children are the trigger's content. Each item can take an `icon`, a function that receives the colour to draw it in, so destructive rows draw red icons.\n\n## When to use\n\n- Secondary actions on a card, a row or a header: share, rename, move, delete.\n- A short list of actions that would crowd the screen as buttons.\n\n## When not to use\n\n- The main action of a screen. Show it as a button.\n- More than about seven items, or items with sub-menus. Use a sheet.\n\n## Notes\n\n- The menu opens in a transparent modal, so parents with `overflow: 'hidden'` cannot clip it. It is measured from the trigger and kept 12 pt inside the window, opening upwards when there is no room below.\n- The chosen action runs once the menu has closed, so an action that navigates or opens a sheet does not fight the closing animation.\n- Android's back button closes the menu.\n- With reduced motion the menu appears and closes in place.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add pop-menu`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

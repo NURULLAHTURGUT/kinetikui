@@ -1,0 +1,31 @@
+## Usage
+
+```tsx
+import { TipBubble } from '@/components/kinetik/tip-bubble';
+
+<TipBubble
+  content="Covers payment processing and support around the clock."
+  accessibilityLabel="About the service fee"
+>
+  <InfoIcon />
+</TipBubble>;
+```
+
+The children are the anchor. Pressing it opens the tip; it closes after `duration` (4 s by default) or on a second press.
+
+## When to use
+
+- A sentence of help beside a term, a fee or a setting that not everyone needs explained.
+- Explaining an icon-only control the first time someone meets it.
+
+## When not to use
+
+- Anything people must read to continue. Put it on the screen.
+- Long help or links. Use a sheet or a help page.
+
+## Notes
+
+- The bubble is drawn outside the anchor's box, so leave room above (or below, with `placement="bottom"`) and avoid `overflow: 'hidden'` on its parents. The anchor's root has `zIndex: 10` so the bubble draws over the rows that follow it.
+- `align` lines up the bubble's start, centre or end with the anchor, which keeps it on screen near an edge.
+- On Android, touches only reach a view inside its parent's box, so the bubble does not take presses. It closes from the anchor or by itself.
+- With reduced motion the bubble appears without scaling.

@@ -1,0 +1,31 @@
+## Usage
+
+```tsx
+import { InkCheck } from '@/components/kinetik/ink-check';
+
+<InkCheck
+  label="Book the flights"
+  description="Lisbon, 14 to 21 June"
+  checked={booked}
+  onCheckedChange={setBooked}
+/>;
+```
+
+Set `strike` for to-do lists: the label is struck through and greys a little once it is checked.
+
+## When to use
+
+- Lists of independent choices: settings, filters, a to-do or packing list.
+- Consent and agreement lines in forms.
+
+## When not to use
+
+- A setting that takes effect immediately. Use a switch, such as Pulse Toggle.
+- Choosing one option from a set. Use Choice Cards or radio buttons.
+
+## Notes
+
+- The tick is drawn by two plain views rather than a canvas, so a screen with fifty checkboxes costs no more than fifty small views.
+- The tick is drawn in `onAzure`. If you pass a light `color`, check the contrast of the tick against it.
+- The label stays on one line so the strike-through can follow it; put detail in `description`.
+- With reduced motion the box and tick change at once.

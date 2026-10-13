@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "choice-cards",
+  "title": "Choice Cards",
+  "description": "Option cards for a single choice: one selection ring glides between cards, stretching to fit each one.",
+  "category": "input",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["choice-cards.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views. One ring moves on two shared values, and each card has one for its radio. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 20,
+        "p90Ms": 27,
+        "baselineMs": 20,
+        "jankyPercent": 2.49,
+        "atRest": "idle",
+        "memoryMb": 150
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The ring jumps to the new card and the radio fills at once.",
+    "screenReader": "A radio group named by accessibilityLabel; each card is a radio that reads its title, badge, detail and description.",
+    "touchTarget": "Each card is the target, at least 64 pt tall."
+  }
+}

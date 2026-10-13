@@ -1,0 +1,35 @@
+## Usage
+
+```tsx
+import { LiftMenu } from '@/components/kinetik/lift-menu';
+
+<LiftMenu
+  accessibilityLabel={photo.title}
+  onPress={() => openPhoto(photo)}
+  actions={[
+    { key: 'share', label: 'Share', onPress: share },
+    { key: 'delete', label: 'Delete', destructive: true, onPress: remove },
+  ]}
+>
+  <PhotoTile photo={photo} />
+</LiftMenu>;
+```
+
+Wrap any card, tile or row. A tap runs `onPress`; holding for `delay` ms lifts the content and shows its actions.
+
+## When to use
+
+- Shortcuts on items people already open with a tap: photos, messages, files, places.
+- Grids and lists where per-item buttons would crowd the layout.
+
+## When not to use
+
+- The only way to reach an action. Long presses are hard to discover, so offer the same actions elsewhere too, for example in a detail screen.
+- Content that changes while it is lifted, such as video. The lifted copy is a second render of `children`.
+
+## Notes
+
+- The lifted content is a copy of `children` rendered in a modal at the original's position; the original is hidden meanwhile. Keep `children` free of side effects on mount.
+- When there is no room for the menu below, the content moves up first. The menu opens towards the middle of the screen.
+- Every action is a custom accessibility action on the content, so screen reader users pick actions without holding.
+- With reduced motion nothing sinks or lifts; the menu appears at once.

@@ -1,0 +1,26 @@
+## Usage
+
+```tsx
+import { RollStepper } from '@/components/kinetik/roll-stepper';
+
+<RollStepper label="Guests" value={guests} onValueChange={setGuests} min={1} max={6} />;
+```
+
+`formatValue` changes what is shown and read aloud, for example ``(v) => `${v} kg` ``. The window is sized to the widest of the minimum, the maximum and the current value, so the buttons stay put.
+
+## When to use
+
+- Small counts changed a step at a time: guests, nights, quantities in a cart, sets and reps.
+- Values where the exact number matters more than speed of entry.
+
+## When not to use
+
+- Large ranges or rough values. Use a slider, such as Elastic Slider.
+- Numbers people already know and want to type, such as an amount of money. Use a text field.
+
+## Notes
+
+- Holding a button repeats after a short pause and speeds up to about twenty steps a second. Turn it off with `repeat={false}`.
+- At a limit the button dims and the figure bumps against the end, with a heavier haptic.
+- Fractional steps are rounded to six places, so 0.1 + 0.2 lands on 0.3.
+- With reduced motion the figure changes in place.

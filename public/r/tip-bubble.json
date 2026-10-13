@@ -1,0 +1,62 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "tip-bubble",
+  "type": "registry:item",
+  "title": "Tip Bubble",
+  "description": "A short tip that grows out of its anchor from the arrow's point and closes by itself after a few seconds.",
+  "categories": [
+    "disclosure"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/tip-bubble.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/tip-bubble.tsx",
+      "content": "import { useEffect, useRef, useState, type ReactNode } from 'react';\nimport {\n  AccessibilityInfo,\n  Pressable,\n  StyleSheet,\n  Text,\n  View,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { durations, spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type TipBubbleProps = {\n  /** The tip itself. Keep it to a sentence or two. */\n  content: string;\n  /** The anchor the tip points at, e.g. an info icon or a short label. */\n  children: ReactNode;\n  /** Names the anchor for screen readers, e.g. \"About fees\". */\n  accessibilityLabel: string;\n  /** Above or below the anchor. Defaults to `top`. */\n  placement?: 'top' | 'bottom';\n  /** Which edge of the bubble lines up with the anchor. Defaults to `center`. */\n  align?: 'start' | 'center' | 'end';\n  /** Controlled state. Leave unset to toggle on press. */\n  open?: boolean;\n  onOpenChange?: (open: boolean) => void;\n  /** Closes by itself after this many ms; 0 keeps it open. Defaults to 4000. */\n  duration?: number;\n  /** Bubble width. Defaults to 220. */\n  width?: number;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst ARROW = 7;\n/** Extra room around the anchor for the finger. */\nconst HIT = 14;\nconst OFFSET = 6;\n\n/**\n * A tip that grows out of its anchor. Tap the anchor and a small bubble\n * scales up from the arrow's point, then closes by itself after a few\n * seconds or on a second tap. The tip is announced, not focused, so a screen\n * reader stays on the anchor.\n */\nexport function TipBubble({\n  content,\n  children,\n  accessibilityLabel,\n  placement = 'top',\n  align = 'center',\n  open,\n  onOpenChange,\n  duration = 4000,\n  width = 220,\n  testID,\n  style,\n}: TipBubbleProps) {\n  const { colors, font, radius, shadow } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const [inner, setInner] = useState(false);\n  const isOpen = open ?? inner;\n  const [mounted, setMounted] = useState(isOpen);\n  const [anchorW, setAnchorW] = useState(0);\n  const t = useSharedValue(0);\n\n  const controlled = open !== undefined;\n  const setOpen = (next: boolean) => {\n    if (!controlled) setInner(next);\n    onOpenChange?.(next);\n  };\n  // The timer that closes the tip calls whichever onOpenChange is current by then.\n  const changed = useRef(onOpenChange);\n  useEffect(() => {\n    changed.current = onOpenChange;\n  });\n\n  // Mounted from the moment it opens; unmounted only once it has faded.\n  if (isOpen && !mounted) setMounted(true);\n\n  useEffect(() => {\n    if (isOpen) {\n      t.set(withSpring(1, spring('bouncy', reduced)));\n      AccessibilityInfo.announceForAccessibility(content);\n      if (duration <= 0) return;\n      const id = setTimeout(() => {\n        if (!controlled) setInner(false);\n        changed.current?.(false);\n      }, duration);\n      return () => clearTimeout(id);\n    }\n    t.set(withTiming(0, { duration: reduced ? 0 : durations.quick }));\n    // Unmount once the bubble has faded, so it never catches touches.\n    const id = setTimeout(() => setMounted(false), reduced ? 0 : durations.quick);\n    return () => clearTimeout(id);\n  }, [isOpen, reduced, duration, content, controlled, t]);\n\n  const top = placement === 'top';\n  // Where the arrow sits along the bubble, and so where the bubble grows from.\n  const arrowX =\n    align === 'start' ? anchorW / 2 : align === 'end' ? width - anchorW / 2 : width / 2;\n  const left = align === 'start' ? 0 : align === 'end' ? anchorW - width : (anchorW - width) / 2;\n\n  const bubble = useAnimatedStyle(() => ({\n    opacity: Math.min(1, t.get() * 1.5),\n    transform: [{ translateY: (1 - t.get()) * (top ? 6 : -6) }, { scale: 0.6 + t.get() * 0.4 }],\n  }));\n\n  return (\n    <View testID={testID} style={[styles.root, style]}>\n      <Pressable\n        onPress={() => setOpen(!isOpen)}\n        onLayout={(e) => setAnchorW(e.nativeEvent.layout.width)}\n        accessibilityRole=\"button\"\n        accessibilityLabel={accessibilityLabel}\n        accessibilityHint=\"Shows a tip\"\n        accessibilityState={{ expanded: isOpen }}\n        style={styles.anchor}\n      >\n        {children}\n      </Pressable>\n      {mounted ? (\n        <Animated.View\n          pointerEvents=\"none\"\n          accessibilityElementsHidden\n          importantForAccessibility=\"no-hide-descendants\"\n          style={[\n            styles.bubble,\n            {\n              width,\n              left,\n              ...(top\n                ? { bottom: '100%', marginBottom: OFFSET + ARROW - HIT }\n                : { top: '100%', marginTop: OFFSET + ARROW - HIT }),\n              transformOrigin: `${arrowX}px ${top ? '100%' : '0%'}`,\n            },\n            bubble,\n          ]}\n        >\n          <View\n            style={[\n              styles.arrow,\n              { left: arrowX - ARROW, backgroundColor: colors.ember },\n              top ? { bottom: -ARROW + 2 } : { top: -ARROW + 2 },\n            ]}\n          />\n          <View\n            style={[\n              styles.body,\n              { backgroundColor: colors.ember, borderRadius: radius.md, boxShadow: shadow.md },\n            ]}\n          >\n            <Text style={{ color: colors.onEmber, fontSize: font.size.sm, lineHeight: 19 }}>\n              {content}\n            </Text>\n          </View>\n        </Animated.View>\n      ) : null}\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  // The negative margin on the root keeps the layout as it was, while the anchor's padding\n  // grows its box (and so its accessibility bounds) to at least 44 pt.\n  root: { alignSelf: 'flex-start', zIndex: 10, margin: -HIT },\n  anchor: {\n    padding: HIT,\n    minWidth: 44,\n    minHeight: 44,\n    alignItems: 'center',\n    justifyContent: 'center',\n  },\n  bubble: { position: 'absolute', zIndex: 10 },\n  body: { paddingHorizontal: 12, paddingVertical: 9 },\n  // A square turned 45° behind the body: half of it shows as the arrow.\n  arrow: {\n    position: 'absolute',\n    width: ARROW * 2,\n    height: ARROW * 2,\n    borderRadius: 2,\n    transform: [{ rotate: '45deg' }],\n  },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "disclosure",
+    "web": "live",
+    "perf": {
+      "budget": "One shared value; the bubble is mounted only while open or fading. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 21,
+          "baselineMs": 20,
+          "jankyPercent": 2.88,
+          "atRest": "idle",
+          "memoryMb": 140
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The bubble appears and disappears without scaling.",
+      "screenReader": "The anchor is a button with an expanded state and the hint \"Shows a tip\"; the tip is announced when it opens, so focus stays on the anchor.",
+      "touchTarget": "The anchor's box is grown by 14 pt on every side, to at least 44 pt, without moving the layout."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { TipBubble } from '@/components/kinetik/tip-bubble';\n\n<TipBubble\n  content=\"Covers payment processing and support around the clock.\"\n  accessibilityLabel=\"About the service fee\"\n>\n  <InfoIcon />\n</TipBubble>;\n```\n\nThe children are the anchor. Pressing it opens the tip; it closes after `duration` (4 s by default) or on a second press.\n\n## When to use\n\n- A sentence of help beside a term, a fee or a setting that not everyone needs explained.\n- Explaining an icon-only control the first time someone meets it.\n\n## When not to use\n\n- Anything people must read to continue. Put it on the screen.\n- Long help or links. Use a sheet or a help page.\n\n## Notes\n\n- The bubble is drawn outside the anchor's box, so leave room above (or below, with `placement=\"bottom\"`) and avoid `overflow: 'hidden'` on its parents. The anchor's root has `zIndex: 10` so the bubble draws over the rows that follow it.\n- `align` lines up the bubble's start, centre or end with the anchor, which keeps it on screen near an edge.\n- On Android, touches only reach a view inside its parent's box, so the bubble does not take presses. It closes from the anchor or by itself.\n- With reduced motion the bubble appears without scaling.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add tip-bubble`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

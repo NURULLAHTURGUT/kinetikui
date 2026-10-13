@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "letter-morph",
+  "title": "Letter Morph",
+  "description": "A label that morphs letter by letter: shared letters slide to new places as others float away or rise in.",
+  "category": "text",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["letter-morph.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One text view per letter, moved by transforms on the UI thread; each new character is measured once. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 27,
+        "baselineMs": 20,
+        "jankyPercent": 9.36,
+        "atRest": "animating",
+        "memoryMb": 161,
+        "notes": "The demo changes the headline every 1.8 s, so it draws at rest; the long p99 frame is the first appearance of a new character, which is measured once."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The new text replaces the old at once.",
+    "screenReader": "One text element that reads the whole label; the letters themselves are hidden.",
+    "touchTarget": "Not interactive itself; put it inside a button for actions."
+  }
+}

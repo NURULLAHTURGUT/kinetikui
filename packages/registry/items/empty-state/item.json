@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "empty-state",
+  "title": "Empty State",
+  "description": "A calm empty screen: three cards rise and fan out, a blue dot lands, and the next step settles in beneath.",
+  "category": "feedback",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["empty-state.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views and five shared values that play once on mount. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 20,
+        "baselineMs": 20,
+        "jankyPercent": 2.89,
+        "atRest": "idle",
+        "memoryMb": 143
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Everything is in place from the start.",
+    "screenReader": "The illustration is hidden. The title is a header, followed by the description and the action buttons.",
+    "touchTarget": "The main button is 48 pt tall and the text button 48 pt."
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "star-rating",
+  "title": "Star Rating",
+  "description": "Stars you tap or drag across; the fill sweeps from star to star and each one swells as it fills.",
+  "category": "input",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["star-rating.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One small Skia canvas for all the stars, driven by two shared values. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 20,
+        "p90Ms": 23,
+        "baselineMs": 20,
+        "jankyPercent": 1.8,
+        "atRest": "idle",
+        "memoryMb": 152
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The stars fill at once, without the sweep or the swell.",
+    "screenReader": "An adjustable value (\"3 of 5 stars\") with increment and decrement actions; read-only ratings are a single image with the value in its name.",
+    "touchTarget": "The row of stars is the target and at least 44 pt tall; each star is as wide as `size` plus the gap."
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "code-field",
+  "title": "Code Field",
+  "description": "A one-time-code field: digits pop into cells, a caret glides along, a wrong code shakes and a right one ripples.",
+  "category": "input",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["code-field.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One text input and a row of plain views. While focused and empty the caret blinks (one opacity value); otherwise nothing runs.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 26,
+        "baselineMs": 20,
+        "jankyPercent": 4.89,
+        "atRest": "idle",
+        "memoryMb": 148,
+        "notes": "The long p99 frame is the system keyboard opening when the field takes focus."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Digits appear in place, the caret stays lit, and results change colour without the shake or the ripple.",
+    "screenReader": "One text field named by accessibilityLabel, with the number of digits as its hint. Accepted and rejected codes are announced.",
+    "touchTarget": "The cells are 56 pt tall and the input covers the whole row."
+  }
+}

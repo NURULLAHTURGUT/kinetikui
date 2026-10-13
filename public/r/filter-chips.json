@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "filter-chips",
+  "type": "registry:item",
+  "title": "Filter Chips",
+  "description": "Chips that change shape when picked: a check slides in, the chip grows to fit and its outline turns to a tint.",
+  "categories": [
+    "input"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/filter-chips.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/filter-chips.tsx",
+      "content": "import { useEffect } from 'react';\nimport { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  interpolateColor,\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n} from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport type { Palette } from '../../lib/kinetik/tokens/tokens';\n\nexport type FilterChipOption = {\n  value: string;\n  label: string;\n  /** A count after the label, e.g. the number of results. */\n  count?: number;\n};\n\nexport type FilterChipsProps = {\n  options: readonly FilterChipOption[];\n  /** Selected values. */\n  value: readonly string[];\n  onValueChange: (value: string[]) => void;\n  /** Pick any number of chips, or exactly one. Defaults to true. */\n  multiple?: boolean;\n  /** Names the group for screen readers, e.g. \"Filter by type\". */\n  accessibilityLabel: string;\n  /** A tick on each change. Defaults to true. */\n  haptics?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst HEIGHT = 40;\nconst TARGET = 48;\n/** Room the check mark takes when it slides in. */\nconst CHECK_W = 18;\n\n/**\n * Filter chips that change shape when picked: a check mark slides in at the\n * front and pushes the label over, the chip grows to fit, and its outline\n * turns into a tinted fill. Neighbours make room as it grows.\n */\nexport function FilterChips({\n  options,\n  value,\n  onValueChange,\n  multiple = true,\n  accessibilityLabel,\n  haptics = true,\n  testID,\n  style,\n}: FilterChipsProps) {\n  const { colors } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n\n  const toggle = (v: string) => {\n    haptic('tick');\n    if (!multiple) {\n      onValueChange([v]);\n      return;\n    }\n    onValueChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v]);\n  };\n\n  return (\n    <View\n      testID={testID}\n      accessibilityRole={multiple ? undefined : 'radiogroup'}\n      accessibilityLabel={accessibilityLabel}\n      style={[styles.wrap, style]}\n    >\n      {options.map((option) => (\n        <Chip\n          key={option.value}\n          option={option}\n          selected={value.includes(option.value)}\n          multiple={multiple}\n          onPress={() => toggle(option.value)}\n          reduced={reduced}\n          colors={colors}\n        />\n      ))}\n    </View>\n  );\n}\n\ntype ChipProps = {\n  option: FilterChipOption;\n  selected: boolean;\n  multiple: boolean;\n  onPress: () => void;\n  reduced: boolean;\n  colors: Palette;\n};\n\nfunction Chip({ option, selected, multiple, onPress, reduced, colors }: ChipProps) {\n  const { font, radius } = useKinetikTheme();\n  const on = useSharedValue(selected ? 1 : 0);\n  const press = useSharedValue(0);\n\n  useEffect(() => {\n    on.set(withSpring(selected ? 1 : 0, spring('snappy', reduced)));\n  }, [selected, reduced, on]);\n\n  const shell = useAnimatedStyle(() => ({\n    backgroundColor: interpolateColor(on.get(), [0, 1], [colors.surface, colors.azureSoft]),\n    borderColor: interpolateColor(on.get(), [0, 1], [colors.border, colors.azure]),\n    transform: [{ scale: 1 - press.get() * 0.05 }],\n  }));\n  const slot = useAnimatedStyle(() => ({\n    width: CHECK_W * Math.max(0, on.get()),\n    opacity: Math.max(0, on.get() * 1.4 - 0.4),\n  }));\n  const check = useAnimatedStyle(() => ({\n    transform: [{ rotate: '45deg' }, { scale: 0.4 + Math.max(0, on.get()) * 0.6 }],\n  }));\n  const label = useAnimatedStyle(() => ({\n    color: interpolateColor(on.get(), [0, 1], [colors.textMuted, colors.text]),\n  }));\n\n  return (\n    <Pressable\n      onPress={onPress}\n      onPressIn={() => press.set(withSpring(1, spring('snappy', reduced)))}\n      onPressOut={() => press.set(withSpring(0, spring('bouncy', reduced)))}\n      accessibilityRole={multiple ? 'checkbox' : 'radio'}\n      accessibilityLabel={\n        option.count === undefined ? option.label : `${option.label}, ${option.count}`\n      }\n      accessibilityState={multiple ? { checked: selected } : { selected }}\n      style={styles.hit}\n    >\n      <Animated.View style={[styles.chip, { borderRadius: radius.pill }, shell]}>\n        <Animated.View style={[styles.slot, slot]}>\n          <Animated.View style={[styles.check, { borderColor: colors.azure }, check]} />\n        </Animated.View>\n        <Animated.Text\n          numberOfLines={1}\n          style={[{ fontSize: font.size.sm, fontWeight: font.weight.medium }, label]}\n        >\n          {option.label}\n        </Animated.Text>\n        {option.count !== undefined ? (\n          <Animated.Text\n            style={{\n              color: colors.textSubtle,\n              fontSize: font.size.xs,\n              fontWeight: font.weight.medium,\n              fontVariant: ['tabular-nums'],\n              marginLeft: 6,\n            }}\n          >\n            {option.count}\n          </Animated.Text>\n        ) : null}\n      </Animated.View>\n    </Pressable>\n  );\n}\n\nconst styles = StyleSheet.create({\n  // Rows sit flush: the targets' own padding keeps the chips 8 pt apart.\n  wrap: { flexDirection: 'row', flexWrap: 'wrap', columnGap: 8, rowGap: 0 },\n  // The chip is drawn 40 pt tall inside a 48 pt target.\n  hit: { height: TARGET, justifyContent: 'center' },\n  chip: {\n    height: HEIGHT,\n    flexDirection: 'row',\n    alignItems: 'center',\n    paddingHorizontal: 14,\n    borderWidth: 1,\n  },\n  slot: { height: HEIGHT, justifyContent: 'center', overflow: 'hidden' },\n  // A classic tick: the bottom and right edges of a narrow box, turned 45°.\n  check: {\n    width: 6,\n    height: 11,\n    marginLeft: 2,\n    marginTop: -3,\n    borderBottomWidth: 2,\n    borderRightWidth: 2,\n  },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "input",
+    "web": "live",
+    "perf": {
+      "budget": "One shared value per chip. A picked chip's width animates, so the row lays out again for the length of the spring; nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 18,
+          "p90Ms": 22,
+          "baselineMs": 20,
+          "jankyPercent": 1.73,
+          "atRest": "idle",
+          "memoryMb": 152
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Chips change colour and show the check at once, without growing.",
+      "screenReader": "Checkboxes with a checked state, or radios with a selected state when `multiple` is false. Counts are read after the label.",
+      "touchTarget": "40 pt chips drawn inside 48 pt targets."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { FilterChips } from '@/components/kinetik/filter-chips';\n\n<FilterChips\n  accessibilityLabel=\"Filter by type\"\n  options={[\n    { value: 'photos', label: 'Photos', count: 48 },\n    { value: 'videos', label: 'Videos', count: 6 },\n  ]}\n  value={types}\n  onValueChange={setTypes}\n/>;\n```\n\nSet `multiple={false}` for a single choice: the chips become radios and a press always leaves exactly one picked.\n\n## When to use\n\n- Narrowing a list or a grid by a few facets: type, place, status, size.\n- Picking interests or tags during onboarding.\n\n## When not to use\n\n- More than a dozen options. Use a searchable list.\n- Switching between views of the same content. Use tabs or a segmented control.\n\n## Notes\n\n- The chips wrap onto as many lines as they need. A picked chip grows by the width of its check, and the chips after it make room.\n- `count` is shown after the label in a quieter colour and read after it.\n- With reduced motion the chips change colour and show the check without growing.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add filter-chips`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

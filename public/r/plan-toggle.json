@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "plan-toggle",
+  "type": "registry:item",
+  "title": "Plan Toggle",
+  "description": "A billing-period toggle whose thumb slides and resizes, with a savings badge that pops and a price that rolls.",
+  "categories": [
+    "input"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/plan-toggle.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/plan-toggle.tsx",
+      "content": "import { useEffect, useRef, useState } from 'react';\nimport {\n  Pressable,\n  StyleSheet,\n  Text,\n  View,\n  type LayoutRectangle,\n  type StyleProp,\n  type TextStyle,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withSequence,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget } from '../../lib/kinetik/tokens/tokens';\n\nexport type PlanToggleOption = {\n  value: string;\n  label: string;\n  /** A small tag after the label, e.g. \"Save 20%\". It pops when its option is picked. */\n  badge?: string;\n};\n\nexport type PlanToggleProps = {\n  /** Two or three billing periods or plan kinds. */\n  options: readonly PlanToggleOption[];\n  value: string;\n  onValueChange: (value: string) => void;\n  /** Names the toggle, e.g. \"Billing period\". */\n  accessibilityLabel: string;\n  /** A tick on change. Defaults to true. */\n  haptics?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst PAD = 4;\n\n/**\n * A billing-period toggle. The thumb slides and resizes to the picked\n * option, and an option's savings badge pops as it is chosen. Pair it with\n * `PlanPrice`, whose figure rolls to the new amount.\n */\nexport function PlanToggle({\n  options,\n  value,\n  onValueChange,\n  accessibilityLabel,\n  haptics = true,\n  testID,\n  style,\n}: PlanToggleProps) {\n  const { colors, font, radius } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const [layouts, setLayouts] = useState<Record<string, LayoutRectangle>>({});\n  const x = useSharedValue(0);\n  const w = useSharedValue(0);\n  const placed = useRef(false);\n  const target = layouts[value];\n\n  useEffect(() => {\n    if (!target) return;\n    const snap = reduced || !placed.current;\n    placed.current = true;\n    x.set(snap ? target.x : withSpring(target.x, spring('smooth')));\n    w.set(snap ? target.width : withSpring(target.width, spring('smooth')));\n  }, [target, reduced, x, w]);\n\n  const thumb = useAnimatedStyle(() => ({\n    opacity: w.get() > 0 ? 1 : 0,\n    width: w.get(),\n    transform: [{ translateX: x.get() }],\n  }));\n\n  return (\n    <View\n      testID={testID}\n      accessibilityRole=\"radiogroup\"\n      accessibilityLabel={accessibilityLabel}\n      style={[\n        styles.track,\n        {\n          backgroundColor: colors.surfaceSunken,\n          borderColor: colors.border,\n          borderRadius: radius.pill,\n        },\n        style,\n      ]}\n    >\n      <Animated.View\n        style={[\n          styles.thumb,\n          {\n            backgroundColor: colors.surfaceRaised,\n            borderRadius: radius.pill,\n            borderColor: colors.border,\n          },\n          thumb,\n        ]}\n      />\n      {options.map((option) => {\n        const selected = option.value === value;\n        return (\n          <Pressable\n            key={option.value}\n            onPress={() => {\n              if (selected) return;\n              haptic('tick');\n              onValueChange(option.value);\n            }}\n            onLayout={(e) => {\n              const layout = e.nativeEvent.layout;\n              setLayouts((l) => {\n                const prev = l[option.value];\n                return prev && prev.x === layout.x && prev.width === layout.width\n                  ? l\n                  : { ...l, [option.value]: layout };\n              });\n            }}\n            accessibilityRole=\"radio\"\n            accessibilityLabel={option.badge ? `${option.label}, ${option.badge}` : option.label}\n            accessibilityState={{ checked: selected }}\n            style={styles.option}\n          >\n            <Text\n              style={{\n                color: selected ? colors.text : colors.textMuted,\n                fontSize: font.size.sm,\n                fontWeight: font.weight.semibold,\n              }}\n            >\n              {option.label}\n            </Text>\n            {option.badge ? (\n              <Badge text={option.badge} active={selected} reduced={reduced} />\n            ) : null}\n          </Pressable>\n        );\n      })}\n    </View>\n  );\n}\n\nfunction Badge({ text, active, reduced }: { text: string; active: boolean; reduced: boolean }) {\n  const { colors, font, radius } = useKinetikTheme();\n  const pop = useSharedValue(1);\n  const first = useRef(true);\n  useEffect(() => {\n    if (first.current) {\n      first.current = false;\n      return;\n    }\n    if (!active || reduced) return;\n    pop.set(withSequence(withTiming(1.18, { duration: 110 }), withSpring(1, spring('bouncy'))));\n  }, [active, reduced, pop]);\n  const style = useAnimatedStyle(() => ({ transform: [{ scale: pop.get() }] }));\n\n  return (\n    <Animated.View\n      style={[\n        styles.badge,\n        {\n          backgroundColor: active ? colors.azure : colors.azureSoft,\n          borderRadius: radius.pill,\n        },\n        style,\n      ]}\n    >\n      <Text\n        style={{\n          color: active ? colors.onAzure : colors.azure,\n          fontSize: font.size.xs - 1,\n          fontWeight: font.weight.bold,\n        }}\n      >\n        {text}\n      </Text>\n    </Animated.View>\n  );\n}\n\nexport type PlanPriceProps = {\n  amount: number;\n  /** Formats the amount. Defaults to whole dollars, e.g. \"$12\". */\n  format?: (amount: number) => string;\n  /** After the figure, e.g. \"/ month\". */\n  suffix?: string;\n  /** Style for the figure. */\n  textStyle?: StyleProp<TextStyle>;\n  style?: StyleProp<ViewStyle>;\n};\n\n/**\n * A price that rolls to its new amount: up from below when it rises, down\n * from above when it falls, with the suffix crossfading beside it.\n */\nexport function PlanPrice({\n  amount,\n  format = (a) => `$${Math.round(a)}`,\n  suffix,\n  textStyle,\n  style,\n}: PlanPriceProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const [roll, setRoll] = useState({ from: amount, to: amount, id: 0 });\n  if (roll.to !== amount) setRoll({ from: roll.to, to: amount, id: roll.id + 1 });\n  const t = useSharedValue(1);\n  useEffect(() => {\n    if (roll.id === 0) return;\n    t.set(0);\n    t.set(reduced ? 1 : withSpring(1, spring('smooth')));\n  }, [roll.id, reduced, t]);\n\n  const dir = roll.to >= roll.from ? 1 : -1;\n  const outgoing = useAnimatedStyle(() => ({\n    opacity: 1 - t.get(),\n    transform: [{ translateY: -dir * t.get() * 22 }],\n  }));\n  const incoming = useAnimatedStyle(() => ({\n    opacity: t.get(),\n    transform: [{ translateY: dir * (1 - t.get()) * 22 }],\n  }));\n\n  const figure: StyleProp<TextStyle> = [\n    {\n      color: colors.text,\n      fontSize: font.size['4xl'],\n      fontWeight: font.weight.bold,\n      letterSpacing: -1,\n      fontVariant: ['tabular-nums'],\n    },\n    textStyle,\n  ];\n\n  return (\n    <View\n      accessible\n      accessibilityRole=\"text\"\n      accessibilityLabel={`${format(amount)}${suffix ? ` ${suffix}` : ''}`}\n      style={[styles.price, style]}\n    >\n      <View style={styles.figureBox}>\n        {/* Holds the line height and width of the current figure. */}\n        <Text style={[figure, styles.ghost]}>{format(roll.to)}</Text>\n        {roll.from !== roll.to ? (\n          <Animated.Text key={`o${roll.id}`} style={[figure, styles.layer, outgoing]}>\n            {format(roll.from)}\n          </Animated.Text>\n        ) : null}\n        <Animated.Text key={`i${roll.id}`} style={[figure, styles.layer, incoming]}>\n          {format(roll.to)}\n        </Animated.Text>\n      </View>\n      {suffix ? (\n        <Text style={{ color: colors.textMuted, fontSize: font.size.md, marginLeft: 6 }}>\n          {suffix}\n        </Text>\n      ) : null}\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  track: {\n    flexDirection: 'row',\n    padding: PAD,\n    borderWidth: StyleSheet.hairlineWidth,\n    alignSelf: 'flex-start',\n  },\n  thumb: {\n    position: 'absolute',\n    top: PAD,\n    bottom: PAD,\n    left: 0,\n    borderWidth: StyleSheet.hairlineWidth,\n  },\n  option: {\n    minHeight: minTouchTarget,\n    paddingHorizontal: 16,\n    flexDirection: 'row',\n    alignItems: 'center',\n    gap: 6,\n  },\n  badge: { paddingHorizontal: 7, paddingVertical: 2 },\n  price: { flexDirection: 'row', alignItems: 'baseline' },\n  figureBox: { overflow: 'hidden' },\n  ghost: { opacity: 0 },\n  layer: { position: 'absolute', left: 0, top: 0 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "input",
+    "web": "live",
+    "perf": {
+      "budget": "Plain views. The thumb moves on two shared values and the price on one; nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 21,
+          "baselineMs": 20,
+          "jankyPercent": 3.18,
+          "atRest": "idle",
+          "memoryMb": 140
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The thumb jumps, the badge does not pop and the price changes in place.",
+      "screenReader": "A radio group; each option reads its label and badge. The price is one text element, e.g. \"$14 / month\".",
+      "touchTarget": "Options are 44 pt tall."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { PlanPrice, PlanToggle } from '@/components/kinetik/plan-toggle';\n\n<PlanToggle\n  accessibilityLabel=\"Billing period\"\n  options={[\n    { value: 'monthly', label: 'Monthly' },\n    { value: 'yearly', label: 'Yearly', badge: 'Save 20%' },\n  ]}\n  value={period}\n  onValueChange={setPeriod}\n/>\n<PlanPrice amount={period === 'yearly' ? 10 : 12} suffix=\"/ month\" />\n```\n\nThe file exports two components: `PlanToggle` for the period and `PlanPrice` for a figure that rolls up or down to its new amount. Use them together or apart.\n\n## When to use\n\n- Pricing pages and paywalls with monthly and yearly billing.\n- Any two or three options where one carries a saving worth pointing out.\n\n## When not to use\n\n- More than three options. Use Choice Cards.\n- Settings that are on or off. Use a switch.\n\n## Notes\n\n- The thumb resizes to each option, so labels of different lengths are fine.\n- A badge pops when its option is picked and turns from a tint to solid azure.\n- `PlanPrice` takes a `format` function for other currencies, e.g. `(a) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(a)`.\n- With reduced motion the thumb jumps and the price changes in place.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add plan-toggle`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

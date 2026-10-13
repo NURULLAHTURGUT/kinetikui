@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "expand-toolbar",
+  "type": "registry:item",
+  "title": "Expand Toolbar",
+  "description": "Icon buttons where the picked one grows to show its name while its neighbours slide aside to make room.",
+  "categories": [
+    "interaction"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/expand-toolbar.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/expand-toolbar.tsx",
+      "content": "import { useEffect, useState, type ReactNode } from 'react';\nimport { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  interpolateColor,\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n} from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget } from '../../lib/kinetik/tokens/tokens';\n\nexport type ExpandToolbarItem = {\n  key: string;\n  label: string;\n  /** Receives the colour to draw in: azure when picked, muted otherwise. */\n  icon: (color: string) => ReactNode;\n};\n\nexport type ExpandToolbarProps = {\n  items: readonly ExpandToolbarItem[];\n  value: string;\n  onValueChange: (key: string) => void;\n  /** Names the toolbar, e.g. \"Drawing tools\". */\n  accessibilityLabel: string;\n  /** A tick on change. Defaults to true. */\n  haptics?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst SIZE = minTouchTarget;\nconst PAD = 4;\n/** Space between the icon and its label, and after the label. */\nconst LABEL_GAP = 6;\nconst LABEL_END = 14;\n\n/**\n * A row of icon buttons where the picked one grows to show its name. Its\n * neighbours slide aside to make room, the tint follows it, and the label\n * fades in as the button stretches.\n */\nexport function ExpandToolbar({\n  items,\n  value,\n  onValueChange,\n  accessibilityLabel,\n  haptics = true,\n  testID,\n  style,\n}: ExpandToolbarProps) {\n  const { colors, font, radius } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const [widths, setWidths] = useState<Record<string, number>>({});\n  const label = { fontSize: font.size.sm, fontWeight: font.weight.semibold } as const;\n\n  return (\n    <View\n      testID={testID}\n      accessibilityRole=\"toolbar\"\n      accessibilityLabel={accessibilityLabel}\n      style={[\n        styles.tray,\n        { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.pill },\n        style,\n      ]}\n    >\n      {/* Every label measured once, out of sight, so each button knows how far to grow. */}\n      <View\n        style={styles.measure}\n        pointerEvents=\"none\"\n        accessibilityElementsHidden\n        importantForAccessibility=\"no-hide-descendants\"\n      >\n        {items.map((item) => (\n          <Text\n            key={item.key}\n            style={label}\n            onLayout={(e) => {\n              const w = Math.ceil(e.nativeEvent.layout.width);\n              setWidths((prev) => (prev[item.key] === w ? prev : { ...prev, [item.key]: w }));\n            }}\n          >\n            {item.label}\n          </Text>\n        ))}\n      </View>\n      {items.map((item) => (\n        <Tool\n          key={item.key}\n          item={item}\n          selected={item.key === value}\n          labelWidth={widths[item.key] ?? 0}\n          reduced={reduced}\n          onPress={() => {\n            if (item.key === value) return;\n            haptic('tick');\n            onValueChange(item.key);\n          }}\n        />\n      ))}\n    </View>\n  );\n}\n\ntype ToolProps = {\n  item: ExpandToolbarItem;\n  selected: boolean;\n  labelWidth: number;\n  reduced: boolean;\n  onPress: () => void;\n};\n\nfunction Tool({ item, selected, labelWidth, reduced, onPress }: ToolProps) {\n  const { colors, font, radius } = useKinetikTheme();\n  const t = useSharedValue(selected ? 1 : 0);\n  const press = useSharedValue(0);\n  useEffect(() => {\n    t.set(withSpring(selected ? 1 : 0, spring('smooth', reduced)));\n  }, [selected, reduced, t]);\n\n  const grow = labelWidth + LABEL_GAP + LABEL_END - 10;\n  const shell = useAnimatedStyle(() => ({\n    width: SIZE + grow * Math.max(0, t.get()),\n    backgroundColor: interpolateColor(t.get(), [0, 1], [colors.surface, colors.azureSoft]),\n    transform: [{ scale: 1 - press.get() * 0.06 }],\n  }));\n  const text = useAnimatedStyle(() => ({\n    opacity: Math.max(0, t.get() * 1.6 - 0.6),\n    transform: [{ translateX: (1 - t.get()) * -6 }],\n  }));\n\n  return (\n    <Pressable\n      onPress={onPress}\n      onPressIn={() => press.set(withSpring(1, spring('snappy', reduced)))}\n      onPressOut={() => press.set(withSpring(0, spring('bouncy', reduced)))}\n      accessibilityRole=\"button\"\n      accessibilityLabel={item.label}\n      accessibilityState={{ selected }}\n    >\n      <Animated.View style={[styles.tool, { borderRadius: radius.pill }, shell]}>\n        <View style={styles.icon}>{item.icon(selected ? colors.azure : colors.textMuted)}</View>\n        <Animated.View style={[styles.label, text]}>\n          <Text\n            numberOfLines={1}\n            style={{\n              color: colors.azure,\n              fontSize: font.size.sm,\n              fontWeight: font.weight.semibold,\n            }}\n          >\n            {item.label}\n          </Text>\n        </Animated.View>\n      </Animated.View>\n    </Pressable>\n  );\n}\n\nconst styles = StyleSheet.create({\n  tray: {\n    flexDirection: 'row',\n    alignSelf: 'flex-start',\n    padding: PAD,\n    gap: 2,\n    borderWidth: StyleSheet.hairlineWidth,\n  },\n  measure: {\n    position: 'absolute',\n    opacity: 0,\n    left: 0,\n    top: 0,\n    width: 1000,\n    alignItems: 'flex-start',\n  },\n  tool: { height: SIZE, flexDirection: 'row', alignItems: 'center', overflow: 'hidden' },\n  icon: { width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' },\n  label: { marginLeft: LABEL_GAP - 10 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "interaction",
+    "web": "live",
+    "perf": {
+      "budget": "One shared value per button; two widths animate on a change, so the row lays out for the length of the spring. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 22,
+          "p90Ms": 24,
+          "baselineMs": 20,
+          "jankyPercent": 0.7,
+          "atRest": "idle",
+          "memoryMb": 151,
+          "notes": "Measured with its own script that taps each tool in turn, since the default gestures miss the toolbar."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The picked button shows its label at once, without growing.",
+      "screenReader": "A toolbar of buttons named by their labels, the picked one marked as selected.",
+      "touchTarget": "Every button is at least 44 pt square."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { ExpandToolbar } from '@/components/kinetik/expand-toolbar';\n\n<ExpandToolbar\n  accessibilityLabel=\"Note tools\"\n  items={[\n    { key: 'pen', label: 'Sketch', icon: (c) => <PencilIcon color={c} /> },\n    { key: 'text', label: 'Text', icon: (c) => <TextIcon color={c} /> },\n    { key: 'photo', label: 'Photo', icon: (c) => <PhotoIcon color={c} /> },\n  ]}\n  value={tool}\n  onValueChange={setTool}\n/>;\n```\n\nEach `icon` is a function that receives the colour to draw in: azure for the picked tool and a muted grey for the rest.\n\n## When to use\n\n- Picking a mode or tool: drawing tools, editor modes, map layers, compact filters.\n- Places where icons alone are enough most of the time, but the current one should be spelled out.\n\n## When not to use\n\n- Navigating between screens. Use a tab bar, such as Dock Bar or Liquid Tabs.\n- More than five or six tools. The row gets too wide on a phone once one is expanded.\n\n## Notes\n\n- Labels are measured once, out of sight, so each button grows by exactly its label's width.\n- The toolbar sizes to its content. Centre it with `alignSelf: 'center'` or put it in a row.\n- With reduced motion the picked button shows its label without growing.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add expand-toolbar`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

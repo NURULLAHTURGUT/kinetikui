@@ -1,0 +1,35 @@
+## Usage
+
+```tsx
+import { SwipeRow } from '@/components/kinetik/swipe-row';
+
+<SwipeRow
+  accessibilityLabel={`${mail.from}, ${mail.subject}`}
+  leading={{ key: 'pin', label: 'Pin', tone: 'azure', onPress: pin }}
+  trailing={[
+    { key: 'delete', label: 'Delete', tone: 'danger', dismiss: true, onPress: remove },
+    { key: 'flag', label: 'Flag', onPress: flag },
+  ]}
+>
+  <MailRow mail={mail} />
+</SwipeRow>;
+```
+
+`trailing` lists actions from the edge inwards. The first one is the edge action: it runs on a full swipe. Actions with `dismiss` slide the row away and fold it shut before `onPress` runs, so remove the item from your list in `onPress`.
+
+## When to use
+
+- Quick actions on rows people process one by one: mail, notifications, tasks, saved items.
+- Lists where the same actions are also available elsewhere, for example in the item's detail screen.
+
+## When not to use
+
+- The only way to reach an action. Swipes are hard to discover.
+- Rows inside a horizontal scroller or carousel, where the swipe would fight the scroll.
+
+## Notes
+
+- A short swipe opens the actions; a fling opens them too. Tap the row to close them.
+- Past 62% of the row's width the edge action grows over the others with a tick; let go there to run it. Turn this off with `fullSwipe={false}`.
+- Swiping towards a side with no actions resists and springs back.
+- Every action is a custom accessibility action on the row, so screen reader users never need to swipe.

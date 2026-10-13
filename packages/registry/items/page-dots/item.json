@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "page-dots",
+  "title": "Page Dots",
+  "description": "Page dots that follow the scroll: a worm that stretches to the next page, or a dot that widens into a pill.",
+  "category": "navigation",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["page-dots.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Reads the scroll position as a shared value on the UI thread, so it follows the finger without re-rendering. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 21,
+        "baselineMs": 20,
+        "jankyPercent": 2.02,
+        "atRest": "idle",
+        "memoryMb": 147
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Driven by the scroll, it still follows the finger; without a scroll position it jumps between pages.",
+    "screenReader": "An adjustable value (\"Page, 2 of 5\") whose increment and decrement ask for the next and previous page.",
+    "touchTarget": "The whole row is the target, 44 pt tall; a tap picks the nearest dot."
+  }
+}

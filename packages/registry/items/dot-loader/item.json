@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "dot-loader",
+  "title": "Dot Loader",
+  "description": "Loading dots that hop in a wave, breathe in a pulse, or sit in a chat bubble as a typing indicator.",
+  "category": "feedback",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["dot-loader.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One repeating shared value drives every dot on the UI thread. It animates for as long as it is shown, so unmount it when loading ends.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 22,
+        "p90Ms": 23,
+        "baselineMs": 20,
+        "jankyPercent": 0.13,
+        "atRest": "animating",
+        "memoryMb": 152,
+        "notes": "Animating at rest is the loader itself; unmount it when loading ends."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The dots stay in place and only brighten one after another.",
+    "screenReader": "One progress indicator named by accessibilityLabel (Loading by default), such as \"The host is typing\".",
+    "touchTarget": "Not interactive."
+  }
+}

@@ -1,0 +1,33 @@
+## Usage
+
+```tsx
+import { CompareSlider } from '@/components/kinetik/compare-slider';
+
+<CompareSlider
+  accessibilityLabel="Colour grade"
+  beforeLabel="Original"
+  afterLabel="Graded"
+  before={<Image source={original} style={StyleSheet.absoluteFill} />}
+  after={<Image source={graded} style={StyleSheet.absoluteFill} />}
+/>;
+```
+
+`before` and `after` fill the frame, one over the other. The divider shows `before` to its left and `after` to its right.
+
+## When to use
+
+- Showing what an edit, a filter or a restoration changed.
+- Before and after for renovations, cleaning, retouching, maps across years.
+
+## When not to use
+
+- Pictures that do not line up. Show them side by side.
+- More than two versions. Use a carousel.
+
+## Notes
+
+- The frame takes the width it is given and sets its height with `aspectRatio` (4:3 by default). Make both pictures fill it.
+- The `before` picture is cut by the divider, never squeezed.
+- Drag anywhere on the picture, or tap to jump the divider there. Vertical drags still scroll the page.
+- On first sight the divider nudges once to show that it moves; turn this off with `hint={false}`.
+- With reduced motion there is no nudge, and jumps happen without a spring.

@@ -1,0 +1,33 @@
+## Usage
+
+```tsx
+import { WaffleChart } from '@/components/kinetik/waffle-chart';
+
+<WaffleChart
+  accessibilityLabel="Trip budget"
+  data={[
+    { label: 'Stays', value: 46 },
+    { label: 'Flights', value: 28 },
+    { label: 'Food', value: 17 },
+  ]}
+/>;
+```
+
+Values are percentages. If they add up to less than 100, the remaining cells stay empty, which makes "how much is left" easy to see.
+
+## When to use
+
+- Parts of a whole that people should be able to count: budgets, survey answers, storage.
+- Small numbers of slices, up to about five.
+
+## When not to use
+
+- Values that do not add up to a whole. Use Bar Chart.
+- Precise comparisons between similar shares. Cells round to whole percent.
+
+## Notes
+
+- Shares are rounded to whole cells with the largest-remainder method, so the cells always add up to the rounded total and never past a hundred. `waffleCells` is exported if you need the same counts elsewhere.
+- Tap a legend entry to dim every other slice; tap it again to clear.
+- The grid is square and takes the width it is given.
+- With reduced motion the grid appears filled and changes colour at once.
