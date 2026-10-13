@@ -146,7 +146,7 @@ export function Ridgeline({
         onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
       >
         {width > 0 ? (
-          <Canvas style={[StyleSheet.absoluteFill]} pointerEvents="none">
+          <Canvas style={StyleSheet.absoluteFill} pointerEvents="none">
             {/* The lifted ridge is drawn last so it sits in front of its neighbours. */}
             {ridges
               .map((r, i) => ({ r, i }))

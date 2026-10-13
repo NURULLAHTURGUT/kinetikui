@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import Animated, {
   LinearTransition,
+  ZoomIn,
+  ZoomOut,
   useAnimatedStyle,
   useSharedValue,
   withSequence,
@@ -20,7 +22,7 @@ import Animated, {
 
 import { useHaptic } from '../../shared/hooks/use-haptic';
 import { useReduceMotion } from '../../shared/hooks/use-reduce-motion';
-import { durations, easings, spring, springs, timing } from '../../shared/motion/motion';
+import { durations, easings, spring, timing } from '../../shared/motion/motion';
 import { useKinetikTheme } from '../../shared/tokens/theme';
 import { minTouchTarget } from '../../shared/tokens/tokens';
 
@@ -44,30 +46,10 @@ export type TagFieldProps = {
 
 const TAG_H = 32;
 
-const enter = () => {
-  'worklet';
-  return {
-    initialValues: { opacity: 0, transform: [{ scale: 0.5 }] },
-    animations: {
-      opacity: withTiming(1, { duration: durations.quick }),
-      transform: [{ scale: withSpring(1, springs.bouncy) }],
-    },
-  };
-};
-const leave = () => {
-  'worklet';
-  return {
-    initialValues: { opacity: 1, transform: [{ scale: 1 }] },
-    animations: {
-      opacity: withTiming(0, { duration: durations.quick, easing: easings.exit }),
-      transform: [{ scale: withTiming(0.6, { duration: durations.quick, easing: easings.exit }) }],
-    },
-  };
-};
-const reflow = LinearTransition.springify()
-  .mass(springs.smooth.mass)
-  .stiffness(springs.smooth.stiffness)
-  .damping(springs.smooth.damping);
+// Predefined animations with duration modifiers only, so they also run on the web.
+const enter = ZoomIn.duration(durations.base).easing(easings.standard);
+const leave = ZoomOut.duration(durations.quick).easing(easings.exit);
+const reflow = LinearTransition.duration(durations.base).easing(easings.standard);
 
 /**
  * Typed words that turn into tags. A tag pops in when Return or a comma ends
