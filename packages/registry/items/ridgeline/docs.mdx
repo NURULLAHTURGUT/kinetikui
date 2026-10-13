@@ -1,0 +1,32 @@
+## Usage
+
+```tsx
+import { Ridgeline } from '@/components/kinetik/ridgeline';
+
+<Ridgeline
+  accessibilityLabel="Commute times by city, in minutes"
+  groups={[
+    { key: 'lis', label: 'Lisbon', values: lisbonMinutes },
+    { key: 'ber', label: 'Berlin', values: berlinMinutes },
+  ]}
+  domain={[0, 100]}
+  formatValue={(v) => `${Math.round(v)} min`}
+/>;
+```
+
+## When to use
+
+- Comparing how values are spread across a few groups: response times by region, prices by category, scores by class.
+- Showing that two groups with the same average behave differently.
+
+## When not to use
+
+- A single number per group. Use Bar Chart.
+- Very few samples per group (under ten or so); the smoothed curve would suggest a shape the data does not have.
+
+## Notes
+
+- Pass raw samples: each ridge is a Gaussian kernel density estimate, scaled against the tallest ridge so heights compare fairly.
+- Ridges overlap upwards; `ground` should match the colour behind the chart so the ones in front stay solid.
+- Tap a row to lift its ridge and mark its quartiles; the readout and each row's label give the median and middle half for screen readers.
+- With reduced motion the ridges appear at full height and do not lift.

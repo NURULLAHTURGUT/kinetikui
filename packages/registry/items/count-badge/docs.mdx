@@ -1,0 +1,26 @@
+## Usage
+
+```tsx
+import { CountBadge } from '@/components/kinetik/count-badge';
+
+<CountBadge count={unread} formatLabel={(n) => `${n} unread`}>
+  <InboxIcon />
+</CountBadge>;
+```
+
+## When to use
+
+- Unread messages, new notifications, items in a cart: a count that changes while people watch.
+- A presence or "something new" dot with `dot`.
+
+## When not to use
+
+- Static labels or categories. Use a plain tag.
+- Counts so large they stop meaning anything; prefer a dot, or cap with `max`.
+
+## Notes
+
+- The badge springs in for the first item, jumps when the count rises, rolls the number up or down, and shrinks away at zero.
+- It reads its own label (`formatLabel`) for screen readers; give the element underneath its own name too.
+- `ringColor` should match what is behind the anchor so the badge looks cut out of it.
+- With reduced motion the number changes in place, without the jump.

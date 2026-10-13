@@ -1,0 +1,24 @@
+## Usage
+
+```tsx
+import { TagField } from '@/components/kinetik/tag-field';
+
+<TagField label="Topics" value={tags} onChange={setTags} maxTags={6} />;
+```
+
+## When to use
+
+- Short free-form values people add several of: topics, skills, email recipients, labels.
+- Lists where people should see and edit everything they have added in one place.
+
+## When not to use
+
+- Choosing from a known, short list. Use Filter Chips.
+- A single value. Use Float Field.
+
+## Notes
+
+- Return or any of `separators` (a comma by default) ends a tag; pasted text with commas becomes several tags.
+- A duplicate (ignoring case) makes the existing tag jump instead of adding another; `validate` can refuse a tag, which shakes the field.
+- Backspace in the empty field first marks the last tag, then removes it. Additions and removals are announced to screen readers.
+- Each remove button is a full 44 pt square inside the 32 pt pill.

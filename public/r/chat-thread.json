@@ -1,0 +1,62 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "chat-thread",
+  "type": "registry:item",
+  "title": "Chat Thread",
+  "description": "Grouped chat bubbles: new messages rise in from their side, typing dots wave and Seen fades in.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/chat-thread.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/chat-thread.tsx",
+      "content": "import { useEffect, useState } from 'react';\nimport { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  cancelAnimation,\n  useAnimatedStyle,\n  useSharedValue,\n  withDelay,\n  withRepeat,\n  withSpring,\n  withTiming,\n  type SharedValue,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { durations, easings, spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type ChatMessage = {\n  id: string;\n  from: 'me' | 'them';\n  text: string;\n  /** Shown under the last message of a group, e.g. \"09:41\". */\n  time?: string;\n};\n\nexport type ChatThreadProps = {\n  messages: readonly ChatMessage[];\n  /** Shows three bouncing dots from the other side. */\n  typing?: boolean;\n  /** Shows \"Seen\" under your last message. */\n  seen?: boolean;\n  /** The other person's name, for screen readers. Defaults to \"Them\". */\n  name?: string;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst BIG = 18;\nconst SMALL = 5;\n\n/**\n * A conversation of grouped bubbles. Messages from one sender in a row share\n * a group with tucked corners, a new message rises in from its side, the\n * other person's typing shows as three dots in a wave, and \"Seen\" fades in\n * under your last message.\n */\nexport function ChatThread({\n  messages,\n  typing = false,\n  seen = false,\n  name = 'Them',\n  testID,\n  style,\n}: ChatThreadProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  // Messages already there when the thread mounts appear without animating.\n  const [initial] = useState(() => new Set(messages.map((m) => m.id)));\n  const lastMine = [...messages].reverse().find((m) => m.from === 'me')?.id;\n\n  return (\n    <View testID={testID} style={[styles.root, style]} accessibilityLiveRegion=\"polite\">\n      {messages.map((m, i) => {\n        const prev = messages[i - 1];\n        const next = messages[i + 1];\n        const first = prev?.from !== m.from;\n        const last = next?.from !== m.from;\n        return (\n          <View key={m.id} style={{ marginTop: i === 0 ? 0 : first ? 12 : 2 }}>\n            <Bubble\n              message={m}\n              first={first}\n              last={last}\n              name={name}\n              enter={!initial.has(m.id) && !reduced}\n            />\n            {last && m.time ? (\n              <Text\n                style={[\n                  styles.meta,\n                  m.from === 'me' ? styles.right : styles.left,\n                  { color: colors.textSubtle, fontSize: font.size.xs },\n                ]}\n                accessibilityElementsHidden\n                importantForAccessibility=\"no\"\n              >\n                {m.time}\n              </Text>\n            ) : null}\n            {seen && m.id === lastMine ? <Seen /> : null}\n          </View>\n        );\n      })}\n      {typing ? <Typing name={name} reduced={reduced} /> : null}\n    </View>\n  );\n}\n\ntype BubbleProps = {\n  message: ChatMessage;\n  first: boolean;\n  last: boolean;\n  name: string;\n  enter: boolean;\n};\n\nfunction Bubble({ message, first, last, name, enter }: BubbleProps) {\n  const { colors, font } = useKinetikTheme();\n  const mine = message.from === 'me';\n  const p = useSharedValue(enter ? 0 : 1);\n  useEffect(() => {\n    p.set(withSpring(1, spring('smooth')));\n  }, [p]);\n  const motion = useAnimatedStyle(() => ({\n    opacity: Math.min(1, p.get() * 1.5),\n    transform: [{ translateY: (1 - p.get()) * 18 }, { scale: 0.92 + p.get() * 0.08 }],\n  }));\n\n  // The side facing the sender is tucked in the middle of a group and tails off at its end.\n  const top = first ? BIG : SMALL;\n  const bottom = last ? BIG - 12 : SMALL;\n  const corners = mine\n    ? { borderRadius: BIG, borderTopRightRadius: top, borderBottomRightRadius: bottom }\n    : { borderRadius: BIG, borderTopLeftRadius: top, borderBottomLeftRadius: bottom };\n\n  return (\n    <Animated.View\n      accessible\n      accessibilityLabel={`${mine ? 'You' : name}: ${message.text}${message.time ? `, ${message.time}` : ''}`}\n      style={[\n        styles.bubble,\n        mine ? styles.mine : styles.theirs,\n        corners,\n        { backgroundColor: mine ? colors.azure : colors.surfaceRaised },\n        { transformOrigin: mine ? '100% 100%' : '0% 100%' },\n        motion,\n      ]}\n    >\n      <Text\n        style={{\n          color: mine ? colors.onAzure : colors.text,\n          fontSize: font.size.md,\n          lineHeight: 21,\n        }}\n      >\n        {message.text}\n      </Text>\n    </Animated.View>\n  );\n}\n\nfunction Seen() {\n  const { colors, font } = useKinetikTheme();\n  const shown = useSharedValue(0);\n  useEffect(() => {\n    shown.set(\n      withDelay(200, withTiming(1, { duration: durations.slow, easing: easings.standard })),\n    );\n  }, [shown]);\n  const motion = useAnimatedStyle(() => ({ opacity: shown.get() }));\n  return (\n    <Animated.Text\n      style={[\n        styles.meta,\n        styles.right,\n        { color: colors.textSubtle, fontSize: font.size.xs },\n        motion,\n      ]}\n    >\n      Seen\n    </Animated.Text>\n  );\n}\n\nfunction Typing({ name, reduced }: { name: string; reduced: boolean }) {\n  const { colors } = useKinetikTheme();\n  const wave = useSharedValue(0);\n  const p = useSharedValue(reduced ? 1 : 0);\n  useEffect(() => {\n    p.set(withSpring(1, spring('smooth', reduced)));\n    if (reduced) return;\n    wave.set(withRepeat(withTiming(1, { duration: 1100, easing: easings.linear }), -1));\n    return () => cancelAnimation(wave);\n  }, [reduced, p, wave]);\n  const motion = useAnimatedStyle(() => ({\n    opacity: p.get(),\n    transform: [{ scale: 0.8 + p.get() * 0.2 }],\n  }));\n  return (\n    <Animated.View\n      accessible\n      accessibilityLabel={`${name} is typing`}\n      style={[\n        styles.bubble,\n        styles.theirs,\n        styles.typing,\n        {\n          backgroundColor: colors.surfaceRaised,\n          borderRadius: BIG,\n          borderBottomLeftRadius: BIG - 12,\n          marginTop: 12,\n        },\n        { transformOrigin: '0% 100%' },\n        motion,\n      ]}\n    >\n      {[0, 1, 2].map((i) => (\n        <Dot key={i} index={i} wave={wave} />\n      ))}\n    </Animated.View>\n  );\n}\n\nfunction Dot({ index, wave }: { index: number; wave: SharedValue<number> }) {\n  const { colors } = useKinetikTheme();\n  const motion = useAnimatedStyle(() => {\n    // Each dot rises in turn: a short bump travelling along the row.\n    const t = (wave.get() - index * 0.16 + 1) % 1;\n    const up = t < 0.32 ? Math.sin((t / 0.32) * Math.PI) : 0;\n    return { opacity: 0.45 + up * 0.55, transform: [{ translateY: -up * 4 }] };\n  });\n  return <Animated.View style={[styles.dot, { backgroundColor: colors.textMuted }, motion]} />;\n}\n\nconst styles = StyleSheet.create({\n  root: { gap: 0 },\n  bubble: { maxWidth: '78%', paddingHorizontal: 14, paddingVertical: 9 },\n  mine: { alignSelf: 'flex-end' },\n  theirs: { alignSelf: 'flex-start' },\n  meta: { marginTop: 4, marginHorizontal: 6 },\n  right: { alignSelf: 'flex-end' },\n  left: { alignSelf: 'flex-start' },\n  typing: { flexDirection: 'row', gap: 5, paddingVertical: 14 },\n  dot: { width: 7, height: 7, borderRadius: 3.5 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "Plain views; each new bubble runs one spring when it arrives. Only the typing dots loop, and only while shown.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 18,
+          "baselineMs": 18,
+          "jankyPercent": 1.69,
+          "atRest": "idle",
+          "memoryMb": 140
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "New messages appear without rising and the typing dots hold still.",
+      "screenReader": "A polite live region; each bubble reads the sender, the text and the time.",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { ChatThread } from '@/components/kinetik/chat-thread';\n\n<ScrollView>\n  <ChatThread messages={messages} typing={otherIsTyping} seen={read} name=\"Maya\" />\n</ScrollView>;\n```\n\n## When to use\n\n- Conversations between two people: support chats, messages, comments on an order.\n- Assistant replies in a chat layout.\n\n## When not to use\n\n- Long threaded discussions with replies and reactions. Use a comment list.\n- A single notification. Use a toast or Notice Bar.\n\n## Notes\n\n- Consecutive messages from one side form a group: tucked corners on the sender's side, a tail on the last one, and the time under it.\n- Messages added after mount rise in from their side; the ones there at mount appear still.\n- The thread is a polite live region, and every bubble reads its sender, text and time. Typing reads as \"Maya is typing\".\n- Put it in your own `ScrollView` (or an inverted list for long threads).\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add chat-thread`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

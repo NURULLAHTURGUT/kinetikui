@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "sort-table",
+  "title": "Sort Table",
+  "description": "A table sorted by tapping a column: rows spring from their old places to their new ones as the arrow turns.",
+  "category": "data",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["sort-table.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views; each row moves by one transform on one shared value, so a sort never lays the table out again. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "baselineMs": 18,
+        "jankyPercent": 2.29,
+        "atRest": "idle",
+        "memoryMb": 142
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Rows jump to their new places and the arrow turns at once.",
+    "screenReader": "Headers are buttons that read their sort state; each row reads every column's title and value.",
+    "touchTarget": "Headers are 44 pt tall and as wide as their column."
+  }
+}

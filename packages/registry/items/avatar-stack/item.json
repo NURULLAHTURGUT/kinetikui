@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "avatar-stack",
+  "title": "Avatar Stack",
+  "description": "Overlapping avatars that fan out one after another with names beneath, then tuck back in behind the first.",
+  "category": "data",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["avatar-stack.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views and images; every face reads one shared value for its offset and name. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 23,
+        "baselineMs": 18,
+        "jankyPercent": 3.66,
+        "atRest": "idle",
+        "memoryMb": 145
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The faces spread and stack at once.",
+    "screenReader": "One button that names everyone and says whether the stack is expanded.",
+    "touchTarget": "The whole stack is the target, at least 44 pt tall."
+  }
+}

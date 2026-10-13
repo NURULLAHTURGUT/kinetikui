@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "sort-table",
+  "type": "registry:item",
+  "title": "Sort Table",
+  "description": "A table sorted by tapping a column: rows spring from their old places to their new ones as the arrow turns.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/sort-table.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/sort-table.tsx",
+      "content": "import { useEffect, useState } from 'react';\nimport { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring, timing } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type SortValue = string | number;\nexport type SortRow = { id: string } & Record<string, SortValue>;\n\nexport type SortColumn = {\n  key: string;\n  title: string;\n  /** Numbers read best right-aligned. Defaults to \"left\". */\n  align?: 'left' | 'right';\n  /** Share of the width. Defaults to 1. */\n  flex?: number;\n  /** Formats a cell for display; sorting uses the raw value. */\n  format?: (value: SortValue, row: SortRow) => string;\n  /** Defaults to true. */\n  sortable?: boolean;\n};\n\nexport type SortState = { key: string; dir: 'asc' | 'desc' };\n\nexport type SortTableProps = {\n  columns: readonly SortColumn[];\n  rows: readonly SortRow[];\n  initialSort?: SortState;\n  onSortChange?: (sort: SortState) => void;\n  /** A tick when the order changes. Defaults to true. */\n  haptics?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst ROW = 48;\nconst HEAD = 44;\n\n/** Rows in order for a sort: numbers by size, text alphabetically; ties keep their order. */\nexport function sortRows(rows: readonly SortRow[], sort: SortState | null): SortRow[] {\n  if (!sort) return [...rows];\n  const sign = sort.dir === 'asc' ? 1 : -1;\n  return rows\n    .map((row, i) => ({ row, i }))\n    .sort((a, b) => {\n      const x = a.row[sort.key];\n      const y = b.row[sort.key];\n      const c =\n        typeof x === 'number' && typeof y === 'number'\n          ? x - y\n          : String(x ?? '').localeCompare(String(y ?? ''));\n      return c === 0 ? a.i - b.i : c * sign;\n    })\n    .map((e) => e.row);\n}\n\n/**\n * A table you sort by tapping a column. Rows do not jump: each one springs\n * from its old place to its new one, the arrow in the header turns to show\n * the direction, and the sorted column's cells come forward.\n */\nexport function SortTable({\n  columns,\n  rows,\n  initialSort,\n  onSortChange,\n  haptics = true,\n  testID,\n  style,\n}: SortTableProps) {\n  const { colors, font, radius } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const [sort, setSort] = useState<SortState | null>(initialSort ?? null);\n  const order = sortRows(rows, sort);\n  const place = new Map(order.map((r, i) => [r.id, i]));\n\n  const press = (col: SortColumn) => {\n    // A new column sorts numbers high to low and text A to Z; the same column flips.\n    const numeric = typeof rows[0]?.[col.key] === 'number';\n    const next: SortState =\n      sort?.key === col.key\n        ? { key: col.key, dir: sort.dir === 'asc' ? 'desc' : 'asc' }\n        : { key: col.key, dir: numeric ? 'desc' : 'asc' };\n    haptic('tick');\n    setSort(next);\n    onSortChange?.(next);\n  };\n\n  return (\n    <View\n      testID={testID}\n      style={[styles.root, { borderColor: colors.border, borderRadius: radius.lg }, style]}\n    >\n      <View style={[styles.head, { borderBottomColor: colors.borderStrong }]}>\n        {columns.map((col) => {\n          const active = sort?.key === col.key;\n          const sortable = col.sortable !== false;\n          const state = active\n            ? `sorted ${sort?.dir === 'asc' ? 'ascending' : 'descending'}`\n            : sortable\n              ? 'not sorted'\n              : '';\n          return (\n            <Pressable\n              key={col.key}\n              onPress={() => press(col)}\n              disabled={!sortable}\n              accessibilityRole=\"button\"\n              accessibilityLabel={state ? `${col.title}, ${state}` : col.title}\n              style={[\n                styles.headCell,\n                { flex: col.flex ?? 1 },\n                col.align === 'right' && styles.right,\n              ]}\n            >\n              <Text\n                numberOfLines={1}\n                style={{\n                  color: active ? colors.text : colors.textMuted,\n                  fontSize: font.size.xs,\n                  fontWeight: font.weight.semibold,\n                  letterSpacing: font.tracking.wide,\n                }}\n              >\n                {col.title.toUpperCase()}\n              </Text>\n              {sortable ? (\n                <Arrow on={active} up={active && sort?.dir === 'asc'} reduced={reduced} />\n              ) : null}\n            </Pressable>\n          );\n        })}\n      </View>\n      <View style={{ height: rows.length * ROW }}>\n        {rows.map((row) => (\n          <Row\n            key={row.id}\n            row={row}\n            index={place.get(row.id) ?? 0}\n            last={(place.get(row.id) ?? 0) === rows.length - 1}\n            columns={columns}\n            sortKey={sort?.key}\n            reduced={reduced}\n          />\n        ))}\n      </View>\n    </View>\n  );\n}\n\ntype RowProps = {\n  row: SortRow;\n  index: number;\n  last: boolean;\n  columns: readonly SortColumn[];\n  sortKey: string | undefined;\n  reduced: boolean;\n};\n\nfunction Row({ row, index, last, columns, sortKey, reduced }: RowProps) {\n  const { colors, font } = useKinetikTheme();\n  const y = useSharedValue(index * ROW);\n  useEffect(() => {\n    y.set(withSpring(index * ROW, spring('smooth', reduced)));\n  }, [index, reduced, y]);\n  const motion = useAnimatedStyle(() => ({ transform: [{ translateY: y.get() }] }));\n  const label = columns\n    .map((c) => `${c.title}: ${c.format ? c.format(row[c.key]!, row) : String(row[c.key] ?? '')}`)\n    .join(', ');\n\n  return (\n    <Animated.View\n      accessible\n      accessibilityLabel={label}\n      style={[\n        styles.row,\n        {\n          borderBottomColor: colors.border,\n          borderBottomWidth: last ? 0 : StyleSheet.hairlineWidth,\n        },\n        motion,\n      ]}\n    >\n      {columns.map((c) => {\n        const v = row[c.key];\n        const text = c.format ? c.format(v!, row) : String(v ?? '');\n        return (\n          <Text\n            key={c.key}\n            numberOfLines={1}\n            style={[\n              styles.cell,\n              { flex: c.flex ?? 1 },\n              c.align === 'right' && styles.textRight,\n              {\n                color: c.key === sortKey ? colors.text : colors.textMuted,\n                fontSize: font.size.sm,\n                fontWeight: c.key === sortKey ? font.weight.semibold : font.weight.regular,\n                fontVariant: ['tabular-nums'],\n              },\n            ]}\n          >\n            {text}\n          </Text>\n        );\n      })}\n    </Animated.View>\n  );\n}\n\nfunction Arrow({ on, up, reduced }: { on: boolean; up: boolean; reduced: boolean }) {\n  const { colors } = useKinetikTheme();\n  const turn = useSharedValue(up ? 1 : 0);\n  const shown = useSharedValue(on ? 1 : 0);\n  useEffect(() => {\n    turn.set(withSpring(up ? 1 : 0, spring('snappy', reduced)));\n    shown.set(withTiming(on ? 1 : 0.25, timing('quick', reduced)));\n  }, [up, on, reduced, turn, shown]);\n  const motion = useAnimatedStyle(() => ({\n    opacity: shown.get(),\n    transform: [{ rotate: `${turn.get() * 180}deg` }],\n  }));\n  return (\n    <Animated.View style={[styles.arrow, motion]}>\n      <View style={[styles.stroke, styles.l, { backgroundColor: colors.text }]} />\n      <View style={[styles.stroke, styles.r, { backgroundColor: colors.text }]} />\n    </Animated.View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  root: { borderWidth: 1, overflow: 'hidden' },\n  head: { flexDirection: 'row', borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 8 },\n  headCell: {\n    height: HEAD,\n    flexDirection: 'row',\n    alignItems: 'center',\n    gap: 4,\n    paddingHorizontal: 6,\n  },\n  right: { justifyContent: 'flex-end' },\n  row: {\n    position: 'absolute',\n    left: 0,\n    right: 0,\n    top: 0,\n    height: ROW,\n    flexDirection: 'row',\n    alignItems: 'center',\n    paddingHorizontal: 8,\n  },\n  cell: { paddingHorizontal: 6 },\n  textRight: { textAlign: 'right' },\n  arrow: { width: 10, height: 10 },\n  stroke: { position: 'absolute', top: 4.5, width: 5.5, height: 1.5, borderRadius: 1 },\n  l: { left: 0.6, transform: [{ rotate: '40deg' }] },\n  r: { right: 0.6, transform: [{ rotate: '-40deg' }] },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "Plain views; each row moves by one transform on one shared value, so a sort never lays the table out again. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 18,
+          "baselineMs": 18,
+          "jankyPercent": 2.29,
+          "atRest": "idle",
+          "memoryMb": 142
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Rows jump to their new places and the arrow turns at once.",
+      "screenReader": "Headers are buttons that read their sort state; each row reads every column's title and value.",
+      "touchTarget": "Headers are 44 pt tall and as wide as their column."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { SortTable } from '@/components/kinetik/sort-table';\n\n<SortTable\n  columns={[\n    { key: 'city', title: 'City', flex: 1.6 },\n    { key: 'orders', title: 'Orders', align: 'right' },\n    { key: 'growth', title: 'Growth', align: 'right', format: (v) => `${v}%` },\n  ]}\n  rows={[\n    { id: 'lis', city: 'Lisbon', orders: 1840, growth: 12 },\n    { id: 'ber', city: 'Berlin', orders: 3120, growth: 4 },\n  ]}\n  initialSort={{ key: 'orders', dir: 'desc' }}\n/>;\n```\n\n## When to use\n\n- A short table of records people compare by different measures: cities, plans, players, products.\n- Places where watching rows move tells people what changed when they re-sort.\n\n## When not to use\n\n- Long lists (more than about 50 rows). Every row is laid out at once; use a virtualised list with a sort menu.\n- Wide tables with many columns on a phone. Show fewer columns or a card per record.\n\n## Notes\n\n- A new column sorts numbers high to low and text A to Z; tapping it again flips the direction. Ties keep their original order.\n- Rows keep their identity (`id`) and spring from their old place to their new one.\n- Headers read their sort state (\"Orders, sorted descending\") and every row reads each column's title and value.\n- With reduced motion rows jump to their new places.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add sort-table`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

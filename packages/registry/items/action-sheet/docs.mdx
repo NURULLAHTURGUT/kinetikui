@@ -1,0 +1,32 @@
+## Usage
+
+```tsx
+import { ActionSheet } from '@/components/kinetik/action-sheet';
+
+<ActionSheet
+  visible={open}
+  onClose={() => setOpen(false)}
+  title="Sunset at the pier.jpg"
+  actions={[
+    { label: 'Share', onPress: share },
+    { label: 'Delete photo', tone: 'danger', onPress: remove },
+  ]}
+/>;
+```
+
+## When to use
+
+- A short list of things to do with one object: a photo, a message, a file.
+- Phone layouts, where the actions are easiest to reach at the bottom edge.
+
+## When not to use
+
+- A single confirmation. Use Pop Dialog.
+- Menus attached to a button on wide screens. Use Pop Menu.
+
+## Notes
+
+- A chosen action runs after the sheet has closed, so navigation or a dialog it opens never overlaps the exit.
+- Drag the sheet down past about a quarter of its height, or flick it, to close it; a shorter drag springs back.
+- The bottom padding follows the safe area when the app has a `SafeAreaProvider` (Expo Router adds one).
+- With reduced motion it appears and disappears without sliding.

@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "theme-switch",
+  "title": "Theme Switch",
+  "description": "A light and dark switch drawn as a sun whose rays turn and draw in while a shadow slides across to leave a moon.",
+  "category": "interaction",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["theme-switch.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "A 28 pt Skia canvas driven by one shared value: two circles in a layer and one path of eight rays. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 22,
+        "p90Ms": 24,
+        "baselineMs": 17,
+        "jankyPercent": 0.39,
+        "atRest": "idle",
+        "memoryMb": 153,
+        "notes": "Steady 22 ms on this emulator for a small Skia canvas; the same run measured Reveal Field (also Skia) at 17 ms."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The icon changes at once.",
+    "screenReader": "A switch named \"Dark mode\" (or by its label) that is on in dark mode.",
+    "touchTarget": "48 by 48 pt, or the whole row with a label."
+  }
+}

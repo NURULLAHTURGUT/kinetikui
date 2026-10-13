@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "avatar-stack",
+  "type": "registry:item",
+  "title": "Avatar Stack",
+  "description": "Overlapping avatars that fan out one after another with names beneath, then tuck back in behind the first.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/avatar-stack.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/avatar-stack.tsx",
+      "content": "import { useEffect, useState } from 'react';\nimport {\n  Image,\n  Pressable,\n  StyleSheet,\n  Text,\n  View,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  type SharedValue,\n} from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type Person = {\n  id: string;\n  name: string;\n  /** A photo URL. Without one, the initials are shown. */\n  image?: string;\n};\n\nexport type AvatarStackProps = {\n  people: readonly Person[];\n  /** Faces shown while stacked; the rest are counted in a \"+n\" chip. Defaults to 4. */\n  max?: number;\n  /** Faces shown once spread out. Defaults to 6. */\n  maxOpen?: number;\n  /** Avatar diameter. Defaults to 40. */\n  size?: number;\n  /** The colour around each avatar. Defaults to the theme background. */\n  ringColor?: string;\n  /** A light tap when it opens or closes. Defaults to true. */\n  haptics?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst OVERLAP = 0.62;\nconst GAP = 10;\n\n/** One or two initials from a name. */\nexport function initials(name: string): string {\n  const parts = name.trim().split(/\\s+/).filter(Boolean);\n  const first = parts[0]?.[0] ?? '';\n  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? '') : '';\n  return (first + last).toUpperCase();\n}\n\n/**\n * Overlapping avatars for a team or a set of people. Tap the stack and the\n * faces fan out one after another with their first names beneath; tap again\n * and they tuck back in behind the first.\n */\nexport function AvatarStack({\n  people,\n  max = 4,\n  maxOpen = 6,\n  size = 40,\n  ringColor,\n  haptics = true,\n  testID,\n  style,\n}: AvatarStackProps) {\n  const { colors } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const [open, setOpen] = useState(false);\n  const p = useSharedValue(0);\n\n  useEffect(() => {\n    p.set(withSpring(open ? 1 : 0, spring('smooth', reduced)));\n  }, [open, reduced, p]);\n\n  const shownClosed = Math.min(people.length, max);\n  // Spread out, it never grows wider than the space it has, chip included.\n  const [room, setRoom] = useState(Infinity);\n  const fits = Math.floor((room + GAP) / (size + GAP));\n  const wanted = Math.min(people.length, Math.max(max, maxOpen));\n  const shownOpen = Math.max(\n    shownClosed,\n    wanted < people.length || wanted > fits ? Math.min(wanted, fits - 1) : wanted,\n  );\n  const extraClosed = people.length - shownClosed;\n  const extraOpen = people.length - shownOpen;\n  const visible = people.slice(0, shownOpen);\n  const step = size * OVERLAP;\n  const closedW = (shownClosed - 1) * step + size + (extraClosed > 0 ? step : 0);\n  const openW = (shownOpen - 1) * (size + GAP) + size + (extraOpen > 0 ? size + GAP : 0);\n\n  const box = useAnimatedStyle(() => ({\n    width: closedW + (openW - closedW) * p.get(),\n    height: size + p.get() * 22,\n  }));\n\n  const names = people.map((x) => x.name);\n  const label = `${people.length} people: ${names.slice(0, 6).join(', ')}${people.length > 6 ? ` and ${people.length - 6} more` : ''}`;\n\n  return (\n    <View style={style} onLayout={(e) => setRoom(e.nativeEvent.layout.width)}>\n      <Pressable\n        testID={testID}\n        onPress={() => {\n          haptic('tap');\n          setOpen((o) => !o);\n        }}\n        accessibilityRole=\"button\"\n        accessibilityLabel={label}\n        accessibilityState={{ expanded: open }}\n        accessibilityHint={open ? 'Stacks the faces' : 'Spreads the faces out'}\n        style={styles.hit}\n      >\n        <Animated.View style={box}>\n          {visible.map((person, i) => (\n            <Face\n              key={person.id}\n              person={person}\n              index={i}\n              size={size}\n              p={p}\n              stackedOut={i >= shownClosed}\n              ring={ringColor ?? colors.background}\n            />\n          ))}\n          {extraClosed > 0 || extraOpen > 0 ? (\n            <More\n              closed={extraClosed}\n              open={extraOpen}\n              closedX={shownClosed * step}\n              openX={shownOpen * (size + GAP)}\n              size={size}\n              p={p}\n              ring={ringColor ?? colors.background}\n            />\n          ) : null}\n        </Animated.View>\n      </Pressable>\n    </View>\n  );\n}\n\ntype FaceProps = {\n  person: Person;\n  index: number;\n  size: number;\n  p: SharedValue<number>;\n  stackedOut: boolean;\n  ring: string;\n};\n\nfunction Face({ person, index, size, p, stackedOut, ring }: FaceProps) {\n  const { colors, font } = useKinetikTheme();\n  // Each face follows the stack's progress a beat after the one before it.\n  const lag = Math.min(0.4, index * 0.06);\n  const motion = useAnimatedStyle(() => {\n    const t = Math.min(1, Math.max(0, (p.get() - lag) / (1 - lag)));\n    const closed = index * size * OVERLAP;\n    const opened = index * (size + GAP);\n    return {\n      opacity: stackedOut ? t : 1,\n      zIndex: 100 - index,\n      transform: [\n        { translateX: closed + (opened - closed) * t },\n        { scale: stackedOut ? 0.7 + t * 0.3 : 1 },\n      ],\n    };\n  });\n  const name = useAnimatedStyle(() => ({\n    opacity: Math.max(0, p.get() * 1.6 - 0.6),\n    transform: [{ translateY: (1 - p.get()) * -4 }],\n  }));\n  const palette = [\n    { bg: colors.azureSoft, fg: colors.azure },\n    { bg: colors.emberSoft, fg: colors.text },\n    { bg: colors.surfaceRaised, fg: colors.textMuted },\n  ];\n  const tone = palette[index % palette.length]!;\n\n  return (\n    <Animated.View style={[styles.face, { width: size }, motion]} pointerEvents=\"none\">\n      <View\n        style={[\n          styles.circle,\n          {\n            width: size,\n            height: size,\n            borderRadius: size / 2,\n            borderColor: ring,\n            // Opaque underneath, so overlapping faces never show through each other.\n            backgroundColor: ring,\n          },\n        ]}\n      >\n        <View style={[StyleSheet.absoluteFill, { backgroundColor: tone.bg }]} />\n        {person.image ? (\n          <Image\n            source={{ uri: person.image }}\n            style={{ width: size - 4, height: size - 4, borderRadius: (size - 4) / 2 }}\n            accessibilityIgnoresInvertColors\n          />\n        ) : (\n          <Text style={{ color: tone.fg, fontSize: size * 0.36, fontWeight: font.weight.semibold }}>\n            {initials(person.name)}\n          </Text>\n        )}\n      </View>\n      <Animated.Text\n        numberOfLines={1}\n        style={[\n          styles.name,\n          { width: size + GAP, color: colors.textMuted, fontSize: font.size.xs },\n          name,\n        ]}\n      >\n        {person.name.split(' ')[0]}\n      </Animated.Text>\n    </Animated.View>\n  );\n}\n\ntype MoreProps = {\n  closed: number;\n  open: number;\n  closedX: number;\n  openX: number;\n  size: number;\n  p: SharedValue<number>;\n  ring: string;\n};\n\nfunction More({ closed, open, closedX, openX, size, p, ring }: MoreProps) {\n  const { colors, font } = useKinetikTheme();\n  const motion = useAnimatedStyle(() => {\n    const t = p.get();\n    const count = t > 0.5 ? open : closed;\n    return {\n      opacity: count > 0 ? 1 : Math.max(0, 1 - t * 2),\n      transform: [{ translateX: closedX + (openX - closedX) * t }],\n    };\n  });\n  const closedText = useAnimatedStyle(() => ({ opacity: Math.max(0, 1 - p.get() * 2) }));\n  const openText = useAnimatedStyle(() => ({ opacity: Math.max(0, p.get() * 2 - 1) }));\n  return (\n    <Animated.View style={[styles.face, { width: size }, motion]} pointerEvents=\"none\">\n      <View\n        style={[\n          styles.circle,\n          {\n            width: size,\n            height: size,\n            borderRadius: size / 2,\n            borderColor: ring,\n            backgroundColor: colors.surfaceRaised,\n          },\n        ]}\n      >\n        {[\n          { n: closed, style: closedText },\n          { n: open, style: openText },\n        ].map(({ n, style }, i) =>\n          n > 0 ? (\n            <Animated.Text\n              key={i}\n              style={[\n                styles.count,\n                {\n                  color: colors.textMuted,\n                  fontSize: size * 0.32,\n                  fontWeight: font.weight.semibold,\n                },\n                style,\n              ]}\n            >\n              +{n}\n            </Animated.Text>\n          ) : null,\n        )}\n      </View>\n    </Animated.View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  hit: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', paddingVertical: 2 },\n  face: { position: 'absolute', left: 0, top: 0, alignItems: 'center' },\n  circle: { borderWidth: 2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },\n  name: { textAlign: 'center', marginTop: 4 },\n  count: { position: 'absolute' },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "Plain views and images; every face reads one shared value for its offset and name. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 23,
+          "baselineMs": 18,
+          "jankyPercent": 3.66,
+          "atRest": "idle",
+          "memoryMb": 145
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The faces spread and stack at once.",
+      "screenReader": "One button that names everyone and says whether the stack is expanded.",
+      "touchTarget": "The whole stack is the target, at least 44 pt tall."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { AvatarStack } from '@/components/kinetik/avatar-stack';\n\n<AvatarStack\n  people={[\n    { id: 'a', name: 'Maya Lindqvist', image: mayaPhoto },\n    { id: 'b', name: 'Leo Okafor' },\n    { id: 'c', name: 'Ines Duarte' },\n  ]}\n  max={4}\n/>;\n```\n\n## When to use\n\n- Showing who is on a project, in a chat or at an event, in the space of one line.\n- Places where people sometimes want the names but not always.\n\n## When not to use\n\n- A full member list with roles and actions. Use a list screen.\n- A single person. Show one avatar with the name beside it.\n\n## Notes\n\n- Stacked, it shows `max` faces and a \"+n\" chip; spread out, it shows up to `maxOpen` faces with first names beneath.\n- Faces without an `image` show one or two initials. Set `ringColor` to the colour behind the stack so the overlaps look cut out.\n- It is one button for screen readers that names everyone (up to six, then \"and n more\") and says whether it is expanded.\n- With reduced motion the faces move at once.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add avatar-stack`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

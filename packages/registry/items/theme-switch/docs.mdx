@@ -1,0 +1,26 @@
+## Usage
+
+```tsx
+import { ThemeSwitch } from '@/components/kinetik/theme-switch';
+
+<ThemeSwitch value={scheme} onValueChange={setScheme} label="Dark mode" />;
+
+// Pass the same value to the provider to switch the whole app:
+<KinetikProvider scheme={scheme}>{app}</KinetikProvider>;
+```
+
+## When to use
+
+- A settings row or a header button that switches the app between light and dark.
+- Anywhere a plain switch would need an extra icon to explain itself.
+
+## When not to use
+
+- Three choices (light, dark, follow the system). Use Glide Radio or a segmented control.
+- Settings unrelated to appearance. Use Pulse Toggle.
+
+## Notes
+
+- It is a switch for screen readers: "Dark mode", on or off. With `label` the words sit beside the icon and name it.
+- The icon is one small Skia canvas: the crescent is a circle cut out of the core in an offscreen layer.
+- With reduced motion the sun becomes the moon at once.

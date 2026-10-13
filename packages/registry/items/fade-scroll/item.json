@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "fade-scroll",
+  "title": "Fade Scroll",
+  "description": "A scroll view whose edges fade only where there is more to see, with a slim indicator that slips away.",
+  "category": "disclosure",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["fade-scroll.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "A native scroll view with two gradient views and a bar that read the scroll offset on the UI thread. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "baselineMs": 18,
+        "jankyPercent": 3.76,
+        "atRest": "idle",
+        "memoryMb": 135
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The animated indicator is replaced by the platform's own.",
+    "screenReader": "A plain scroll view named by accessibilityLabel; the fades are decoration.",
+    "touchTarget": "Not interactive itself; its content keeps its own targets."
+  }
+}

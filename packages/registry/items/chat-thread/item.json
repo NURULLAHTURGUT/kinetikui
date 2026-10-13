@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "chat-thread",
+  "title": "Chat Thread",
+  "description": "Grouped chat bubbles: new messages rise in from their side, typing dots wave and Seen fades in.",
+  "category": "data",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["chat-thread.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views; each new bubble runs one spring when it arrives. Only the typing dots loop, and only while shown.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "baselineMs": 18,
+        "jankyPercent": 1.69,
+        "atRest": "idle",
+        "memoryMb": 140
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "New messages appear without rising and the typing dots hold still.",
+    "screenReader": "A polite live region; each bubble reads the sender, the text and the time.",
+    "touchTarget": "Not interactive."
+  }
+}

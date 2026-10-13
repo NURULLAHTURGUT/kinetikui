@@ -1,0 +1,32 @@
+## Usage
+
+```tsx
+import { MorphSelect } from '@/components/kinetik/morph-select';
+
+<MorphSelect
+  label="Time zone"
+  options={[
+    { value: 'lis', label: 'Lisbon', description: 'UTC+0' },
+    { value: 'ist', label: 'Istanbul', description: 'UTC+3' },
+  ]}
+  value={zone}
+  onValueChange={setZone}
+/>;
+```
+
+## When to use
+
+- One choice from a list of about four to twenty options in a form: a country, a time zone, a size.
+- Places where the options need a second line of detail.
+
+## When not to use
+
+- Two to five options people should compare at a glance. Use Choice Cards or a segmented control.
+- Long lists that need search. Use a searchable picker screen.
+
+## Notes
+
+- The trigger is measured and the panel grows out of it in its own modal, so it floats above everything and Back or a tap outside closes it.
+- The panel opens upwards when there is no room below.
+- Past `maxVisible` rows the list scrolls. Disabled options stay visible but cannot be chosen.
+- With reduced motion the list opens and closes at once.

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "split-pane",
+  "type": "registry:item",
+  "title": "Split Pane",
+  "description": "Two panes with a handle between them: drag to trade space, let go and it springs to the nearest stop.",
+  "categories": [
+    "disclosure"
+  ],
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/split-pane.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/split-pane.tsx",
+      "content": "import { useEffect, useState, type ReactNode } from 'react';\nimport {\n  StyleSheet,\n  View,\n  type AccessibilityActionEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport { Gesture, GestureDetector } from 'react-native-gesture-handler';\nimport Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget } from '../../lib/kinetik/tokens/tokens';\n\nexport type SplitPaneProps = {\n  /** The top pane (or the left one when horizontal). */\n  first: ReactNode;\n  second: ReactNode;\n  /** \"vertical\" stacks the panes; \"horizontal\" puts them side by side. Defaults to \"vertical\". */\n  direction?: 'vertical' | 'horizontal';\n  /** Share of the space the first pane starts with. Defaults to 0.5. */\n  initial?: number;\n  /** Shares the divider settles on when let go. Defaults to [0.25, 0.5, 0.75]. */\n  snapPoints?: readonly number[];\n  /** No pane gets smaller than this many points. Defaults to 56. */\n  minSize?: number;\n  onChange?: (share: number) => void;\n  /** A tick when the divider settles. Defaults to true. */\n  haptics?: boolean;\n  /** Names the divider for screen readers. Defaults to \"Resize panes\". */\n  accessibilityLabel?: string;\n  testID?: string;\n  /** Needs a fixed height when vertical (or width when horizontal). */\n  style?: StyleProp<ViewStyle>;\n};\n\nconst GAP = 12;\n\n/**\n * Two panes with a divider between them. Drag the handle and the panes trade\n * space under your finger; let go and the divider springs to the nearest\n * resting point, taking the flick into account. The handle grows while held.\n */\nexport function SplitPane({\n  first,\n  second,\n  direction = 'vertical',\n  initial = 0.5,\n  snapPoints = [0.25, 0.5, 0.75],\n  minSize = 56,\n  onChange,\n  haptics = true,\n  accessibilityLabel = 'Resize panes',\n  testID,\n  style,\n}: SplitPaneProps) {\n  const { colors, radius } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const vertical = direction === 'vertical';\n  const [size, setSize] = useState(0);\n  const [share, setShare] = useState(initial);\n  const total = useSharedValue(0);\n  const at = useSharedValue(initial);\n  const start = useSharedValue(initial);\n  const held = useSharedValue(0);\n  const points = [...snapPoints].sort((a, b) => a - b);\n\n  useEffect(() => {\n    total.set(Math.max(0, size - GAP));\n  }, [size, total]);\n\n  const settle = (next: number) => {\n    setShare(next);\n    haptic('tick');\n    onChange?.(next);\n  };\n\n  const pan = Gesture.Pan()\n    .withTestId('split-pane')\n    .minDistance(0)\n    .onBegin(() => {\n      start.set(at.get());\n      held.set(withSpring(1, spring('snappy', reduced)));\n    })\n    .onUpdate((e) => {\n      const t = total.get();\n      if (t === 0) return;\n      const lo = Math.min(0.5, minSize / t);\n      const d = (vertical ? e.translationY : e.translationX) / t;\n      at.set(Math.max(lo, Math.min(1 - lo, start.get() + d)));\n    })\n    .onFinalize((e) => {\n      held.set(withSpring(0, spring('smooth', reduced)));\n      const t = total.get();\n      if (t === 0) return;\n      // Where a flick would carry it, then the nearest resting point.\n      const v = (vertical ? e.velocityY : e.velocityX) / t;\n      const aim = at.get() + v * 0.12;\n      let best = points[0] ?? 0.5;\n      for (const p of points) if (Math.abs(p - aim) < Math.abs(best - aim)) best = p;\n      at.set(reduced ? best : withSpring(best, spring('smooth', false, v)));\n      scheduleOnRN(settle, best);\n    });\n\n  const nudge = (e: AccessibilityActionEvent) => {\n    const up = e.nativeEvent.actionName === 'increment';\n    const next = up\n      ? points.find((p) => p > share + 0.001)\n      : [...points].reverse().find((p) => p < share - 0.001);\n    if (next === undefined) return;\n    at.set(reduced ? next : withSpring(next, spring('smooth')));\n    settle(next);\n  };\n\n  const firstStyle = useAnimatedStyle(() => {\n    const s = at.get() * total.get();\n    return vertical ? { height: s } : { width: s };\n  });\n  const handle = useAnimatedStyle(() => {\n    const k = held.get();\n    return vertical\n      ? { width: 36 + k * 20, opacity: 0.6 + k * 0.4 }\n      : { height: 36 + k * 20, opacity: 0.6 + k * 0.4 };\n  });\n\n  return (\n    <View\n      testID={testID}\n      style={[vertical ? styles.column : styles.row, style]}\n      onLayout={(e) => setSize(vertical ? e.nativeEvent.layout.height : e.nativeEvent.layout.width)}\n    >\n      <Animated.View style={[styles.pane, firstStyle]}>{first}</Animated.View>\n      <GestureDetector gesture={pan}>\n        <View\n          collapsable={false}\n          accessible\n          accessibilityRole=\"adjustable\"\n          accessibilityLabel={accessibilityLabel}\n          accessibilityValue={{ text: `${Math.round(share * 100)} percent` }}\n          accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}\n          onAccessibilityAction={nudge}\n          style={vertical ? styles.dividerY : styles.dividerX}\n        >\n          <Animated.View\n            style={[\n              vertical ? styles.handleY : styles.handleX,\n              { backgroundColor: colors.borderStrong, borderRadius: radius.pill },\n              handle,\n            ]}\n          />\n        </View>\n      </GestureDetector>\n      <View style={[styles.pane, styles.fill]}>{second}</View>\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  column: { flexDirection: 'column' },\n  row: { flexDirection: 'row' },\n  pane: { overflow: 'hidden' },\n  fill: { flex: 1 },\n  // The divider is a full 44 pt target that overlaps the panes, but only takes GAP of space.\n  dividerY: {\n    height: minTouchTarget,\n    marginVertical: -(minTouchTarget - GAP) / 2,\n    alignItems: 'center',\n    justifyContent: 'center',\n    zIndex: 1,\n  },\n  dividerX: {\n    width: minTouchTarget,\n    marginHorizontal: -(minTouchTarget - GAP) / 2,\n    alignItems: 'center',\n    justifyContent: 'center',\n    zIndex: 1,\n  },\n  handleY: { height: 4 },\n  handleX: { width: 4 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "disclosure",
+    "web": "live",
+    "perf": {
+      "budget": "Plain views; the first pane's size and the handle read two shared values, so dragging lays out only the two panes. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 18,
+          "baselineMs": 18,
+          "jankyPercent": 1.43,
+          "atRest": "idle",
+          "memoryMb": 142
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The divider jumps to its resting point and the handle does not grow.",
+      "screenReader": "The divider is an adjustable element with the first pane's share as a percentage, stepping between resting points.",
+      "touchTarget": "The divider is a full-width target 44 pt tall."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { SplitPane } from '@/components/kinetik/split-pane';\n\n<SplitPane style={{ height: 520 }} first={<Map />} second={<PlaceList />} />;\n```\n\n## When to use\n\n- Two related views people balance against each other: a map and a list, a preview and its settings, a chat and a document.\n- Tablet layouts side by side with `direction=\"horizontal\"`.\n\n## When not to use\n\n- A sheet that slides over content. Use Morph Sheet or Action Sheet.\n- Content people only switch between. Use Scroll Tabs.\n\n## Notes\n\n- The divider follows the finger, then springs to the nearest of `snapPoints`, carrying the flick's speed into the spring.\n- `minSize` keeps either pane from vanishing. Give the component a fixed height (or width when horizontal).\n- The divider is an adjustable element: screen readers step it between the resting points.\n- It is a 44 pt target that overlaps the panes, while only 12 pt of space separates them.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add split-pane`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

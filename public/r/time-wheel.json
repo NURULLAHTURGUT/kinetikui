@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "time-wheel",
+  "type": "registry:item",
+  "title": "Time Wheel",
+  "description": "Wheels for a time of day: rows tilt away like a drum, each wheel snaps row by row with a tick.",
+  "categories": [
+    "input"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/time-wheel.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/time-wheel.tsx",
+      "content": "import { useEffect, useRef } from 'react';\nimport {\n  StyleSheet,\n  Text,\n  View,\n  type AccessibilityActionEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  useAnimatedRef,\n  useAnimatedScrollHandler,\n  useAnimatedStyle,\n  useSharedValue,\n  type SharedValue,\n} from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type TimeValue = { hours: number; minutes: number };\n\nexport type TimeWheelProps = {\n  /** Hours 0–23 and minutes 0–59. */\n  value: TimeValue;\n  onChange: (value: TimeValue) => void;\n  /** Minutes step by this much. Defaults to 1. */\n  minuteStep?: number;\n  /** \"12h\" adds an AM/PM wheel. Defaults to \"24h\". */\n  hourCycle?: '12h' | '24h';\n  /** Names the picker for screen readers. Defaults to \"Time\". */\n  accessibilityLabel?: string;\n  /** A tick for every row that passes the middle. Defaults to true. */\n  haptics?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst ROW = 40;\nconst VISIBLE = 5;\nconst HEIGHT = ROW * VISIBLE;\nconst pad = (n: number) => String(n).padStart(2, '0');\n\n/**\n * Wheels for a time of day, like a drum seen side-on. Rows tilt away and fade\n * above and below the middle band, each wheel snaps row by row with a tick,\n * and the value is set when it comes to rest.\n */\nexport function TimeWheel({\n  value,\n  onChange,\n  minuteStep = 1,\n  hourCycle = '24h',\n  accessibilityLabel = 'Time',\n  haptics = true,\n  testID,\n  style,\n}: TimeWheelProps) {\n  const { colors, font, radius } = useKinetikTheme();\n  const twelve = hourCycle === '12h';\n  const step = Math.max(1, Math.min(30, Math.floor(minuteStep)));\n\n  const hours = twelve\n    ? Array.from({ length: 12 }, (_, i) => (i === 0 ? 12 : i))\n    : Array.from({ length: 24 }, (_, i) => i);\n  const minutes = Array.from({ length: Math.ceil(60 / step) }, (_, i) => i * step);\n  const pm = value.hours >= 12;\n  const hourIndex = twelve ? value.hours % 12 : value.hours;\n  const minuteIndex = Math.min(minutes.length - 1, Math.round(value.minutes / step));\n\n  const setHour = (i: number) => {\n    const h = twelve ? (i % 12) + (pm ? 12 : 0) : i;\n    if (h !== value.hours) onChange({ hours: h, minutes: value.minutes });\n  };\n  const setMinute = (i: number) => {\n    const m = minutes[i] ?? 0;\n    if (m !== value.minutes) onChange({ hours: value.hours, minutes: m });\n  };\n  const setHalf = (i: number) => {\n    const next = (value.hours % 12) + (i === 1 ? 12 : 0);\n    if (next !== value.hours) onChange({ hours: next, minutes: value.minutes });\n  };\n\n  return (\n    <View testID={testID} accessibilityLabel={accessibilityLabel} style={[styles.root, style]}>\n      <View\n        pointerEvents=\"none\"\n        style={[styles.band, { backgroundColor: colors.surfaceRaised, borderRadius: radius.md }]}\n      />\n      <Wheel\n        label={`${accessibilityLabel}, hours`}\n        testID={testID ? `${testID}-hours` : undefined}\n        items={hours.map((h) => (twelve ? String(h) : pad(h)))}\n        index={hourIndex}\n        onIndex={setHour}\n        haptics={haptics}\n      />\n      <Text\n        style={[\n          styles.colon,\n          { color: colors.text, fontSize: font.size.xl, fontWeight: font.weight.semibold },\n        ]}\n        accessibilityElementsHidden\n        importantForAccessibility=\"no\"\n      >\n        :\n      </Text>\n      <Wheel\n        label={`${accessibilityLabel}, minutes`}\n        testID={testID ? `${testID}-minutes` : undefined}\n        items={minutes.map(pad)}\n        index={minuteIndex}\n        onIndex={setMinute}\n        haptics={haptics}\n      />\n      {twelve ? (\n        <Wheel\n          label={`${accessibilityLabel}, AM or PM`}\n          items={['AM', 'PM']}\n          index={pm ? 1 : 0}\n          onIndex={setHalf}\n          haptics={haptics}\n          narrow\n        />\n      ) : null}\n    </View>\n  );\n}\n\ntype WheelProps = {\n  label: string;\n  testID?: string;\n  items: readonly string[];\n  index: number;\n  onIndex: (index: number) => void;\n  haptics: boolean;\n  narrow?: boolean;\n};\n\nfunction Wheel({ label, items, index, onIndex, haptics, narrow, testID }: WheelProps) {\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const ref = useAnimatedRef<Animated.ScrollView>();\n  const y = useSharedValue(index * ROW);\n  const passing = useSharedValue(index);\n  const dragging = useSharedValue(false);\n  const last = items.length - 1;\n  // The first scroll to the value jumps (contentOffset on native; the web ignores\n  // that prop, so it is set again here). Later ones animate.\n  const mounted = useRef(false);\n\n  useEffect(() => {\n    if (!mounted.current) {\n      mounted.current = true;\n      ref.current?.scrollTo({ y: index * ROW, animated: false });\n      return;\n    }\n    if (dragging.get()) return;\n    if (Math.round(y.get() / ROW) === index) return;\n    ref.current?.scrollTo({ y: index * ROW, animated: !reduced });\n  }, [index, reduced, ref, y, dragging]);\n\n  const settle = (i: number) => onIndex(Math.max(0, Math.min(last, i)));\n\n  const onScroll = useAnimatedScrollHandler({\n    onScroll: (e) => {\n      y.set(e.contentOffset.y);\n      const i = Math.max(0, Math.min(last, Math.round(e.contentOffset.y / ROW)));\n      if (i !== passing.get()) {\n        passing.set(i);\n        if (dragging.get()) scheduleOnRN(haptic, 'tick');\n      }\n    },\n    onBeginDrag: () => {\n      dragging.set(true);\n    },\n    onEndDrag: (e) => {\n      // Without a fling there is no momentum phase, so the wheel settles here.\n      if (Math.abs(e.velocity?.y ?? 0) < 0.05) {\n        dragging.set(false);\n        scheduleOnRN(settle, Math.round(e.contentOffset.y / ROW));\n      }\n    },\n    onMomentumEnd: (e) => {\n      dragging.set(false);\n      scheduleOnRN(settle, Math.round(e.contentOffset.y / ROW));\n    },\n  });\n\n  const nudge = (e: AccessibilityActionEvent) => {\n    const next = index + (e.nativeEvent.actionName === 'increment' ? 1 : -1);\n    if (next >= 0 && next <= last) onIndex(next);\n  };\n\n  return (\n    <View\n      accessible\n      accessibilityRole=\"adjustable\"\n      accessibilityLabel={label}\n      accessibilityValue={{ text: items[index] ?? '' }}\n      accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}\n      onAccessibilityAction={nudge}\n      style={[styles.wheel, narrow && styles.narrow]}\n    >\n      <Animated.ScrollView\n        ref={ref}\n        onScroll={onScroll}\n        scrollEventThrottle={16}\n        snapToInterval={ROW}\n        decelerationRate=\"fast\"\n        showsVerticalScrollIndicator={false}\n        contentOffset={{ x: 0, y: index * ROW }}\n        contentContainerStyle={styles.content}\n        nestedScrollEnabled\n        testID={testID}\n      >\n        {items.map((item, i) => (\n          <Row key={item} text={item} index={i} y={y} reduced={reduced} />\n        ))}\n      </Animated.ScrollView>\n    </View>\n  );\n}\n\nfunction Row({\n  text,\n  index,\n  y,\n  reduced,\n}: {\n  text: string;\n  index: number;\n  y: SharedValue<number>;\n  reduced: boolean;\n}) {\n  const { colors, font } = useKinetikTheme();\n  const motion = useAnimatedStyle(() => {\n    const d = (index * ROW - y.get()) / ROW;\n    const a = Math.min(Math.abs(d), 3);\n    return {\n      opacity: 1 - a * 0.3,\n      transform: reduced\n        ? []\n        : [\n            { perspective: 500 },\n            { rotateX: `${Math.max(-70, Math.min(70, -d * 24))}deg` },\n            { scale: 1 - a * 0.05 },\n          ],\n    };\n  });\n  return (\n    <Animated.View style={[styles.row, motion]}>\n      <Text\n        style={{\n          color: colors.text,\n          fontSize: font.size.xl,\n          fontWeight: font.weight.medium,\n          fontVariant: ['tabular-nums'],\n        }}\n      >\n        {text}\n      </Text>\n    </Animated.View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  root: {\n    height: HEIGHT,\n    flexDirection: 'row',\n    justifyContent: 'center',\n    alignItems: 'center',\n    alignSelf: 'center',\n  },\n  band: { position: 'absolute', left: 0, right: 0, top: (HEIGHT - ROW) / 2, height: ROW },\n  wheel: { width: 72, height: HEIGHT },\n  narrow: { width: 64 },\n  content: { paddingVertical: (HEIGHT - ROW) / 2 },\n  row: { height: ROW, alignItems: 'center', justifyContent: 'center' },\n  colon: { marginTop: -3 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "input",
+    "web": "live",
+    "perf": {
+      "budget": "Native scroll views; each row reads its wheel's scroll offset in one animated style. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 18,
+          "baselineMs": 18,
+          "jankyPercent": 10.59,
+          "atRest": "idle",
+          "memoryMb": 145,
+          "notes": "Janky frames come from the native fling and snap of the scroll views; rows stay at 17 ms median."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Rows stay flat and changes from outside jump instead of scrolling.",
+      "screenReader": "Each wheel is an adjustable element named after its part of the time, with the shown value.",
+      "touchTarget": "Each wheel is 72 by 200 pt."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { TimeWheel } from '@/components/kinetik/time-wheel';\n\n<TimeWheel\n  accessibilityLabel=\"Alarm\"\n  value={time} // { hours: 7, minutes: 30 }\n  onChange={setTime}\n  minuteStep={5}\n/>;\n```\n\n## When to use\n\n- Setting a time of day: an alarm, a reminder, opening hours, a delivery window.\n- Places where a thumb is quicker than typing digits.\n\n## When not to use\n\n- Durations or countdown lengths beyond 24 hours. Use Roll Stepper or a number field.\n- Picking a date. Use Month Calendar.\n\n## Notes\n\n- `value.hours` is always 0–23, also with `hourCycle=\"12h\"`, which adds an AM/PM wheel.\n- Each wheel snaps row by row and ticks as rows pass the middle; the value is set when the wheel comes to rest.\n- Every wheel is an adjustable element: screen readers can swipe up and down to step it.\n- With reduced motion rows stay flat (no tilt) and programmatic changes jump instead of scrolling.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add time-wheel`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

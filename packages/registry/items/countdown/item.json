@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "countdown",
+  "title": "Countdown",
+  "description": "A countdown whose digits drop in as they change; at zero the tiles step back for a Live pill with a beating dot.",
+  "category": "feedback",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["countdown.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One timer per second re-renders a few text cells; each changed digit animates two texts. Once live, only the dot loops.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "baselineMs": 18,
+        "jankyPercent": 3.68,
+        "atRest": "animating",
+        "memoryMb": 148,
+        "notes": "Animating at rest: the seconds tick once a second. A finished countdown only loops the dot."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Digits change in place and the live dot holds still.",
+    "screenReader": "A timer that reads the time left in words, then the live label.",
+    "touchTarget": "Not interactive."
+  }
+}

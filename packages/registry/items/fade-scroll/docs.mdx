@@ -1,0 +1,25 @@
+## Usage
+
+```tsx
+import { FadeScroll } from '@/components/kinetik/fade-scroll';
+
+<FadeScroll style={{ height: 260 }} accessibilityLabel="Privacy summary">
+  {sections}
+</FadeScroll>;
+```
+
+## When to use
+
+- A scrolling area inside a screen, such as terms in a sheet, a list in a card or a row of chips, where people need a hint that there is more.
+- Places where a hard cut-off edge would look like the content ends there.
+
+## When not to use
+
+- The main scroll view of a screen. The screen edges already show that it scrolls.
+- Content on a busy background such as a photo. The fades need a flat colour to fade into.
+
+## Notes
+
+- An edge fade appears only when there is content beyond that edge, and grows over the first `fadeSize` points of scrolling.
+- Set `fadeColor` to the colour behind the scroll view (it defaults to the theme background). `#RRGGBB` colours work best.
+- The slim indicator shows while scrolling and slips away 0.7 s after it stops. With reduced motion the platform's own indicator is used instead.

@@ -1,0 +1,28 @@
+## Usage
+
+```tsx
+import { Countdown } from '@/components/kinetik/countdown';
+
+<Countdown
+  to={new Date('2026-11-02T17:00:00Z')}
+  accessibilityLabel="The keynote starts in"
+  onComplete={() => setLive(true)}
+/>;
+```
+
+## When to use
+
+- Launches, sales, live events and deadlines where the exact moment matters.
+- A waiting screen before something opens.
+
+## When not to use
+
+- Elapsed time, like a stopwatch or a call length. Count up instead.
+- Anything that could pressure people unfairly, such as fake scarcity timers.
+
+## Notes
+
+- It ticks on the second boundary, so the seconds change with the system clock; days appear only when the countdown starts a day or more away.
+- At zero the tiles give way to `liveLabel` with a beating dot, and `onComplete` is called once.
+- Screen readers read it as a timer, such as "Starts in 2 hours, 30 minutes", without seconds unless under a minute.
+- With reduced motion digits change in place and the dot does not beat.

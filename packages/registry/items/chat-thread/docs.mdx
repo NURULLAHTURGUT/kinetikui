@@ -1,0 +1,26 @@
+## Usage
+
+```tsx
+import { ChatThread } from '@/components/kinetik/chat-thread';
+
+<ScrollView>
+  <ChatThread messages={messages} typing={otherIsTyping} seen={read} name="Maya" />
+</ScrollView>;
+```
+
+## When to use
+
+- Conversations between two people: support chats, messages, comments on an order.
+- Assistant replies in a chat layout.
+
+## When not to use
+
+- Long threaded discussions with replies and reactions. Use a comment list.
+- A single notification. Use a toast or Notice Bar.
+
+## Notes
+
+- Consecutive messages from one side form a group: tucked corners on the sender's side, a tail on the last one, and the time under it.
+- Messages added after mount rise in from their side; the ones there at mount appear still.
+- The thread is a polite live region, and every bubble reads its sender, text and time. Typing reads as "Maya is typing".
+- Put it in your own `ScrollView` (or an inverted list for long threads).

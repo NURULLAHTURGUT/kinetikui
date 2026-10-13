@@ -1,0 +1,31 @@
+## Usage
+
+```tsx
+import { ScrollTabs } from '@/components/kinetik/scroll-tabs';
+
+<ScrollTabs
+  tabs={[
+    { key: 'all', title: 'All', content: <AllFeed /> },
+    { key: 'photos', title: 'Photos', content: <Photos /> },
+    { key: 'videos', title: 'Videos', content: <Videos /> },
+  ]}
+  onIndexChange={setIndex}
+/>;
+```
+
+## When to use
+
+- Sibling views of the same kind that people swipe between: feed filters, categories, inbox folders.
+- More tabs than fit across the screen; the strip scrolls and keeps the current tab in view.
+
+## When not to use
+
+- The app's main sections. Use a bottom tab bar (Dock Bar or Liquid Tabs).
+- Two or three options that filter one list in place. Use Filter Chips or a segmented control.
+
+## Notes
+
+- The underline follows the swipe frame by frame on the UI thread and stretches slightly halfway between tabs.
+- Only the current page is exposed to screen readers; tabs are `tab` elements in a `tablist`.
+- Every page is rendered; keep heavy content lazy inside it if there are many tabs.
+- With reduced motion a tab tap jumps straight to its page.

@@ -1,0 +1,29 @@
+## Usage
+
+```tsx
+import { TimeWheel } from '@/components/kinetik/time-wheel';
+
+<TimeWheel
+  accessibilityLabel="Alarm"
+  value={time} // { hours: 7, minutes: 30 }
+  onChange={setTime}
+  minuteStep={5}
+/>;
+```
+
+## When to use
+
+- Setting a time of day: an alarm, a reminder, opening hours, a delivery window.
+- Places where a thumb is quicker than typing digits.
+
+## When not to use
+
+- Durations or countdown lengths beyond 24 hours. Use Roll Stepper or a number field.
+- Picking a date. Use Month Calendar.
+
+## Notes
+
+- `value.hours` is always 0–23, also with `hourCycle="12h"`, which adds an AM/PM wheel.
+- Each wheel snaps row by row and ticks as rows pass the middle; the value is set when the wheel comes to rest.
+- Every wheel is an adjustable element: screen readers can swipe up and down to step it.
+- With reduced motion rows stay flat (no tilt) and programmatic changes jump instead of scrolling.

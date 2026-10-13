@@ -1,0 +1,66 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "side-drawer",
+  "type": "registry:item",
+  "title": "Side Drawer",
+  "description": "A navigation drawer that springs in from the side as its rows follow one by one; drag it back to close.",
+  "categories": [
+    "overlay"
+  ],
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-safe-area-context",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/side-drawer.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/side-drawer.tsx",
+      "content": "import { useContext, useEffect, useState, type ReactNode } from 'react';\nimport {\n  Modal,\n  Pressable,\n  StyleSheet,\n  Text,\n  View,\n  useWindowDimensions,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';\nimport Animated, {\n  interpolate,\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  withTiming,\n  type SharedValue,\n} from 'react-native-reanimated';\nimport { SafeAreaInsetsContext } from 'react-native-safe-area-context';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { durations, easings, spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type DrawerItem = {\n  key: string;\n  label: string;\n  /** A small count or tag on the right, e.g. \"12\". */\n  badge?: string;\n};\n\nexport type SideDrawerProps = {\n  visible: boolean;\n  /** Called for a tap outside, a drag back to the edge, Back and the escape gesture. */\n  onClose: () => void;\n  /** Navigation rows. They slide in one after another as the drawer opens. */\n  items?: readonly DrawerItem[];\n  /** The key of the current row, which gets a highlight. */\n  active?: string;\n  onSelect?: (key: string) => void;\n  /** Content above the rows, e.g. the account. */\n  header?: ReactNode;\n  /** Content pinned to the bottom, e.g. settings and sign out. */\n  footer?: ReactNode;\n  /** Which edge it comes from. Defaults to \"left\". */\n  side?: 'left' | 'right';\n  /** Defaults to 85% of the screen, at most 320. */\n  width?: number;\n  /** A tick when a row is chosen. Defaults to true. */\n  haptics?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst ROW = 48;\n\n/**\n * A navigation drawer from the side of the screen. The panel springs in over\n * a dimmed screen, its rows follow one after another, and a highlight sits\n * behind the current row. Drag it back towards its edge to close it.\n */\nexport function SideDrawer({\n  visible,\n  onClose,\n  items = [],\n  active,\n  onSelect,\n  header,\n  footer,\n  side = 'left',\n  width,\n  haptics = true,\n  testID,\n  style,\n}: SideDrawerProps) {\n  const { colors, radius, shadow, space } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const window = useWindowDimensions();\n  const insets = useContext(SafeAreaInsetsContext);\n  const w = width ?? Math.min(320, window.width * 0.85);\n  const dir = side === 'left' ? -1 : 1;\n  const [mounted, setMounted] = useState(visible);\n  if (visible && !mounted) setMounted(true);\n  const t = useSharedValue(0);\n  const drag = useSharedValue(0);\n\n  useEffect(() => {\n    if (visible) {\n      drag.set(0);\n      t.set(reduced ? 1 : withSpring(1, spring('smooth')));\n      return;\n    }\n    if (reduced) {\n      t.set(0);\n      setTimeout(() => setMounted(false), 0);\n      return;\n    }\n    t.set(\n      withTiming(0, { duration: durations.base, easing: easings.exit }, (done) => {\n        if (done) scheduleOnRN(setMounted, false);\n      }),\n    );\n  }, [visible, reduced, t, drag]);\n\n  const pan = Gesture.Pan()\n    .withTestId('side-drawer')\n    .activeOffsetX([-8, 8])\n    .failOffsetY([-16, 16])\n    .onUpdate((e) => {\n      // Towards the edge it follows the finger; the other way it resists.\n      const toward = e.translationX * dir;\n      drag.set(toward > 0 ? toward : -Math.sqrt(-toward) * 2);\n    })\n    .onEnd((e) => {\n      if (drag.get() > w * 0.3 || e.velocityX * dir > 800) scheduleOnRN(onClose);\n      else drag.set(withSpring(0, spring('bouncy', reduced)));\n    });\n\n  const scrim = useAnimatedStyle(() => ({\n    opacity: t.get() * (1 - Math.min(1, Math.max(0, drag.get()) / w)),\n  }));\n  const panel = useAnimatedStyle(() => ({\n    transform: [\n      { translateX: dir * (interpolate(t.get(), [0, 1], [w + 24, 0]) + Math.max(-12, drag.get())) },\n    ],\n  }));\n\n  return (\n    <Modal\n      visible={mounted}\n      transparent\n      animationType=\"none\"\n      onRequestClose={onClose}\n      statusBarTranslucent\n      navigationBarTranslucent\n    >\n      {/* A modal is its own window on Android, so gestures need their own root. */}\n      <GestureHandlerRootView style={styles.fill}>\n        <View style={StyleSheet.absoluteFill} onAccessibilityEscape={onClose}>\n          <Animated.View\n            style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }, scrim]}\n          >\n            <Pressable\n              style={StyleSheet.absoluteFill}\n              onPress={onClose}\n              accessibilityRole=\"button\"\n              accessibilityLabel=\"Close menu\"\n            />\n          </Animated.View>\n          <GestureDetector gesture={pan}>\n            <Animated.View\n              collapsable={false}\n              testID={testID}\n              style={[\n                styles.panel,\n                side === 'left' ? styles.left : styles.right,\n                {\n                  width: w,\n                  backgroundColor: colors.surface,\n                  borderColor: colors.border,\n                  boxShadow: shadow.lg,\n                  paddingTop: (insets?.top ?? 0) + space[4],\n                  paddingBottom: (insets?.bottom ?? 0) + space[4],\n                  borderTopRightRadius: side === 'left' ? radius.xl : 0,\n                  borderBottomRightRadius: side === 'left' ? radius.xl : 0,\n                  borderTopLeftRadius: side === 'right' ? radius.xl : 0,\n                  borderBottomLeftRadius: side === 'right' ? radius.xl : 0,\n                },\n                style,\n                panel,\n              ]}\n            >\n              {header ? (\n                <View style={{ paddingHorizontal: space[4], marginBottom: space[4] }}>\n                  {header}\n                </View>\n              ) : null}\n              <View style={[styles.rows, { paddingHorizontal: space[2] }]} accessibilityRole=\"menu\">\n                {items.map((item, i) => (\n                  <Row\n                    key={item.key}\n                    item={item}\n                    index={i}\n                    t={t}\n                    current={item.key === active}\n                    onPress={() => {\n                      haptic('tick');\n                      onSelect?.(item.key);\n                    }}\n                  />\n                ))}\n              </View>\n              {footer ? <View style={{ paddingHorizontal: space[4] }}>{footer}</View> : null}\n            </Animated.View>\n          </GestureDetector>\n        </View>\n      </GestureHandlerRootView>\n    </Modal>\n  );\n}\n\ntype RowProps = {\n  item: DrawerItem;\n  index: number;\n  t: SharedValue<number>;\n  current: boolean;\n  onPress: () => void;\n};\n\nfunction Row({ item, index, t, current, onPress }: RowProps) {\n  const { colors, font, radius } = useKinetikTheme();\n  const motion = useAnimatedStyle(() => {\n    const start = Math.min(0.45, 0.2 + index * 0.05);\n    const p = interpolate(t.get(), [start, start + 0.5], [0, 1], 'clamp');\n    return { opacity: p, transform: [{ translateX: (1 - p) * -16 }] };\n  });\n  return (\n    <Animated.View style={motion}>\n      <Pressable\n        onPress={onPress}\n        accessibilityRole=\"menuitem\"\n        accessibilityLabel={item.badge ? `${item.label}, ${item.badge}` : item.label}\n        accessibilityState={{ selected: current }}\n        style={({ pressed }) => [\n          styles.row,\n          {\n            borderRadius: radius.md,\n            backgroundColor: current\n              ? colors.azureSoft\n              : pressed\n                ? colors.surfaceSunken\n                : undefined,\n          },\n        ]}\n      >\n        <View style={[styles.mark, { backgroundColor: current ? colors.azure : 'transparent' }]} />\n        <Text\n          numberOfLines={1}\n          style={[\n            styles.label,\n            {\n              color: current ? colors.azure : colors.text,\n              fontSize: font.size.md,\n              fontWeight: current ? font.weight.semibold : font.weight.regular,\n            },\n          ]}\n        >\n          {item.label}\n        </Text>\n        {item.badge ? (\n          <Text\n            style={{\n              color: colors.textSubtle,\n              fontSize: font.size.sm,\n              fontVariant: ['tabular-nums'],\n            }}\n          >\n            {item.badge}\n          </Text>\n        ) : null}\n      </Pressable>\n    </Animated.View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  fill: { flex: 1 },\n  panel: { position: 'absolute', top: 0, bottom: 0, borderWidth: StyleSheet.hairlineWidth },\n  left: { left: 0 },\n  right: { right: 0 },\n  rows: { flex: 1, gap: 2 },\n  row: { height: ROW, flexDirection: 'row', alignItems: 'center', gap: 12, paddingRight: 14 },\n  mark: { width: 3, height: 18, borderRadius: 2 },\n  label: { flex: 1 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "overlay",
+    "web": "live",
+    "perf": {
+      "budget": "A transparent modal of plain views; the panel, scrim and rows read two shared values. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 20,
+          "p90Ms": 28,
+          "baselineMs": 18,
+          "jankyPercent": 8.37,
+          "atRest": "idle",
+          "memoryMb": 147,
+          "notes": "p99 spikes are the first frame of the modal window opening."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The drawer appears and disappears without sliding, rows included.",
+      "screenReader": "Rows are menu items with a selected state; outside the panel is a \"Close menu\" button, and Back closes it.",
+      "touchTarget": "Rows are 48 pt tall and nearly the full width of the panel."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { SideDrawer } from '@/components/kinetik/side-drawer';\n\n<SideDrawer\n  visible={open}\n  onClose={() => setOpen(false)}\n  items={[\n    { key: 'inbox', label: 'Inbox', badge: '12' },\n    { key: 'sent', label: 'Sent' },\n  ]}\n  active={section}\n  onSelect={(key) => {\n    setSection(key);\n    setOpen(false);\n  }}\n  header={<Account />}\n/>;\n```\n\n## When to use\n\n- Apps with more sections than fit in a tab bar: mail folders, workspaces, admin areas.\n- Secondary navigation that people open now and then, not on every screen.\n\n## When not to use\n\n- Three to five main sections used all the time. Use a tab bar (Dock Bar or Liquid Tabs).\n- A list of actions on one object. Use Action Sheet.\n\n## Notes\n\n- `items` render as rows that slide in one by one; `header` and `footer` take any content.\n- Drag the panel towards its edge past about a third of its width, or flick it, to close; the other way it resists.\n- Top and bottom padding follow the safe area when the app has a `SafeAreaProvider` (Expo Router adds one).\n- With reduced motion it appears and disappears without sliding.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add side-drawer`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

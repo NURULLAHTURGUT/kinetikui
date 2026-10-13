@@ -1,0 +1,24 @@
+## Usage
+
+```tsx
+import { SlotText } from '@/components/kinetik/slot-text';
+
+<SlotText text={`$${total.toLocaleString('en-US')}`} />;
+```
+
+## When to use
+
+- A short figure or word that changes at a moment worth noticing: a reward, a score, a result, a code being revealed.
+- Headlines that cycle through a few words.
+
+## When not to use
+
+- Numbers that change often or continuously, such as a live price. Use Odometer, which rolls without spinning.
+- Long sentences. Every character is its own reel.
+
+## Notes
+
+- Each reel spins through glyphs of the same kind as its new character (digits for digits, letters for letters), so a number never flashes letters.
+- Reels start left to right `stagger` ms apart and their widths ease to fit the characters they land on; extra reels spin away to nothing.
+- The whole text is read once by screen readers; the reels are hidden.
+- With reduced motion the new text appears at once.

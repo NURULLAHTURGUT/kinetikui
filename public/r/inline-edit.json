@@ -1,0 +1,65 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "inline-edit",
+  "type": "registry:item",
+  "title": "Inline Edit",
+  "description": "Text you rename in place: it becomes a field without moving, an underline draws in, and a check confirms the save.",
+  "categories": [
+    "input"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/inline-edit.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/inline-edit.tsx",
+      "content": "import { Canvas, Path, Skia, type SkPath } from '@shopify/react-native-skia';\nimport { useEffect, useRef, useState } from 'react';\nimport {\n  Pressable,\n  StyleSheet,\n  Text,\n  TextInput,\n  View,\n  type StyleProp,\n  type TextStyle,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withDelay,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { durations, spring, timing } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget } from '../../lib/kinetik/tokens/tokens';\n\nexport type InlineEditProps = {\n  value: string;\n  /** Called with the trimmed text when an edit is saved. Empty edits are dropped. */\n  onSubmit: (value: string) => void;\n  /** What the text is, for screen readers, e.g. \"Project name\". */\n  accessibilityLabel: string;\n  /** Shown while the text is empty. */\n  placeholder?: string;\n  /** Style for the text, shared by the label and the field so nothing moves. */\n  textStyle?: StyleProp<TextStyle>;\n  /** Defaults to 80. */\n  maxLength?: number;\n  /** A light tap when an edit is saved. Defaults to true. */\n  haptics?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst ICON = 16;\nconst PENCIL = Skia.Path.MakeFromSVGString(\n  'M10.5 3.2l2.3 2.3M3 13l.6-2.9 7.6-7.6a1.2 1.2 0 0 1 1.7 0l.6.6a1.2 1.2 0 0 1 0 1.7l-7.6 7.6L3 13z',\n)!;\nconst CHECK = Skia.Path.MakeFromSVGString('M3.2 8.4l3.1 3.1 6.5-6.9')!;\nconst CROSS = Skia.Path.MakeFromSVGString('M4 4l8 8M12 4l-8 8')!;\n\n/**\n * Text you can rename where it stands. Tapping it turns the same line into a\n * field without moving a pixel, an underline draws in from the left and the\n * save and cancel buttons pop in beside it; saving puts the text back with a\n * brief check.\n */\nexport function InlineEdit({\n  value,\n  onSubmit,\n  accessibilityLabel,\n  placeholder = 'Untitled',\n  textStyle,\n  maxLength = 80,\n  haptics = true,\n  testID,\n  style,\n}: InlineEditProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const [editing, setEditing] = useState(false);\n  const [draft, setDraft] = useState(value);\n  const [saved, setSaved] = useState(0);\n  // Read in the blur handler: a blur after Save or Cancel must not save again.\n  const mode = useRef<'idle' | 'editing'>('idle');\n\n  const open = useSharedValue(0);\n  const flash = useSharedValue(0);\n\n  useEffect(() => {\n    open.set(withSpring(editing ? 1 : 0, spring('snappy', reduced)));\n  }, [editing, reduced, open]);\n\n  useEffect(() => {\n    if (saved === 0) return;\n    flash.set(1);\n    // A fade, not movement, so it plays with reduced motion too.\n    flash.set(withDelay(900, withTiming(0, timing('slow'))));\n    const id = setTimeout(() => setSaved(0), 900 + durations.slow);\n    return () => clearTimeout(id);\n  }, [saved, flash]);\n\n  const start = () => {\n    mode.current = 'editing';\n    setDraft(value);\n    setEditing(true);\n  };\n  const finish = (save: boolean) => {\n    if (mode.current !== 'editing') return;\n    mode.current = 'idle';\n    setEditing(false);\n    const next = draft.trim();\n    if (!save || next.length === 0 || next === value) return;\n    haptic('tap');\n    onSubmit(next);\n    setSaved((n) => n + 1);\n  };\n\n  const text = StyleSheet.flatten([\n    {\n      color: colors.text,\n      fontSize: font.size.xl,\n      fontWeight: font.weight.semibold,\n      lineHeight: Math.round(font.size.xl * 1.3),\n    },\n    textStyle,\n  ]);\n\n  const underline = useAnimatedStyle(() => ({ transform: [{ scaleX: open.get() }] }));\n  const actions = useAnimatedStyle(() => ({\n    opacity: open.get(),\n    transform: [{ scale: 0.6 + open.get() * 0.4 }],\n  }));\n  const pencil = useAnimatedStyle(() => ({ opacity: 1 - flash.get() }));\n  const check = useAnimatedStyle(() => ({\n    opacity: flash.get(),\n    transform: [{ scale: 0.5 + flash.get() * 0.5 }],\n  }));\n\n  return (\n    <View testID={testID} style={[styles.row, style]}>\n      <View style={styles.grow}>\n        {editing ? (\n          <TextInput\n            value={draft}\n            onChangeText={setDraft}\n            autoFocus\n            selectTextOnFocus\n            maxLength={maxLength}\n            returnKeyType=\"done\"\n            onSubmitEditing={() => finish(true)}\n            onBlur={() => finish(true)}\n            accessibilityLabel={accessibilityLabel}\n            placeholder={placeholder}\n            placeholderTextColor={colors.textSubtle}\n            selectionColor={colors.azure}\n            cursorColor={colors.azure}\n            style={[text, styles.input, { minHeight: minTouchTarget }]}\n          />\n        ) : (\n          <Pressable\n            onPress={start}\n            accessibilityRole=\"button\"\n            accessibilityLabel={`${accessibilityLabel}, ${value || placeholder}`}\n            accessibilityHint=\"Edits the text\"\n            style={styles.label}\n          >\n            <Text\n              numberOfLines={1}\n              style={[text, styles.shrink, !value && { color: colors.textSubtle }]}\n            >\n              {value || placeholder}\n            </Text>\n            <View style={styles.badge}>\n              <Animated.View style={[StyleSheet.absoluteFill, pencil]}>\n                <Glyph path={PENCIL} color={colors.textSubtle} />\n              </Animated.View>\n              <Animated.View style={[StyleSheet.absoluteFill, check]}>\n                <Glyph path={CHECK} color={colors.success} width={2} />\n              </Animated.View>\n            </View>\n          </Pressable>\n        )}\n        <Animated.View\n          pointerEvents=\"none\"\n          style={[styles.underline, { backgroundColor: colors.azure }, underline]}\n        />\n      </View>\n      {editing ? (\n        <Animated.View style={[styles.actions, actions]}>\n          <Pressable\n            onPress={() => finish(false)}\n            accessibilityRole=\"button\"\n            accessibilityLabel=\"Cancel\"\n            style={({ pressed }) => [\n              styles.action,\n              { backgroundColor: pressed ? colors.surfaceSunken : colors.surface },\n            ]}\n          >\n            <Glyph path={CROSS} color={colors.textMuted} />\n          </Pressable>\n          <Pressable\n            onPress={() => finish(true)}\n            accessibilityRole=\"button\"\n            accessibilityLabel=\"Save\"\n            style={({ pressed }) => [\n              styles.action,\n              { backgroundColor: colors.azure, opacity: pressed ? 0.8 : 1 },\n            ]}\n          >\n            <Glyph path={CHECK} color={colors.onAzure} width={2} />\n          </Pressable>\n        </Animated.View>\n      ) : null}\n    </View>\n  );\n}\n\nfunction Glyph({ path, color, width = 1.6 }: { path: SkPath; color: string; width?: number }) {\n  return (\n    <Canvas style={styles.glyph}>\n      <Path\n        path={path}\n        style=\"stroke\"\n        strokeWidth={width}\n        strokeCap=\"round\"\n        strokeJoin=\"round\"\n        color={color}\n      />\n    </Canvas>\n  );\n}\n\nconst styles = StyleSheet.create({\n  row: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: minTouchTarget },\n  grow: { flex: 1, justifyContent: 'center' },\n  label: {\n    flexDirection: 'row',\n    alignItems: 'center',\n    gap: 8,\n    minHeight: minTouchTarget,\n    alignSelf: 'flex-start',\n    maxWidth: '100%',\n  },\n  shrink: { flexShrink: 1 },\n  input: { padding: 0, margin: 0, includeFontPadding: false },\n  badge: { width: ICON, height: ICON },\n  underline: {\n    position: 'absolute',\n    left: 0,\n    right: 0,\n    bottom: 4,\n    height: 2,\n    borderRadius: 1,\n    transformOrigin: 'left center',\n  },\n  actions: { flexDirection: 'row', gap: 6 },\n  action: {\n    width: minTouchTarget,\n    height: minTouchTarget,\n    borderRadius: minTouchTarget / 2,\n    alignItems: 'center',\n    justifyContent: 'center',\n  },\n  glyph: { width: ICON, height: ICON },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "input",
+    "web": "live",
+    "perf": {
+      "budget": "One native text input while editing and two shared values; the icons are 16 pt Skia paths. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 20,
+          "p90Ms": 26,
+          "baselineMs": 18,
+          "jankyPercent": 8.57,
+          "atRest": "idle",
+          "memoryMb": 149,
+          "notes": "p99 spikes are the keyboard opening when editing starts."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The underline and buttons appear without a spring; the check still fades.",
+      "screenReader": "A button that reads the label and the value; while editing, a text field plus Cancel and Save buttons.",
+      "touchTarget": "The text and both buttons are at least 44 pt tall."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { InlineEdit } from '@/components/kinetik/inline-edit';\n\n<InlineEdit accessibilityLabel=\"Project name\" value={name} onSubmit={setName} />;\n```\n\n## When to use\n\n- Names and titles people rename now and then: a project, a playlist, a board.\n- Detail screens where a separate edit form would be heavier than the change.\n\n## When not to use\n\n- Several related fields that should be saved together. Use a form with one Save button.\n- Text that needs validation with an explanation. Use Float Field, which has room for an error.\n\n## Notes\n\n- The label and the field share `textStyle`, so the text does not move when editing starts.\n- Return or Save keeps the trimmed text, Cancel restores the old one, and leaving the field saves it. An empty edit is dropped.\n- Inside a `ScrollView`, set `keyboardShouldPersistTaps=\"handled\"` so the buttons work while the keyboard is open.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add inline-edit`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

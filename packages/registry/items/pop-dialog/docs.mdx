@@ -1,0 +1,33 @@
+## Usage
+
+```tsx
+import { PopDialog } from '@/components/kinetik/pop-dialog';
+
+<PopDialog
+  visible={open}
+  onClose={() => setOpen(false)}
+  title="Leave Weekend Hikers?"
+  message="You will stop getting messages from this group."
+  actions={[
+    { label: 'Stay', onPress: () => setOpen(false) },
+    { label: 'Leave', tone: 'danger', onPress: leave },
+  ]}
+/>;
+```
+
+## When to use
+
+- A decision that must be made before going on: discarding changes, leaving a group, deleting something.
+- Short confirmations with two or three clear choices.
+
+## When not to use
+
+- Information that needs no decision. Use a toast or Notice Bar.
+- Long forms or content. Use a sheet or a new screen.
+
+## Notes
+
+- `visible` controls it; the dialog stays mounted until its exit animation finishes, so closing never cuts it off.
+- Back on Android, a tap outside (unless `dismissable` is false) and the screen reader escape gesture call `onClose`.
+- Two actions sit side by side; three or more are stacked. Name actions with verbs ("Leave", "Delete"), not "OK".
+- With reduced motion it appears and disappears without moving.

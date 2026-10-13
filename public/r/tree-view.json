@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "tree-view",
+  "type": "registry:item",
+  "title": "Tree View",
+  "description": "Nested folders whose branches grow open to their measured height as the chevron turns and rows drift in.",
+  "categories": [
+    "disclosure"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/tree-view.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/tree-view.tsx",
+      "content": "import { useEffect, useRef, useState } from 'react';\nimport { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring, timing } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type TreeNode = {\n  id: string;\n  label: string;\n  /** A short note on the right, e.g. a size or a count. */\n  detail?: string;\n  children?: readonly TreeNode[];\n};\n\nexport type TreeViewProps = {\n  data: readonly TreeNode[];\n  /** Branches open at first. */\n  defaultExpanded?: readonly string[];\n  /** The highlighted node. */\n  selected?: string;\n  /** Called for a press on any node; branches also open or close. */\n  onSelect?: (node: TreeNode) => void;\n  /** A tick when a branch opens or closes. Defaults to true. */\n  haptics?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst ROW = 44;\nconst INDENT = 20;\n\n/**\n * Nested folders and items. A branch opens by growing to its measured height\n * while its rows drift in, the chevron turns a quarter, and a thin guide line\n * marks each level. Children are only built the first time a branch opens.\n */\nexport function TreeView({\n  data,\n  defaultExpanded = [],\n  selected,\n  onSelect,\n  haptics = true,\n  testID,\n  style,\n}: TreeViewProps) {\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set(defaultExpanded));\n\n  const toggle = (node: TreeNode) => {\n    if (node.children?.length) {\n      haptic('tick');\n      setOpen((prev) => {\n        const next = new Set(prev);\n        if (next.has(node.id)) next.delete(node.id);\n        else next.add(node.id);\n        return next;\n      });\n    }\n    onSelect?.(node);\n  };\n\n  return (\n    <View testID={testID} style={style}>\n      {data.map((node) => (\n        <Branch\n          key={node.id}\n          node={node}\n          depth={0}\n          open={open}\n          selected={selected}\n          reduced={reduced}\n          onPress={toggle}\n        />\n      ))}\n    </View>\n  );\n}\n\ntype BranchProps = {\n  node: TreeNode;\n  depth: number;\n  open: ReadonlySet<string>;\n  selected: string | undefined;\n  reduced: boolean;\n  onPress: (node: TreeNode) => void;\n};\n\nfunction Branch({ node, depth, open, selected, reduced, onPress }: BranchProps) {\n  const { colors, font, radius } = useKinetikTheme();\n  const kids = node.children ?? [];\n  const parent = kids.length > 0;\n  const expanded = parent && open.has(node.id);\n  // Children are built the first time the branch opens, then kept for closing.\n  const [built, setBuilt] = useState(expanded);\n  if (expanded && !built) setBuilt(true);\n  const [measured, setMeasured] = useState(0);\n\n  const turn = useSharedValue(expanded ? 1 : 0);\n  const height = useSharedValue(0);\n  // The first known height is applied at once; later changes spring.\n  const placed = useRef(false);\n  useEffect(() => {\n    turn.set(withSpring(expanded ? 1 : 0, spring('snappy', reduced)));\n  }, [expanded, reduced, turn]);\n  useEffect(() => {\n    if (measured === 0) return;\n    const target = expanded ? measured : 0;\n    height.set(!placed.current || reduced ? target : withSpring(target, spring('smooth')));\n    placed.current = true;\n  }, [expanded, measured, reduced, height]);\n\n  const box = useAnimatedStyle(() => ({ height: height.get() }));\n  const fade = useAnimatedStyle(() => ({\n    opacity: withTiming(expanded ? 1 : 0, timing('quick', reduced)),\n    transform: [{ translateY: withSpring(expanded ? 0 : -6, spring('smooth', reduced)) }],\n  }));\n  const chevron = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.get() * 90}deg` }] }));\n  const isSelected = selected === node.id;\n\n  return (\n    <View>\n      <Pressable\n        onPress={() => onPress(node)}\n        accessibilityRole=\"button\"\n        accessibilityLabel={[node.label, node.detail].filter(Boolean).join(', ')}\n        accessibilityState={{\n          expanded: parent ? expanded : undefined,\n          selected: isSelected,\n        }}\n        style={({ pressed }) => [\n          styles.row,\n          {\n            paddingLeft: 8 + depth * INDENT,\n            borderRadius: radius.sm,\n            backgroundColor: isSelected\n              ? colors.azureSoft\n              : pressed\n                ? colors.surfaceSunken\n                : undefined,\n          },\n        ]}\n      >\n        <View style={styles.glyph}>\n          {parent ? (\n            <Animated.View style={[styles.chevron, chevron]}>\n              <View style={[styles.stroke, styles.up, { backgroundColor: colors.textMuted }]} />\n              <View style={[styles.stroke, styles.down, { backgroundColor: colors.textMuted }]} />\n            </Animated.View>\n          ) : (\n            <View style={[styles.leaf, { backgroundColor: colors.textSubtle }]} />\n          )}\n        </View>\n        <Text\n          numberOfLines={1}\n          style={[\n            styles.label,\n            {\n              color: isSelected ? colors.azure : colors.text,\n              fontSize: font.size.md,\n              fontWeight: parent ? font.weight.medium : font.weight.regular,\n            },\n          ]}\n        >\n          {node.label}\n        </Text>\n        {node.detail ? (\n          <Text\n            style={{\n              color: colors.textSubtle,\n              fontSize: font.size.xs,\n              fontVariant: ['tabular-nums'],\n            }}\n          >\n            {node.detail}\n          </Text>\n        ) : null}\n      </Pressable>\n      {parent && built ? (\n        <Animated.View\n          style={[styles.box, box]}\n          accessibilityElementsHidden={!expanded}\n          importantForAccessibility={expanded ? 'auto' : 'no-hide-descendants'}\n        >\n          {/* Laid out on its own, so a closed (zero-height) box never squeezes it before it is measured. */}\n          <Animated.View\n            style={[styles.content, fade]}\n            onLayout={(e) => {\n              const h = Math.round(e.nativeEvent.layout.height);\n              if (h !== measured) setMeasured(h);\n            }}\n          >\n            <View\n              pointerEvents=\"none\"\n              style={[\n                styles.guide,\n                { left: 8 + depth * INDENT + 9, backgroundColor: colors.border },\n              ]}\n            />\n            {kids.map((child) => (\n              <Branch\n                key={child.id}\n                node={child}\n                depth={depth + 1}\n                open={open}\n                selected={selected}\n                reduced={reduced}\n                onPress={onPress}\n              />\n            ))}\n          </Animated.View>\n        </Animated.View>\n      ) : null}\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  row: { height: ROW, flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 12 },\n  glyph: { width: 18, height: 18, alignItems: 'center', justifyContent: 'center' },\n  chevron: { width: 14, height: 14 },\n  stroke: { position: 'absolute', width: 7, height: 1.8, borderRadius: 1, left: 4.5 },\n  up: { top: 4.6, transform: [{ rotate: '45deg' }] },\n  down: { top: 8.6, transform: [{ rotate: '-45deg' }] },\n  leaf: { width: 5, height: 5, borderRadius: 2.5 },\n  label: { flex: 1 },\n  box: { overflow: 'hidden' },\n  content: { position: 'absolute', top: 0, left: 0, right: 0 },\n  guide: { position: 'absolute', top: 4, bottom: 4, width: StyleSheet.hairlineWidth * 2 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "disclosure",
+    "web": "live",
+    "perf": {
+      "budget": "Plain views; each open branch springs one height value. Children are built on first open. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 18,
+          "baselineMs": 18,
+          "jankyPercent": 3.24,
+          "atRest": "idle",
+          "memoryMb": 152
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Branches open and close at once.",
+      "screenReader": "Every row is a button with its label and detail; branches report expanded or collapsed, and closed branches are hidden.",
+      "touchTarget": "Rows are 44 pt tall and span the full width."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { TreeView } from '@/components/kinetik/tree-view';\n\n<TreeView\n  data={[\n    {\n      id: 'app',\n      label: 'app',\n      children: [{ id: 'home', label: 'index.tsx', detail: '4 KB' }],\n    },\n  ]}\n  defaultExpanded={['app']}\n  selected={current}\n  onSelect={(node) => setCurrent(node.id)}\n/>;\n```\n\n## When to use\n\n- Hierarchies people browse a level at a time: folders, categories, an outline, settings groups.\n- Places where seeing the path to an item helps, not just the item.\n\n## When not to use\n\n- Flat lists. Use plain rows.\n- Deep trees on a phone (more than three or four levels). Drill into a new screen per level instead.\n\n## Notes\n\n- A branch grows to its measured height while its rows drift in; nested branches resize their parents as they open.\n- Children are built the first time a branch opens and kept afterwards, so large trees stay cheap.\n- Every row is a button; branches say whether they are expanded and the selected row says it is selected.\n- With reduced motion branches open and close at once.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add tree-view`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

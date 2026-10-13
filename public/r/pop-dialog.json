@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "pop-dialog",
+  "type": "registry:item",
+  "title": "Pop Dialog",
+  "description": "A dialog that rises and settles on a soft spring over a dimmed screen, and sinks back before it unmounts.",
+  "categories": [
+    "overlay"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/pop-dialog.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/pop-dialog.tsx",
+      "content": "import { useEffect, useState, type ReactNode } from 'react';\nimport {\n  Modal,\n  Pressable,\n  StyleSheet,\n  Text,\n  View,\n  useWindowDimensions,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { durations, easings, spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type PopDialogAction = {\n  label: string;\n  onPress: () => void;\n  /** \"primary\" is filled, \"danger\" is filled in red. Defaults to \"default\". */\n  tone?: 'default' | 'primary' | 'danger';\n};\n\nexport type PopDialogProps = {\n  visible: boolean;\n  /** Called for a tap outside, Back on Android and the screen reader escape gesture. */\n  onClose: () => void;\n  title: string;\n  message?: string;\n  /** Extra content between the message and the actions. */\n  children?: ReactNode;\n  /** One to three actions; two sit side by side, more are stacked. */\n  actions: readonly PopDialogAction[];\n  /** A tap outside closes it. Defaults to true. */\n  dismissable?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst MAX_W = 360;\n\n/**\n * A dialog that pops up from just below the middle of the screen: the screen\n * dims, the card rises and settles on a soft spring, and it sinks back as it\n * closes. It stays mounted until its exit has finished.\n */\nexport function PopDialog({\n  visible,\n  onClose,\n  title,\n  message,\n  children,\n  actions,\n  dismissable = true,\n  testID,\n  style,\n}: PopDialogProps) {\n  const { colors, font, radius, space, shadow } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const window = useWindowDimensions();\n  const [mounted, setMounted] = useState(visible);\n  if (visible && !mounted) setMounted(true);\n  const t = useSharedValue(0);\n\n  useEffect(() => {\n    if (visible) {\n      t.set(reduced ? 1 : withSpring(1, spring('smooth')));\n      return;\n    }\n    if (reduced) {\n      t.set(0);\n      setTimeout(() => setMounted(false), 0);\n      return;\n    }\n    t.set(\n      withTiming(0, { duration: durations.quick, easing: easings.exit }, (done) => {\n        if (done) scheduleOnRN(setMounted, false);\n      }),\n    );\n  }, [visible, reduced, t]);\n\n  const scrim = useAnimatedStyle(() => ({ opacity: Math.min(1, t.get()) }));\n  const card = useAnimatedStyle(() => {\n    const p = t.get();\n    return {\n      opacity: Math.min(1, p * 1.6),\n      transform: [{ translateY: (1 - p) * 24 }, { scale: 0.94 + p * 0.06 }],\n    };\n  });\n\n  const stacked = actions.length > 2;\n\n  return (\n    <Modal\n      visible={mounted}\n      transparent\n      animationType=\"none\"\n      onRequestClose={onClose}\n      statusBarTranslucent\n      navigationBarTranslucent\n    >\n      {/* The modal is its own window, so focus stays inside; escape closes it. */}\n      <View style={styles.root} onAccessibilityEscape={onClose}>\n        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }, scrim]}>\n          <Pressable\n            style={StyleSheet.absoluteFill}\n            onPress={dismissable ? onClose : undefined}\n            accessible={dismissable}\n            accessibilityRole=\"button\"\n            accessibilityLabel=\"Close dialog\"\n            importantForAccessibility={dismissable ? 'auto' : 'no-hide-descendants'}\n          />\n        </Animated.View>\n        <Animated.View\n          testID={testID}\n          style={[\n            styles.card,\n            {\n              width: Math.min(MAX_W, window.width - space[6] * 2),\n              backgroundColor: colors.surfaceRaised,\n              borderColor: colors.border,\n              borderRadius: radius.xl,\n              boxShadow: shadow.lg,\n              padding: space[6],\n              gap: space[2],\n            },\n            style,\n            card,\n          ]}\n        >\n          <Text\n            accessibilityRole=\"header\"\n            style={{ color: colors.text, fontSize: font.size.lg, fontWeight: font.weight.semibold }}\n          >\n            {title}\n          </Text>\n          {message ? (\n            <Text style={{ color: colors.textMuted, fontSize: font.size.sm, lineHeight: 20 }}>\n              {message}\n            </Text>\n          ) : null}\n          {children}\n          <View style={[stacked ? styles.stack : styles.pair, { marginTop: space[4] }]}>\n            {actions.map((a) => (\n              <ActionButton key={a.label} action={a} fill={!stacked} />\n            ))}\n          </View>\n        </Animated.View>\n      </View>\n    </Modal>\n  );\n}\n\nfunction ActionButton({ action, fill }: { action: PopDialogAction; fill: boolean }) {\n  const { colors, font, radius } = useKinetikTheme();\n  const tone = action.tone ?? 'default';\n  const bg = tone === 'primary' ? colors.ember : tone === 'danger' ? colors.danger : colors.surface;\n  // Ink that reads on red: dark on the light red of the dark theme, white on the deep red of the light one.\n  const fg = tone === 'default' ? colors.text : colors.onEmber;\n  return (\n    <Pressable\n      onPress={action.onPress}\n      accessibilityRole=\"button\"\n      accessibilityLabel={action.label}\n      style={({ pressed }) => [\n        styles.action,\n        fill && styles.fill,\n        {\n          backgroundColor: bg,\n          borderColor: tone === 'default' ? colors.borderStrong : bg,\n          borderRadius: radius.md,\n          opacity: pressed ? 0.75 : 1,\n        },\n      ]}\n    >\n      <Text style={{ color: fg, fontSize: font.size.md, fontWeight: font.weight.semibold }}>\n        {action.label}\n      </Text>\n    </Pressable>\n  );\n}\n\nconst styles = StyleSheet.create({\n  root: { flex: 1, alignItems: 'center', justifyContent: 'center' },\n  card: { borderWidth: 1 },\n  pair: { flexDirection: 'row', gap: 10 },\n  stack: { gap: 8 },\n  action: {\n    minHeight: 48,\n    paddingHorizontal: 16,\n    borderWidth: 1,\n    alignItems: 'center',\n    justifyContent: 'center',\n  },\n  fill: { flex: 1 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "overlay",
+    "web": "live",
+    "perf": {
+      "budget": "A transparent modal of plain views; the scrim and card read one shared value. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 18,
+          "p90Ms": 30,
+          "baselineMs": 18,
+          "jankyPercent": 10.34,
+          "atRest": "idle",
+          "memoryMb": 144,
+          "notes": "p99 spikes are the first frame of the modal window opening."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The dialog appears and disappears without moving.",
+      "screenReader": "A modal window with a heading and named action buttons; the escape gesture and Back close it.",
+      "touchTarget": "Actions are at least 48 pt tall; outside the card is one large close target."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { PopDialog } from '@/components/kinetik/pop-dialog';\n\n<PopDialog\n  visible={open}\n  onClose={() => setOpen(false)}\n  title=\"Leave Weekend Hikers?\"\n  message=\"You will stop getting messages from this group.\"\n  actions={[\n    { label: 'Stay', onPress: () => setOpen(false) },\n    { label: 'Leave', tone: 'danger', onPress: leave },\n  ]}\n/>;\n```\n\n## When to use\n\n- A decision that must be made before going on: discarding changes, leaving a group, deleting something.\n- Short confirmations with two or three clear choices.\n\n## When not to use\n\n- Information that needs no decision. Use a toast or Notice Bar.\n- Long forms or content. Use a sheet or a new screen.\n\n## Notes\n\n- `visible` controls it; the dialog stays mounted until its exit animation finishes, so closing never cuts it off.\n- Back on Android, a tap outside (unless `dismissable` is false) and the screen reader escape gesture call `onClose`.\n- Two actions sit side by side; three or more are stacked. Name actions with verbs (\"Leave\", \"Delete\"), not \"OK\".\n- With reduced motion it appears and disappears without moving.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add pop-dialog`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

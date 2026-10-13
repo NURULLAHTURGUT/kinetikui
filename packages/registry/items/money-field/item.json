@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "money-field",
+  "title": "Money Field",
+  "description": "A currency field typed like a till: every place rolls to its new digit and separators slide in as it grows.",
+  "category": "input",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["money-field.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain text cells, two shared values each; widths are measured once per text style. Only the caret loops, and only while focused.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "baselineMs": 18,
+        "jankyPercent": 2.28,
+        "atRest": "idle",
+        "memoryMb": 149
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Digits change in place, new places appear at once and the caret stays lit.",
+    "screenReader": "A number field named by its label whose value is the formatted amount.",
+    "touchTarget": "The whole amount is the target, at least 160 by 66 pt."
+  }
+}

@@ -1,0 +1,37 @@
+## Usage
+
+```tsx
+import { SideDrawer } from '@/components/kinetik/side-drawer';
+
+<SideDrawer
+  visible={open}
+  onClose={() => setOpen(false)}
+  items={[
+    { key: 'inbox', label: 'Inbox', badge: '12' },
+    { key: 'sent', label: 'Sent' },
+  ]}
+  active={section}
+  onSelect={(key) => {
+    setSection(key);
+    setOpen(false);
+  }}
+  header={<Account />}
+/>;
+```
+
+## When to use
+
+- Apps with more sections than fit in a tab bar: mail folders, workspaces, admin areas.
+- Secondary navigation that people open now and then, not on every screen.
+
+## When not to use
+
+- Three to five main sections used all the time. Use a tab bar (Dock Bar or Liquid Tabs).
+- A list of actions on one object. Use Action Sheet.
+
+## Notes
+
+- `items` render as rows that slide in one by one; `header` and `footer` take any content.
+- Drag the panel towards its edge past about a third of its width, or flick it, to close; the other way it resists.
+- Top and bottom padding follow the safe area when the app has a `SafeAreaProvider` (Expo Router adds one).
+- With reduced motion it appears and disappears without sliding.

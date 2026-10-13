@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "progress-bar",
+  "title": "Progress Bar",
+  "description": "A bar that springs to each new amount with a sheen along the fill, a counting percentage and a green finish.",
+  "category": "feedback",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-count"],
+  "files": ["progress-bar.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views and four shared values. The sheen loops on the UI thread only while work is under way; a finished bar is idle.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 21,
+        "p90Ms": 23,
+        "baselineMs": 18,
+        "jankyPercent": 0,
+        "atRest": "animating",
+        "memoryMb": 146,
+        "notes": "The demo advances the bar every 0.9 s, so the sheen was running at rest; a finished bar draws nothing."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The fill jumps to each value with no sheen; the indeterminate bar holds still.",
+    "screenReader": "A progress bar named by its label with a 0 to 100 value, marked busy until it is done.",
+    "touchTarget": "Not interactive."
+  }
+}

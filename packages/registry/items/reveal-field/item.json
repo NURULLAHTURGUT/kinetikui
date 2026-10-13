@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "reveal-field",
+  "title": "Reveal Field",
+  "description": "A password field with an eye that blinks as the text turns between dots and letters, and a slash that wipes away.",
+  "category": "input",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["reveal-field.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "A native text input and a 24 pt Skia icon driven by four shared values. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 17,
+        "baselineMs": 17,
+        "jankyPercent": 0.2,
+        "atRest": "idle",
+        "memoryMb": 151
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The text and the slash switch at once, without the blink.",
+    "screenReader": "A secure text field named by its label, and a button named \"Show password\" or \"Hide password\".",
+    "touchTarget": "The eye button is 48 by 50 pt; the field is 52 pt tall."
+  }
+}

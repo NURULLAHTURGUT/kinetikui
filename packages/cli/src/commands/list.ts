@@ -8,6 +8,7 @@ const CATEGORY_ORDER = [
   'interaction',
   'input',
   'disclosure',
+  'overlay',
   'text',
   'navigation',
   'feedback',

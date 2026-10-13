@@ -49,6 +49,7 @@ const CATEGORIES = [
   'interaction',
   'input',
   'disclosure',
+  'overlay',
   'text',
   'navigation',
   'feedback',

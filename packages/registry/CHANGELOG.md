@@ -1,5 +1,17 @@
 # @kinetik/registry
 
+## 1.2.0
+
+### Minor Changes
+
+- 31 new components and a new Overlays category.
+
+  **Inputs.** Float Field, Glide Radio, Grow Area, Inline Edit, Money Field, Month Calendar, Morph Select, Reveal Field, Signature Pad, Swatch Picker, Tag Field, Time Wheel.
+
+  **Overlays.** Action Sheet, Pop Dialog, Side Drawer.
+
+  **Disclosure.** Fade Scroll, Split Pane, Tree View. **Navigation.** Pager, Scroll Tabs. **Feedback.** Count Badge, Countdown, Progress Bar. **Data.** Avatar Stack, Brush Chart, Chat Thread, Ridgeline, Sort Table, Stream Graph. **Interaction.** Theme Switch. **Text.** Slot Text.
+
 ## 1.1.0
 
 ### Minor Changes

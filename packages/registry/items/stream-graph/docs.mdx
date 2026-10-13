@@ -1,0 +1,31 @@
+## Usage
+
+```tsx
+import { StreamGraph } from '@/components/kinetik/stream-graph';
+
+<StreamGraph
+  accessibilityLabel="Hours of listening by genre"
+  layers={[
+    { key: 'pop', label: 'Pop', values: [32, 38, 35, 42] },
+    { key: 'jazz', label: 'Jazz', values: [12, 14, 18, 16] },
+  ]}
+  formatValue={(v) => `${Math.round(v)} h`}
+/>;
+```
+
+## When to use
+
+- How a whole is made up over time, when the overall flow matters more than exact values: listening by genre, traffic by source.
+- Switching between periods or segments, where the morph shows what changed.
+
+## When not to use
+
+- Exact comparisons between layers. Use Bar Chart or Line Chart.
+- Data with negative values. Streams can only stack amounts.
+
+## Notes
+
+- Layers stack around a centred baseline and are smoothed with Catmull-Rom curves. Every layer needs the same number of values.
+- New data morphs each shape into place; the first draw grows out of the middle line.
+- Tap a layer, or its key, to isolate it: the others fade and the readout shows its total and share. Tap again to let go.
+- Data is compared by value, so passing a new but equal array does not replay the morph.

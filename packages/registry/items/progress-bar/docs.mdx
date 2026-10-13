@@ -1,0 +1,27 @@
+## Usage
+
+```tsx
+import { ProgressBar } from '@/components/kinetik/progress-bar';
+
+<ProgressBar label="Uploading 12 photos" value={sent / total} />;
+
+// Unknown length:
+<ProgressBar label="Preparing the export" value={null} />;
+```
+
+## When to use
+
+- Work that takes more than a second or two and whose amount is known: uploads, downloads, installs, imports.
+- With `value={null}` for work whose length is unknown yet, switching to a value once it is.
+
+## When not to use
+
+- Short waits under a second. Show nothing, or a spinner on the button (Status Button).
+- Quotas or limits that are not work in progress. Use Usage Meter.
+
+## Notes
+
+- The fill springs to each new value and the percentage counts up; a sheen travels along the fill while work is under way and stops at rest.
+- At 100% the fill turns green and `doneLabel` replaces the number.
+- It is a `progressbar` with a 0–100 value for screen readers, busy until done; indeterminate bars have no value.
+- With reduced motion the fill jumps, the number changes at once and there is no sheen or sweep.

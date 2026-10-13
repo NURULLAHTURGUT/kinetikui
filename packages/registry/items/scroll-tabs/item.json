@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "scroll-tabs",
+  "title": "Scroll Tabs",
+  "description": "Tabs over swipeable pages: the underline follows the swipe and stretches between tabs as labels brighten.",
+  "category": "navigation",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["scroll-tabs.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Two native scroll views; the underline and labels read the page scroll offset on the UI thread. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "baselineMs": 18,
+        "jankyPercent": 4.49,
+        "atRest": "idle",
+        "memoryMb": 144
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Tapping a tab jumps to its page instead of scrolling.",
+    "screenReader": "A tab list whose tabs have a selected state; only the current page is exposed.",
+    "touchTarget": "Tabs are 48 pt tall and as wide as their label plus 32 pt."
+  }
+}

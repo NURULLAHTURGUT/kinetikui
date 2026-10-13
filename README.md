@@ -11,7 +11,7 @@
 
 <p align="center">
   <strong>Motion parts for Expo.</strong><br />
-  80 animated components and 4 screen templates for React Native, copied into your app as source.
+  111 animated components and 4 screen templates for React Native, copied into your app as source.
 </p>
 
 <p align="center">
@@ -49,7 +49,7 @@ npx kinetik-ui add glint-card
 
 ## What you get
 
-- **80 components and 4 screen templates**, each with a live demo, a props table and notes on when _not_ to use it.
+- **111 components and 4 screen templates**, each with a live demo, a props table and notes on when _not_ to use it.
 - **Runs on the UI thread.** Gestures, springs and shaders are worklets; a busy JavaScript thread does not drop frames.
 - **Accessible by default.** Every component has a reduced-motion version, screen-reader labels and roles, and 44 pt touch targets. See the [checklist](docs/accessibility.md).
 - **One design language.** Colours, spacing, type, shadows and three springs come from shared tokens; nothing hard-codes a colour. Brand it with `<KinetikProvider colors={{ ember: '#7C5CFF' }}>`.
@@ -91,50 +91,81 @@ npx kinetik-ui add glint-card
 |             | Split Button      | A primary action with alternatives behind a chevron.                                |
 |             | Status Button     | Folds into a spinner while it works, then opens with a check or shakes.             |
 |             | Swipe Row         | A list row with actions behind it; a long swipe runs the edge one.                  |
+|             | Theme Switch      | A sun whose rays turn and draw in as a shadow leaves a moon.                        |
 |             | Two-Step Button   | Splits into Cancel and Confirm before a destructive action.                         |
 | Inputs      | Choice Cards      | Option cards with one selection ring that glides between them.                      |
 |             | Code Field        | A one-time-code field: digits pop in, wrong codes shake.                            |
 |             | Filter Chips      | Chips that grow a check and turn to a tint when picked.                             |
+|             | Float Field       | A text field whose label rises to the edge, with a ring and a shake for errors.     |
+|             | Glide Radio       | A radio group whose one dot travels between the rings like ink.                     |
+|             | Grow Area         | A multi-line field that grows a line at a time, with a limit ring.                  |
 |             | Ink Check         | A checkbox whose tick is inked in one stroke.                                       |
+|             | Inline Edit       | Text you rename in place, confirmed with a check.                                   |
+|             | Money Field       | A currency field typed like a till, every place rolling.                            |
+|             | Month Calendar    | A month to pick a date or a range; a disc glides between days.                      |
+|             | Morph Select      | A select whose field stretches open into its list.                                  |
 |             | Password Meter    | A new-password field with a meter and rules that tick off.                          |
 |             | Plan Toggle       | A billing-period toggle with a popping badge and rolling price.                     |
 |             | Range Slider      | A two-ended slider over an optional histogram.                                      |
+|             | Reveal Field      | A password field with an eye that blinks.                                           |
 |             | Roll Stepper      | A number stepper whose figure rolls and speeds up while held.                       |
 |             | Search Morph      | A search button that stretches into a search field.                                 |
+|             | Signature Pad     | Finger signing with ink that thins with speed.                                      |
 |             | Star Rating       | Stars you tap or drag across, swelling as they fill.                                |
-| Disclosure  | Lift Menu         | Hold to lift the content above a dimmed screen with its actions.                    |
+|             | Swatch Picker     | Colour swatches with a ring that glides to the pick.                                |
+|             | Tag Field         | Typed words that pop into removable tags.                                           |
+|             | Time Wheel        | Drum-like wheels for a time of day that snap row by row.                            |
+| Disclosure  | Fade Scroll       | A scroll view whose edges fade only where there is more.                            |
+|             | Lift Menu         | Hold to lift the content above a dimmed screen with its actions.                    |
 |             | Pop Menu          | A menu that unfolds from its trigger, rows sliding in.                              |
 |             | Read More         | Long text folded to a few lines that fade, let out on a spring.                     |
+|             | Split Pane        | Two panes with a handle that springs to resting points.                             |
 |             | Tip Bubble        | A short tip that grows out of its anchor and closes by itself.                      |
+|             | Tree View         | Nested folders whose branches grow open.                                            |
+| Overlays    | Action Sheet      | Actions from the bottom edge that follow a drag down.                               |
+|             | Pop Dialog        | A dialog that rises and settles over a dimmed screen.                               |
+|             | Side Drawer       | A drawer from the side whose rows slide in one by one.                              |
 | Text        | Letter Morph      | A label that morphs letter by letter: Save to Saved.                                |
 |             | Marker Highlight  | Key phrases marked as if with a highlighter, one after another.                     |
 |             | Odometer          | Digits that roll like a mechanical counter.                                         |
 |             | Scramble Text     | Characters cycle through glyphs and lock in from left to right.                     |
 |             | Shine Text        | A band of light sweeping across a line of text.                                     |
+|             | Slot Text         | Characters that spin like slot reels onto the new text.                             |
 |             | Typewriter        | Text typed out with a human rhythm, phrase after phrase.                            |
 |             | Word Cascade      | A paragraph that arrives word by word.                                              |
 |             | Word Rotator      | One word in a line that rolls to the next, letter by letter.                        |
 | Navigation  | Dock Bar          | A floating bottom bar whose items swell under the finger.                           |
 |             | Morph Sheet       | A bottom sheet with snap points that blurs the screen behind it.                    |
 |             | Page Dots         | Page dots that follow the scroll as a worm or a pill.                               |
+|             | Pager             | Pagination with a gliding pill and rolling page numbers.                            |
 |             | Parallax Header   | A header that scrolls at half speed and hands off to a compact bar.                 |
+|             | Scroll Tabs       | Tabs over swipeable pages, the underline tied to the swipe.                         |
 | Feedback    | Confetti Burst    | Confetti drawn in a single Skia draw call, physics on the UI thread.                |
+|             | Count Badge       | A corner count that springs in, jumps as it rises and rolls.                        |
+|             | Countdown         | Digits that drop in as they change, then a Live pill.                               |
 |             | Dot Loader        | Dots that hop, breathe or sit in a typing bubble.                                   |
 |             | Empty State       | Three cards fan out above the next step on an empty screen.                         |
 |             | Notice Bar        | An announcement bar whose messages take turns rolling in.                           |
+|             | Progress Bar      | A bar that springs to each amount, with a sheen and a green finish.                 |
 |             | Ring Spinner      | An arc that stretches as it turns and closes into a check.                          |
 |             | Skeleton Sweep    | Loading placeholders with one light band across the whole layout.                   |
 |             | Step Tracker      | Progress through steps: the line fills and steps take a check.                      |
 |             | Toast Stack       | Notifications that stack like cards, fan out and swipe away.                        |
 | Data        | Activity Rings    | Concentric progress rings that wind up; past the goal they lap.                     |
+|             | Avatar Stack      | Overlapping faces that fan out with their names.                                    |
 |             | Bar Chart         | Bars that spring up in a wave and light up under the finger.                        |
+|             | Brush Chart       | A long series with a window you drag and resize to zoom.                            |
+|             | Chat Thread       | Grouped chat bubbles that rise in, with typing dots.                                |
 |             | Donut Chart       | A ring of rounded slices that sweeps in; tap one to bring it forward.               |
 |             | Gauge Meter       | A dial that swings to its value while the figure counts up.                         |
 |             | Heat Grid         | Days shaded by activity, popping in as a wave; drag to read.                        |
 |             | Line Chart        | A smooth line that draws itself in, with a scrubbing guide and label.               |
 |             | Radar Chart       | Shapes that grow from the centre and morph to new values.                           |
+|             | Ridgeline         | Overlapping distributions; tap one to lift it and mark its quartiles.               |
 |             | Slope Chart       | Before and after on two axes, rises in blue.                                        |
+|             | Sort Table        | A table whose rows spring to their new places when sorted.                          |
 |             | Stat Card         | A figure that counts up, with a change pill and a sparkline.                        |
+|             | Stream Graph      | Layered streams that morph between datasets.                                        |
 |             | Timeline          | Events along a rail that pop in and draw down in turn.                              |
 |             | Treemap           | Nested, near-square tiles; tap a group to zoom into it.                             |
 |             | Usage Meter       | What fills an allowance, segment by segment.                                        |

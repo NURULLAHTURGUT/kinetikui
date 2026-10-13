@@ -1,0 +1,31 @@
+## Usage
+
+```tsx
+import { FloatField } from '@/components/kinetik/float-field';
+
+<FloatField
+  label="Email"
+  hint="We only use it for receipts."
+  error={invalid ? 'That does not look like an email address.' : undefined}
+  value={email}
+  onChangeText={setEmail}
+  keyboardType="email-address"
+  autoCapitalize="none"
+/>;
+```
+
+## When to use
+
+- Forms where space is tight and every field needs a visible name: sign up, checkout, profile.
+- Fields that validate on blur and need to say what is wrong right under the input.
+
+## When not to use
+
+- Long text. Use Grow Area, which grows with what is typed.
+- Search. A search field reads better with an icon and no floating label.
+
+## Notes
+
+- Every other `TextInput` prop (keyboard type, auto-complete, secure entry, return key) is passed through.
+- The label is the field's accessible name and the hint or error is its hint; a new error is also announced.
+- With reduced motion the label still moves, without a spring, and the field does not shake.

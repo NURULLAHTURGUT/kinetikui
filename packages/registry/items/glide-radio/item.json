@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "glide-radio",
+  "title": "Glide Radio",
+  "description": "A radio group with one dot that travels between the rings like a drop of ink, stretching as it goes.",
+  "category": "input",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["glide-radio.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views; one dot driven by two shared values serves the whole group. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "baselineMs": 18,
+        "jankyPercent": 0.2,
+        "atRest": "idle",
+        "memoryMb": 142
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The dot jumps to the new ring without stretching.",
+    "screenReader": "A radio group named by accessibilityLabel; each row is a radio that reads its label and description.",
+    "touchTarget": "Each row is the target, at least 48 pt tall."
+  }
+}

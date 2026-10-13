@@ -1,0 +1,41 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "action-sheet",
+  "title": "Action Sheet",
+  "description": "Actions from the bottom edge with Cancel apart: it springs up, follows a downward drag and drops away.",
+  "category": "overlay",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-safe-area-context",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["action-sheet.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "A transparent modal of plain views; the sheet and scrim read two shared values. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 19,
+        "p90Ms": 23,
+        "baselineMs": 18,
+        "jankyPercent": 6.72,
+        "atRest": "idle",
+        "memoryMb": 141,
+        "notes": "p99 spikes are the first frame of the modal window opening."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The sheet appears and disappears without sliding.",
+    "screenReader": "A heading and a button per action, plus Cancel; Back and the escape gesture close it.",
+    "touchTarget": "Every action and Cancel are full-width rows 56 pt tall."
+  }
+}

@@ -1,0 +1,30 @@
+## Usage
+
+```tsx
+import { GrowArea } from '@/components/kinetik/grow-area';
+
+<GrowArea
+  label="About you"
+  placeholder="A line or two about yourself"
+  value={bio}
+  onChangeText={setBio}
+  maxLength={160}
+  maxLines={6}
+/>;
+```
+
+## When to use
+
+- Free text whose length varies a lot: a bio, a comment, a note to the seller.
+- Text with a hard limit people should see coming before they hit it.
+
+## When not to use
+
+- A single line such as a name or an email. Use Float Field.
+- Long documents. Use a dedicated editor screen.
+
+## Notes
+
+- The field starts at `minLines`, springs taller a line at a time and scrolls once it reaches `maxLines`.
+- With `maxLength` a ring fills towards the limit; the number of characters left appears in the last 20 and turns red at zero.
+- Every other `TextInput` prop is passed through.

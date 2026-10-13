@@ -1,0 +1,30 @@
+## Usage
+
+```tsx
+import { BrushChart } from '@/components/kinetik/brush-chart';
+
+<BrushChart
+  accessibilityLabel="Daily visitors"
+  data={visitors}
+  labels={dates}
+  initialWindow={[0.7, 1]}
+  onWindowChange={([from, to]) => load(from, to)}
+/>;
+```
+
+## When to use
+
+- Long time series where people need both the shape of the whole and the detail of a part: traffic, prices, sensor readings.
+- Dashboards where the visible range drives other figures, via `onWindowChange`.
+
+## When not to use
+
+- A handful of points. Use Line Chart or Bar Chart.
+- Comparing several series. Use Line Chart with a legend.
+
+## Notes
+
+- Drag inside the window to move it, pull either handle to zoom, or tap outside it to jump there.
+- The main chart is rebuilt on the UI thread from the window and rescales to the visible range; the overview is drawn once per size.
+- The readout shows the last visible value and the change across the window, and updates when the window settles. The range is an adjustable element: screen readers step it by half a window.
+- `onWindowChange` receives the first and last visible point indices when the window settles.

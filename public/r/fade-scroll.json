@@ -1,0 +1,62 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "fade-scroll",
+  "type": "registry:item",
+  "title": "Fade Scroll",
+  "description": "A scroll view whose edges fade only where there is more to see, with a slim indicator that slips away.",
+  "categories": [
+    "disclosure"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/fade-scroll.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/fade-scroll.tsx",
+      "content": "import { type ReactNode } from 'react';\nimport { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  useAnimatedScrollHandler,\n  useAnimatedStyle,\n  useSharedValue,\n  withDelay,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { durations, easings } from '../../lib/kinetik/motion/motion';\nimport { gradient } from '../../lib/kinetik/tokens/gradient';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type FadeScrollProps = {\n  children: ReactNode;\n  /** Scroll sideways instead of down. */\n  horizontal?: boolean;\n  /** Length of each edge fade. Defaults to 32. */\n  fadeSize?: number;\n  /** The colour behind the scroll view, which the edges fade into. Defaults to the theme background. */\n  fadeColor?: string;\n  /** A slim indicator that shows while scrolling. Defaults to true. */\n  indicator?: boolean;\n  /** Read by screen readers, e.g. \"Terms of service\". */\n  accessibilityLabel?: string;\n  testID?: string;\n  /** Give it a height (or a width when horizontal), or it grows with its content. */\n  style?: StyleProp<ViewStyle>;\n  contentContainerStyle?: StyleProp<ViewStyle>;\n};\n\nconst BAR = 3;\nconst INSET = 3;\n\n/**\n * A scroll view whose edges fade only where there is more to see. At the top\n * there is no top fade; scroll a little and it fades in, reach the end and the\n * bottom fade goes. A slim indicator appears while scrolling and slips away\n * when it stops.\n */\nexport function FadeScroll({\n  children,\n  horizontal = false,\n  fadeSize = 32,\n  fadeColor,\n  indicator = true,\n  accessibilityLabel,\n  testID,\n  style,\n  contentContainerStyle,\n}: FadeScrollProps) {\n  const { colors } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const ground = fadeColor ?? colors.background;\n  const offset = useSharedValue(0);\n  const content = useSharedValue(0);\n  const frame = useSharedValue(0);\n  const shown = useSharedValue(0);\n\n  const hide = () => {\n    'worklet';\n    shown.set(withDelay(700, withTiming(0, { duration: durations.slow, easing: easings.exit })));\n  };\n  const onScroll = useAnimatedScrollHandler({\n    onScroll: (e) => {\n      offset.set(horizontal ? e.contentOffset.x : e.contentOffset.y);\n      content.set(horizontal ? e.contentSize.width : e.contentSize.height);\n      frame.set(horizontal ? e.layoutMeasurement.width : e.layoutMeasurement.height);\n      if (indicator) shown.set(1);\n    },\n    onEndDrag: () => hide(),\n    onMomentumEnd: () => hide(),\n  });\n\n  const start = useAnimatedStyle(() => ({\n    opacity: Math.min(1, Math.max(0, offset.get() / fadeSize)),\n  }));\n  const end = useAnimatedStyle(() => {\n    const left = content.get() - frame.get() - offset.get();\n    return { opacity: content.get() > frame.get() ? Math.min(1, Math.max(0, left / fadeSize)) : 0 };\n  });\n  const bar = useAnimatedStyle(() => {\n    const total = content.get();\n    const view = frame.get();\n    if (total <= view || view === 0) return { opacity: 0 };\n    const len = Math.max(24, (view / total) * (view - INSET * 2));\n    const travel = view - INSET * 2 - len;\n    const at = INSET + Math.min(1, Math.max(0, offset.get() / (total - view))) * travel;\n    return horizontal\n      ? { opacity: shown.get(), width: len, transform: [{ translateX: at }] }\n      : { opacity: shown.get(), height: len, transform: [{ translateY: at }] };\n  });\n\n  const solid = ground;\n  const clear = withAlpha(ground, 0);\n  const startFade = gradient(\n    `linear-gradient(${horizontal ? 'to right' : 'to bottom'}, ${solid}, ${clear})`,\n  );\n  const endFade = gradient(\n    `linear-gradient(${horizontal ? 'to left' : 'to top'}, ${solid}, ${clear})`,\n  );\n  const edge = horizontal ? { width: fadeSize } : { height: fadeSize };\n\n  return (\n    <View testID={testID} style={[styles.root, style]}>\n      <Animated.ScrollView\n        horizontal={horizontal}\n        onScroll={onScroll}\n        scrollEventThrottle={16}\n        onContentSizeChange={(w, h) => content.set(horizontal ? w : h)}\n        onLayout={(e) =>\n          frame.set(horizontal ? e.nativeEvent.layout.width : e.nativeEvent.layout.height)\n        }\n        accessibilityLabel={accessibilityLabel}\n        contentContainerStyle={contentContainerStyle}\n        // With reduced motion the native indicator stands in for the animated one.\n        showsVerticalScrollIndicator={reduced && !horizontal}\n        showsHorizontalScrollIndicator={reduced && horizontal}\n      >\n        {children}\n      </Animated.ScrollView>\n      <Animated.View\n        pointerEvents=\"none\"\n        style={[styles.edge, horizontal ? styles.left : styles.top, edge, startFade, start]}\n      />\n      <Animated.View\n        pointerEvents=\"none\"\n        style={[styles.edge, horizontal ? styles.right : styles.bottom, edge, endFade, end]}\n      />\n      {indicator && !reduced ? (\n        <Animated.View\n          pointerEvents=\"none\"\n          style={[\n            styles.bar,\n            horizontal ? styles.barX : styles.barY,\n            { backgroundColor: colors.textSubtle },\n            bar,\n          ]}\n        />\n      ) : null}\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  root: { overflow: 'hidden' },\n  edge: { position: 'absolute' },\n  top: { top: 0, left: 0, right: 0 },\n  bottom: { bottom: 0, left: 0, right: 0 },\n  left: { left: 0, top: 0, bottom: 0 },\n  right: { right: 0, top: 0, bottom: 0 },\n  bar: { position: 'absolute', borderRadius: BAR },\n  barY: { right: 2, top: 0, width: BAR },\n  barX: { bottom: 2, left: 0, height: BAR },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "disclosure",
+    "web": "live",
+    "perf": {
+      "budget": "A native scroll view with two gradient views and a bar that read the scroll offset on the UI thread. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 18,
+          "baselineMs": 18,
+          "jankyPercent": 3.76,
+          "atRest": "idle",
+          "memoryMb": 135
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The animated indicator is replaced by the platform's own.",
+      "screenReader": "A plain scroll view named by accessibilityLabel; the fades are decoration.",
+      "touchTarget": "Not interactive itself; its content keeps its own targets."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { FadeScroll } from '@/components/kinetik/fade-scroll';\n\n<FadeScroll style={{ height: 260 }} accessibilityLabel=\"Privacy summary\">\n  {sections}\n</FadeScroll>;\n```\n\n## When to use\n\n- A scrolling area inside a screen, such as terms in a sheet, a list in a card or a row of chips, where people need a hint that there is more.\n- Places where a hard cut-off edge would look like the content ends there.\n\n## When not to use\n\n- The main scroll view of a screen. The screen edges already show that it scrolls.\n- Content on a busy background such as a photo. The fades need a flat colour to fade into.\n\n## Notes\n\n- An edge fade appears only when there is content beyond that edge, and grows over the first `fadeSize` points of scrolling.\n- Set `fadeColor` to the colour behind the scroll view (it defaults to the theme background). `#RRGGBB` colours work best.\n- The slim indicator shows while scrolling and slips away 0.7 s after it stops. With reduced motion the platform's own indicator is used instead.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add fade-scroll`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

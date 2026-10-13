@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "ridgeline",
+  "title": "Ridgeline",
+  "description": "Overlapping distributions that rise one by one; tap a row to lift its ridge and mark its quartiles.",
+  "category": "data",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["ridgeline.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One Skia canvas; curves are estimated once per dataset and each ridge moves by a group transform on three shared values. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "baselineMs": 17,
+        "jankyPercent": 0.46,
+        "atRest": "idle",
+        "memoryMb": 156
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Ridges appear at full height and the chosen one does not lift.",
+    "screenReader": "Each row is a button that reads the group, its median and its middle half, with a selected state.",
+    "touchTarget": "Rows are 44 pt tall and span the full width."
+  }
+}

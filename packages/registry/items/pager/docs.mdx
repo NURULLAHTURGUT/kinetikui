@@ -1,0 +1,24 @@
+## Usage
+
+```tsx
+import { Pager } from '@/components/kinetik/pager';
+
+<Pager page={page} pageCount={24} onPageChange={setPage} />;
+```
+
+## When to use
+
+- Long lists split into pages people jump between: search results, orders, records.
+- Places where knowing "page 9 of 24" matters more than endless scrolling.
+
+## When not to use
+
+- Feeds people scroll through once. Load more as they reach the end.
+- Swiping between a few full-screen slides. Use Page Dots.
+
+## Notes
+
+- The first and last pages are always shown, with the current page between gaps; the number of slots never changes, so the row keeps its width.
+- `siblings` adds pages either side of the current one; each slot is 44 pt, so `siblings={1}` needs about 400 pt.
+- `pagerSlots(page, count, siblings)` is exported if you want the same logic elsewhere.
+- With reduced motion the pill jumps and digits change in place.

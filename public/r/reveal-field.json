@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "reveal-field",
+  "type": "registry:item",
+  "title": "Reveal Field",
+  "description": "A password field with an eye that blinks as the text turns between dots and letters, and a slash that wipes away.",
+  "categories": [
+    "input"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/reveal-field.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/reveal-field.tsx",
+      "content": "import { Canvas, Circle, Group, Path, Skia } from '@shopify/react-native-skia';\nimport { useEffect, useState } from 'react';\nimport {\n  Pressable,\n  StyleSheet,\n  Text,\n  TextInput,\n  View,\n  type StyleProp,\n  type TextInputProps,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useDerivedValue,\n  useSharedValue,\n  withSequence,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { durations, easings, spring, timing } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget } from '../../lib/kinetik/tokens/tokens';\n\nexport type RevealFieldProps = Omit<\n  TextInputProps,\n  'style' | 'value' | 'onChangeText' | 'secureTextEntry' | 'multiline'\n> & {\n  /** Shown above the field and used as its accessible name. Defaults to \"Password\". */\n  label?: string;\n  value: string;\n  onChangeText: (text: string) => void;\n  /** Start with the text visible. Defaults to false. */\n  defaultRevealed?: boolean;\n  /** A light tap when the eye toggles. Defaults to true. */\n  haptics?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst HEIGHT = 52;\nconst ICON = 24;\n\nconst EYE = Skia.PathBuilder.Make()\n  .moveTo(2.5, 12)\n  .cubicTo(5.5, 6.5, 9, 5, 12, 5)\n  .cubicTo(15, 5, 18.5, 6.5, 21.5, 12)\n  .cubicTo(18.5, 17.5, 15, 19, 12, 19)\n  .cubicTo(9, 19, 5.5, 17.5, 2.5, 12)\n  .close()\n  .detach();\n\nconst SLASH = Skia.PathBuilder.Make().moveTo(4, 4).lineTo(20, 20).detach();\n\n/**\n * A password field with an eye that blinks. Tapping it shuts and reopens the\n * lid while the text dips and turns between dots and letters, and the slash\n * across the eye draws in or wipes away.\n */\nexport function RevealField({\n  label = 'Password',\n  value,\n  onChangeText,\n  defaultRevealed = false,\n  haptics = true,\n  editable = true,\n  onFocus,\n  onBlur,\n  testID,\n  style,\n  ...input\n}: RevealFieldProps) {\n  const { colors, font, radius, space } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const [revealed, setRevealed] = useState(defaultRevealed);\n  const [focused, setFocused] = useState(false);\n\n  const lid = useSharedValue(1);\n  const slash = useSharedValue(revealed ? 0 : 1);\n  const ring = useSharedValue(0);\n  const fade = useSharedValue(1);\n\n  useEffect(() => {\n    ring.set(withTiming(focused ? 1 : 0, timing('quick', reduced)));\n  }, [focused, reduced, ring]);\n\n  const toggle = () => {\n    const next = !revealed;\n    haptic('tap');\n    setRevealed(next);\n    if (reduced) {\n      slash.set(next ? 0 : 1);\n      return;\n    }\n    const half = { duration: durations.quick / 1.5, easing: easings.standard };\n    lid.set(withSequence(withTiming(0.08, half), withSpring(1, spring('bouncy'))));\n    fade.set(withSequence(withTiming(0.35, half), withTiming(1, timing('base'))));\n    slash.set(withTiming(next ? 0 : 1, timing('base')));\n  };\n\n  const eye = useDerivedValue(() => [\n    { translateY: 12 },\n    { scaleY: lid.get() },\n    { translateY: -12 },\n  ]);\n  const text = useAnimatedStyle(() => ({ opacity: fade.get() }));\n  const outline = useAnimatedStyle(() => ({ opacity: ring.get() }));\n  const ink = focused ? colors.text : colors.textMuted;\n\n  return (\n    <View testID={testID} style={[{ gap: space[2], opacity: editable ? 1 : 0.5 }, style]}>\n      <Text style={{ color: colors.text, fontSize: font.size.sm, fontWeight: font.weight.medium }}>\n        {label}\n      </Text>\n      <View\n        style={[\n          styles.field,\n          {\n            backgroundColor: colors.surface,\n            borderColor: colors.borderStrong,\n            borderRadius: radius.md,\n            paddingLeft: space[4],\n          },\n        ]}\n      >\n        <Animated.View\n          pointerEvents=\"none\"\n          style={[styles.ring, { borderColor: colors.azure, borderRadius: radius.md + 1 }, outline]}\n        />\n        <Animated.View style={[styles.grow, text]}>\n          <TextInput\n            {...input}\n            value={value}\n            onChangeText={onChangeText}\n            editable={editable}\n            secureTextEntry={!revealed}\n            autoCapitalize=\"none\"\n            autoCorrect={false}\n            accessibilityLabel={label}\n            onFocus={(e) => {\n              setFocused(true);\n              onFocus?.(e);\n            }}\n            onBlur={(e) => {\n              setFocused(false);\n              onBlur?.(e);\n            }}\n            placeholderTextColor={colors.textSubtle}\n            selectionColor={colors.azure}\n            cursorColor={colors.azure}\n            style={[\n              styles.input,\n              {\n                color: colors.text,\n                fontSize: font.size.md,\n                letterSpacing: revealed ? font.tracking.normal : font.tracking.wide,\n              },\n            ]}\n          />\n        </Animated.View>\n        <Pressable\n          onPress={toggle}\n          disabled={!editable}\n          accessibilityRole=\"button\"\n          accessibilityLabel={revealed ? 'Hide password' : 'Show password'}\n          style={styles.toggle}\n        >\n          <Canvas style={styles.icon}>\n            <Group transform={eye}>\n              <Path path={EYE} style=\"stroke\" strokeWidth={1.8} strokeJoin=\"round\" color={ink} />\n              <Circle cx={12} cy={12} r={3.2} color={ink} />\n            </Group>\n            {/* A wider stroke in the field colour cuts the eye where the slash crosses it. */}\n            <Path\n              path={SLASH}\n              style=\"stroke\"\n              strokeWidth={4.5}\n              strokeCap=\"round\"\n              color={colors.surface}\n              end={slash}\n            />\n            <Path\n              path={SLASH}\n              style=\"stroke\"\n              strokeWidth={1.8}\n              strokeCap=\"round\"\n              color={ink}\n              end={slash}\n            />\n          </Canvas>\n        </Pressable>\n      </View>\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  field: { height: HEIGHT, borderWidth: 1, flexDirection: 'row', alignItems: 'center' },\n  ring: { position: 'absolute', top: -1, left: -1, right: -1, bottom: -1, borderWidth: 2 },\n  grow: { flex: 1, alignSelf: 'stretch' },\n  input: { flex: 1, padding: 0 },\n  toggle: {\n    width: minTouchTarget + 4,\n    height: HEIGHT - 2,\n    alignItems: 'center',\n    justifyContent: 'center',\n  },\n  icon: { width: ICON, height: ICON },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "input",
+    "web": "live",
+    "perf": {
+      "budget": "A native text input and a 24 pt Skia icon driven by four shared values. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 17,
+          "baselineMs": 17,
+          "jankyPercent": 0.2,
+          "atRest": "idle",
+          "memoryMb": 151
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The text and the slash switch at once, without the blink.",
+      "screenReader": "A secure text field named by its label, and a button named \"Show password\" or \"Hide password\".",
+      "touchTarget": "The eye button is 48 by 50 pt; the field is 52 pt tall."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { RevealField } from '@/components/kinetik/reveal-field';\n\n<RevealField\n  value={password}\n  onChangeText={setPassword}\n  placeholder=\"At least 12 characters\"\n  autoComplete=\"new-password\"\n/>;\n```\n\n## When to use\n\n- Any password or PIN field, so people can check what they typed before sending it.\n- Sign up and change-password forms, where mistakes are expensive.\n\n## When not to use\n\n- One-time codes. Use Code Field, which shows each digit in its own box.\n- Values that must never be shown on screen, such as a card security code in a shared space.\n\n## Notes\n\n- The eye blinks shut and open while the text dips and turns between dots and letters; the slash across it draws in or wipes away.\n- The eye button is named \"Show password\" or \"Hide password\" for screen readers.\n- Every other `TextInput` prop (auto-complete, return key, placeholder) is passed through. Pair it with Password Meter for new passwords.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add reveal-field`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

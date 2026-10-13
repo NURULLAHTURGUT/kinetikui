@@ -1,0 +1,25 @@
+## Usage
+
+```tsx
+import { MoneyField } from '@/components/kinetik/money-field';
+
+// `cents` is an integer: 4250 is $42.50.
+<MoneyField label="Amount to send" value={cents} onChangeValue={setCents} />;
+```
+
+## When to use
+
+- Entering an amount of money: sending, tipping, splitting a bill, setting a budget.
+- Any amount where floating-point rounding must never creep in; the value is an integer of minor units.
+
+## When not to use
+
+- Numbers that are not money, or that step in fixed amounts. Use Roll Stepper.
+- Picking from a few preset amounts only. Use chips or Choice Cards.
+
+## Notes
+
+- Digits arrive from the right like a till: typing 1, 2, 5, 0 gives 0.01, 0.12, 1.25, 12.50, and every place rolls to its new digit.
+- `currency`, `groupSeparator`, `decimalSeparator` and `fractionDigits` cover most locales (for example `€`, `.` and `,`).
+- A transparent native field sits over the amount, so tapping it opens the number pad and screen readers read the formatted amount.
+- With reduced motion digits change in place and new places appear without opening.

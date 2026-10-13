@@ -1,0 +1,28 @@
+## Usage
+
+```tsx
+import { RevealField } from '@/components/kinetik/reveal-field';
+
+<RevealField
+  value={password}
+  onChangeText={setPassword}
+  placeholder="At least 12 characters"
+  autoComplete="new-password"
+/>;
+```
+
+## When to use
+
+- Any password or PIN field, so people can check what they typed before sending it.
+- Sign up and change-password forms, where mistakes are expensive.
+
+## When not to use
+
+- One-time codes. Use Code Field, which shows each digit in its own box.
+- Values that must never be shown on screen, such as a card security code in a shared space.
+
+## Notes
+
+- The eye blinks shut and open while the text dips and turns between dots and letters; the slash across it draws in or wipes away.
+- The eye button is named "Show password" or "Hide password" for screen readers.
+- Every other `TextInput` prop (auto-complete, return key, placeholder) is passed through. Pair it with Password Meter for new passwords.

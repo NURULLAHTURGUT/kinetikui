@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "swatch-picker",
+  "title": "Swatch Picker",
+  "description": "Colour swatches with a ring that glides to your pick, a small squeeze and a check in readable ink.",
+  "category": "input",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["swatch-picker.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views; one ring on two shared values and two per swatch for the squeeze and check. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "baselineMs": 18,
+        "jankyPercent": 0.18,
+        "atRest": "idle",
+        "memoryMb": 145
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The ring jumps to the new swatch and the check appears without a spring.",
+    "screenReader": "A radio group named by accessibilityLabel; each swatch is a radio read by its label.",
+    "touchTarget": "Each swatch is the centre of a 44 by 44 pt cell."
+  }
+}

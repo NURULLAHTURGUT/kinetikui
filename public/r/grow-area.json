@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "grow-area",
+  "type": "registry:item",
+  "title": "Grow Area",
+  "description": "A multi-line field that springs taller a line at a time, with a ring that fills towards the character limit.",
+  "categories": [
+    "input"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/grow-area.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/grow-area.tsx",
+      "content": "import { Canvas, Circle, Path, Skia } from '@shopify/react-native-skia';\nimport { useEffect, useState } from 'react';\nimport {\n  StyleSheet,\n  Text,\n  TextInput,\n  View,\n  type StyleProp,\n  type TextInputProps,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring, timing } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type GrowAreaProps = Omit<\n  TextInputProps,\n  'style' | 'multiline' | 'value' | 'onChangeText' | 'maxLength'\n> & {\n  /** Shown above the field and used as its accessible name. */\n  label: string;\n  value: string;\n  onChangeText: (text: string) => void;\n  /** A hard limit. A ring fills towards it and the count of characters left appears near the end. */\n  maxLength?: number;\n  /** Height when empty, in lines. Defaults to 3. */\n  minLines?: number;\n  /** The field stops growing and scrolls past this many lines. Defaults to 8. */\n  maxLines?: number;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst LINE = 22;\nconst PAD = 12;\nconst RING = 22;\nconst STROKE = 2.5;\n/** The count of characters left shows once this few remain. */\nconst NEAR = 20;\n\nconst arc = (() => {\n  const r = RING / 2 - STROKE;\n  return Skia.PathBuilder.Make()\n    .addArc({ x: RING / 2 - r, y: RING / 2 - r, width: r * 2, height: r * 2 }, -90, 359.99)\n    .detach();\n})();\n\n/**\n * A multi-line field that grows with what is typed. The height springs a line\n * at a time up to a limit, then the text scrolls; a ring beside the label\n * fills towards the character limit and turns amber, then red, near the end.\n */\nexport function GrowArea({\n  label,\n  value,\n  onChangeText,\n  maxLength,\n  minLines = 3,\n  maxLines = 8,\n  editable = true,\n  onFocus,\n  onBlur,\n  testID,\n  style,\n  ...input\n}: GrowAreaProps) {\n  const { colors, font, radius, space } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const [focused, setFocused] = useState(false);\n  const [content, setContent] = useState(0);\n\n  const lo = minLines * LINE;\n  const hi = Math.max(lo, maxLines * LINE);\n  const target = Math.min(hi, Math.max(lo, content)) + PAD * 2;\n\n  const height = useSharedValue(target);\n  const ring = useSharedValue(0);\n  useEffect(() => {\n    height.set(withSpring(target, spring('smooth', reduced)));\n  }, [target, reduced, height]);\n  useEffect(() => {\n    ring.set(withTiming(focused ? 1 : 0, timing('quick', reduced)));\n  }, [focused, reduced, ring]);\n\n  const used = maxLength ? Math.min(1, value.length / maxLength) : 0;\n  const fill = useSharedValue(used);\n  useEffect(() => {\n    fill.set(withSpring(used, spring('snappy', reduced)));\n  }, [used, reduced, fill]);\n\n  const left = maxLength ? maxLength - value.length : 0;\n  const tone = !maxLength\n    ? colors.azure\n    : left <= 0\n      ? colors.danger\n      : left <= NEAR\n        ? colors.warning\n        : colors.azure;\n\n  const box = useAnimatedStyle(() => ({ height: height.get() }));\n  const outline = useAnimatedStyle(() => ({ opacity: ring.get() }));\n\n  return (\n    <View testID={testID} style={[{ gap: space[2], opacity: editable ? 1 : 0.5 }, style]}>\n      <View style={styles.header}>\n        <Text\n          style={{ color: colors.text, fontSize: font.size.sm, fontWeight: font.weight.medium }}\n        >\n          {label}\n        </Text>\n        {maxLength ? (\n          <View\n            style={styles.counter}\n            accessible\n            accessibilityLabel={`${Math.max(0, left)} characters left`}\n          >\n            {left <= NEAR ? (\n              <Text\n                style={{\n                  color: tone,\n                  fontSize: font.size.xs,\n                  fontWeight: font.weight.semibold,\n                  fontVariant: ['tabular-nums'],\n                }}\n              >\n                {left}\n              </Text>\n            ) : null}\n            <Canvas style={styles.ring}>\n              <Circle\n                cx={RING / 2}\n                cy={RING / 2}\n                r={RING / 2 - STROKE}\n                style=\"stroke\"\n                strokeWidth={STROKE}\n                color={colors.track}\n              />\n              <Path\n                path={arc}\n                style=\"stroke\"\n                strokeWidth={STROKE}\n                strokeCap=\"round\"\n                color={tone}\n                end={fill}\n              />\n            </Canvas>\n          </View>\n        ) : null}\n      </View>\n      <Animated.View\n        style={[\n          styles.field,\n          {\n            backgroundColor: colors.surface,\n            borderColor: colors.borderStrong,\n            borderRadius: radius.md,\n            paddingHorizontal: space[4],\n          },\n          box,\n        ]}\n      >\n        <Animated.View\n          pointerEvents=\"none\"\n          style={[\n            styles.focusRing,\n            { borderColor: colors.azure, borderRadius: radius.md + 1 },\n            outline,\n          ]}\n        />\n        <TextInput\n          {...input}\n          multiline\n          value={value}\n          onChangeText={onChangeText}\n          maxLength={maxLength}\n          editable={editable}\n          scrollEnabled={content > hi}\n          accessibilityLabel={label}\n          onFocus={(e) => {\n            setFocused(true);\n            onFocus?.(e);\n          }}\n          onBlur={(e) => {\n            setFocused(false);\n            onBlur?.(e);\n          }}\n          onContentSizeChange={(e) => setContent(Math.ceil(e.nativeEvent.contentSize.height))}\n          placeholderTextColor={colors.textSubtle}\n          selectionColor={colors.azure}\n          cursorColor={colors.azure}\n          textAlignVertical=\"top\"\n          style={[styles.input, { color: colors.text, fontSize: font.size.md, lineHeight: LINE }]}\n        />\n      </Animated.View>\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  header: {\n    flexDirection: 'row',\n    alignItems: 'center',\n    justifyContent: 'space-between',\n    minHeight: RING,\n  },\n  counter: { flexDirection: 'row', alignItems: 'center', gap: 6 },\n  ring: { width: RING, height: RING },\n  field: { borderWidth: 1, paddingVertical: PAD - 1, overflow: 'hidden' },\n  focusRing: { position: 'absolute', top: -1, left: -1, right: -1, bottom: -1, borderWidth: 2 },\n  input: { flex: 1, padding: 0, margin: 0 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "input",
+    "web": "live",
+    "perf": {
+      "budget": "A native text input in a box whose height springs; the ring is a tiny Skia canvas with one trimmed arc. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 27,
+          "baselineMs": 18,
+          "jankyPercent": 2.86,
+          "atRest": "idle",
+          "memoryMb": 143,
+          "notes": "Measured while typing three long lines and deleting them; the keyboard stays open."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The field resizes and the ring fills without springs.",
+      "screenReader": "A multi-line text field named by its label, plus a count of characters left.",
+      "touchTarget": "The whole field is the target, at least three lines tall."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { GrowArea } from '@/components/kinetik/grow-area';\n\n<GrowArea\n  label=\"About you\"\n  placeholder=\"A line or two about yourself\"\n  value={bio}\n  onChangeText={setBio}\n  maxLength={160}\n  maxLines={6}\n/>;\n```\n\n## When to use\n\n- Free text whose length varies a lot: a bio, a comment, a note to the seller.\n- Text with a hard limit people should see coming before they hit it.\n\n## When not to use\n\n- A single line such as a name or an email. Use Float Field.\n- Long documents. Use a dedicated editor screen.\n\n## Notes\n\n- The field starts at `minLines`, springs taller a line at a time and scrolls once it reaches `maxLines`.\n- With `maxLength` a ring fills towards the limit; the number of characters left appears in the last 20 and turns red at zero.\n- Every other `TextInput` prop is passed through.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add grow-area`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

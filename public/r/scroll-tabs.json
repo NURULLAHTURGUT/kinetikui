@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "scroll-tabs",
+  "type": "registry:item",
+  "title": "Scroll Tabs",
+  "description": "Tabs over swipeable pages: the underline follows the swipe and stretches between tabs as labels brighten.",
+  "categories": [
+    "navigation"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/scroll-tabs.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/scroll-tabs.tsx",
+      "content": "import { useEffect, useRef, useState, type ReactNode } from 'react';\nimport {\n  Pressable,\n  ScrollView,\n  StyleSheet,\n  View,\n  type NativeScrollEvent,\n  type NativeSyntheticEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  interpolateColor,\n  useAnimatedRef,\n  useAnimatedScrollHandler,\n  useAnimatedStyle,\n  useSharedValue,\n  type SharedValue,\n} from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type ScrollTab = {\n  key: string;\n  title: string;\n  content: ReactNode;\n};\n\nexport type ScrollTabsProps = {\n  tabs: readonly ScrollTab[];\n  /** The tab shown first. Defaults to 0. */\n  initialIndex?: number;\n  onIndexChange?: (index: number) => void;\n  /** A tick when the tab changes. Defaults to true. */\n  haptics?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst TAB_H = 48;\nconst PAD = 16;\nconst LINE = 3;\n\n/**\n * Tabs over pages you can swipe. The underline is tied to the swipe itself:\n * it slides between tabs, stretching a little in the middle of the move, the\n * labels brighten as their page arrives, and the strip scrolls to keep the\n * current tab in view.\n */\nexport function ScrollTabs({\n  tabs,\n  initialIndex = 0,\n  onIndexChange,\n  haptics = true,\n  testID,\n  style,\n}: ScrollTabsProps) {\n  const { colors } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const strip = useRef<ScrollView>(null);\n  const pager = useAnimatedRef<Animated.ScrollView>();\n  const [index, setIndex] = useState(initialIndex);\n  const [width, setWidth] = useState(0);\n  const [stripW, setStripW] = useState(0);\n  const [spots, setSpots] = useState<{ x: number; w: number }[]>([]);\n  const xs = useSharedValue<number[]>([]);\n  const ws = useSharedValue<number[]>([]);\n  const progress = useSharedValue(initialIndex);\n\n  // Underline spans: the label inside each tab's padding.\n  const place = (i: number, x: number, w: number) => {\n    setSpots((prev) => {\n      if (prev[i]?.x === x && prev[i]?.w === w) return prev;\n      const next = [...prev];\n      next[i] = { x, w };\n      return next;\n    });\n  };\n  useEffect(() => {\n    xs.set(spots.map((s) => s?.x ?? 0));\n    ws.set(spots.map((s) => s?.w ?? 0));\n  }, [spots, xs, ws]);\n\n  const reveal = (i: number) => {\n    const spot = spots[i];\n    if (!spot || stripW === 0) return;\n    strip.current?.scrollTo({\n      x: Math.max(0, spot.x + spot.w / 2 - stripW / 2),\n      animated: !reduced,\n    });\n  };\n\n  const settle = (i: number) => {\n    if (i === index) return;\n    haptic('tick');\n    setIndex(i);\n    reveal(i);\n    onIndexChange?.(i);\n  };\n\n  const select = (i: number) => {\n    pager.current?.scrollTo({ x: i * width, animated: !reduced });\n    if (reduced || width === 0) progress.set(i);\n    settle(i);\n  };\n\n  // The web ignores contentOffset, so the first page is also set once there is a width.\n  const opened = useRef(false);\n  useEffect(() => {\n    if (width === 0 || opened.current) return;\n    opened.current = true;\n    if (initialIndex > 0) pager.current?.scrollTo({ x: initialIndex * width, animated: false });\n  }, [width, initialIndex, pager]);\n\n  const onScroll = useAnimatedScrollHandler({\n    onScroll: (e) => {\n      if (width > 0) progress.set(e.contentOffset.x / width);\n    },\n  });\n\n  const onEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {\n    if (width === 0) return;\n    settle(Math.round(e.nativeEvent.contentOffset.x / width));\n  };\n\n  const line = useAnimatedStyle(() => {\n    const x = xs.get();\n    const w = ws.get();\n    if (x.length === 0) return { opacity: 0 };\n    const p = Math.max(0, Math.min(x.length - 1, progress.get()));\n    const i = Math.floor(p);\n    const j = Math.min(x.length - 1, i + 1);\n    const f = p - i;\n    const left = (x[i] ?? 0) + ((x[j] ?? 0) - (x[i] ?? 0)) * f;\n    const width = (w[i] ?? 0) + ((w[j] ?? 0) - (w[i] ?? 0)) * f;\n    // Halfway between two tabs the line is a little longer, like it is being pulled.\n    const pull = Math.sin(f * Math.PI) * 14;\n    return { opacity: 1, left: left - pull / 2, width: width + pull };\n  });\n\n  return (\n    <View testID={testID} style={style}>\n      <View style={[styles.stripBox, { borderBottomColor: colors.border }]}>\n        <ScrollView\n          ref={strip}\n          horizontal\n          showsHorizontalScrollIndicator={false}\n          onLayout={(e) => setStripW(e.nativeEvent.layout.width)}\n          accessibilityRole=\"tablist\"\n        >\n          {tabs.map((tab, i) => (\n            <Tab\n              key={tab.key}\n              title={tab.title}\n              index={i}\n              selected={i === index}\n              progress={progress}\n              onPress={() => select(i)}\n              onPlace={(x, w) => place(i, x, w)}\n            />\n          ))}\n          <Animated.View\n            pointerEvents=\"none\"\n            style={[styles.line, { backgroundColor: colors.text }, line]}\n          />\n        </ScrollView>\n      </View>\n      <View\n        testID={testID ? `${testID}-pages-box` : undefined}\n        style={styles.pages}\n        onLayout={(e) => setWidth(e.nativeEvent.layout.width)}\n      >\n        {width > 0 ? (\n          <Animated.ScrollView\n            ref={pager}\n            horizontal\n            pagingEnabled\n            showsHorizontalScrollIndicator={false}\n            onScroll={onScroll}\n            onMomentumScrollEnd={onEnd}\n            scrollEventThrottle={16}\n            contentOffset={{ x: initialIndex * width, y: 0 }}\n            testID={testID ? `${testID}-pages` : undefined}\n          >\n            {tabs.map((tab, i) => (\n              <View\n                key={tab.key}\n                style={{ width }}\n                accessibilityElementsHidden={i !== index}\n                importantForAccessibility={i === index ? 'auto' : 'no-hide-descendants'}\n              >\n                {tab.content}\n              </View>\n            ))}\n          </Animated.ScrollView>\n        ) : null}\n      </View>\n    </View>\n  );\n}\n\ntype TabProps = {\n  title: string;\n  index: number;\n  selected: boolean;\n  progress: SharedValue<number>;\n  onPress: () => void;\n  onPlace: (x: number, w: number) => void;\n};\n\nfunction Tab({ title, index, selected, progress, onPress, onPlace }: TabProps) {\n  const { colors, font } = useKinetikTheme();\n  const label = useAnimatedStyle(() => ({\n    color: interpolateColor(\n      Math.min(1, Math.abs(progress.get() - index)),\n      [0, 1],\n      [colors.text, colors.textSubtle],\n    ),\n  }));\n  return (\n    <Pressable\n      onPress={onPress}\n      onLayout={(e) => {\n        const { x, width } = e.nativeEvent.layout;\n        onPlace(x + PAD, width - PAD * 2);\n      }}\n      accessibilityRole=\"tab\"\n      accessibilityLabel={title}\n      accessibilityState={{ selected }}\n      style={styles.tab}\n    >\n      <Animated.Text style={[{ fontSize: font.size.md, fontWeight: font.weight.semibold }, label]}>\n        {title}\n      </Animated.Text>\n    </Pressable>\n  );\n}\n\nconst styles = StyleSheet.create({\n  stripBox: { borderBottomWidth: StyleSheet.hairlineWidth },\n  tab: { height: TAB_H, paddingHorizontal: PAD, justifyContent: 'center' },\n  line: { position: 'absolute', bottom: 0, height: LINE, borderRadius: LINE },\n  pages: { minHeight: 1 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "navigation",
+    "web": "live",
+    "perf": {
+      "budget": "Two native scroll views; the underline and labels read the page scroll offset on the UI thread. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 18,
+          "baselineMs": 18,
+          "jankyPercent": 4.49,
+          "atRest": "idle",
+          "memoryMb": 144
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Tapping a tab jumps to its page instead of scrolling.",
+      "screenReader": "A tab list whose tabs have a selected state; only the current page is exposed.",
+      "touchTarget": "Tabs are 48 pt tall and as wide as their label plus 32 pt."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { ScrollTabs } from '@/components/kinetik/scroll-tabs';\n\n<ScrollTabs\n  tabs={[\n    { key: 'all', title: 'All', content: <AllFeed /> },\n    { key: 'photos', title: 'Photos', content: <Photos /> },\n    { key: 'videos', title: 'Videos', content: <Videos /> },\n  ]}\n  onIndexChange={setIndex}\n/>;\n```\n\n## When to use\n\n- Sibling views of the same kind that people swipe between: feed filters, categories, inbox folders.\n- More tabs than fit across the screen; the strip scrolls and keeps the current tab in view.\n\n## When not to use\n\n- The app's main sections. Use a bottom tab bar (Dock Bar or Liquid Tabs).\n- Two or three options that filter one list in place. Use Filter Chips or a segmented control.\n\n## Notes\n\n- The underline follows the swipe frame by frame on the UI thread and stretches slightly halfway between tabs.\n- Only the current page is exposed to screen readers; tabs are `tab` elements in a `tablist`.\n- Every page is rendered; keep heavy content lazy inside it if there are many tabs.\n- With reduced motion a tab tap jumps straight to its page.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add scroll-tabs`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

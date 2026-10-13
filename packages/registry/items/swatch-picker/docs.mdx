@@ -1,0 +1,33 @@
+## Usage
+
+```tsx
+import { SwatchPicker } from '@/components/kinetik/swatch-picker';
+
+<SwatchPicker
+  accessibilityLabel="Accent colour"
+  swatches={[
+    { value: '#2B6BEF', label: 'Cobalt' },
+    { value: '#3BA58B', label: 'Sea glass' },
+    { value: '#F2C14E', label: 'Butter' },
+  ]}
+  value={accent}
+  onValueChange={setAccent}
+/>;
+```
+
+## When to use
+
+- Picking from a fixed set of colours: a label colour, a theme accent, a product finish.
+- Small sets where seeing every option at once matters more than precision.
+
+## When not to use
+
+- Any colour at all. Use a full colour picker with hue and lightness.
+- Choices that are not colours. Use Glide Radio or Choice Cards.
+
+## Notes
+
+- Every swatch needs a `label`: screen readers read the name, never the hex value.
+- With `#RRGGBB` values the check is drawn in dark or light ink, whichever reads better on that colour.
+- Each swatch sits in a 44 pt cell, so `size` can go down to 24 without shrinking the target.
+- With reduced motion the ring jumps and the swatch does not squeeze.

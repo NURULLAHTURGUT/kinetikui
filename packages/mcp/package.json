@@ -1,6 +1,6 @@
 {
   "name": "@kinetik/mcp",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Model Context Protocol server for Kinetik UI: list, search and inspect components and plan installs.",
   "license": "MIT",

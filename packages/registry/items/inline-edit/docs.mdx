@@ -1,0 +1,23 @@
+## Usage
+
+```tsx
+import { InlineEdit } from '@/components/kinetik/inline-edit';
+
+<InlineEdit accessibilityLabel="Project name" value={name} onSubmit={setName} />;
+```
+
+## When to use
+
+- Names and titles people rename now and then: a project, a playlist, a board.
+- Detail screens where a separate edit form would be heavier than the change.
+
+## When not to use
+
+- Several related fields that should be saved together. Use a form with one Save button.
+- Text that needs validation with an explanation. Use Float Field, which has room for an error.
+
+## Notes
+
+- The label and the field share `textStyle`, so the text does not move when editing starts.
+- Return or Save keeps the trimmed text, Cancel restores the old one, and leaving the field saves it. An empty edit is dropped.
+- Inside a `ScrollView`, set `keyboardShouldPersistTaps="handled"` so the buttons work while the keyboard is open.

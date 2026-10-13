@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "pager",
+  "title": "Pager",
+  "description": "Pagination with a pill that glides to the page; the row keeps its width while the numbers roll in place.",
+  "category": "navigation",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["pager.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views; one pill on one shared value and one more per slot for the roll. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "baselineMs": 18,
+        "jankyPercent": 5.1,
+        "atRest": "idle",
+        "memoryMb": 143
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The pill jumps and the numbers change in place.",
+    "screenReader": "Buttons named \"Page 9\" with the current one selected, plus Previous and Next page buttons that are disabled at the ends.",
+    "touchTarget": "Every slot and arrow is 44 by 44 pt."
+  }
+}

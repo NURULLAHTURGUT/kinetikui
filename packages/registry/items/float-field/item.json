@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "float-field",
+  "title": "Float Field",
+  "description": "A text field whose label rises to the top edge on focus, with a ring that fades in and a shake for errors.",
+  "category": "input",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["float-field.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "A native text input with three shared values: label, ring and shake. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 19,
+        "p90Ms": 25,
+        "baselineMs": 18,
+        "jankyPercent": 12.58,
+        "atRest": "idle",
+        "memoryMb": 135,
+        "notes": "The run types into both fields; the janky frames are the keyboard opening and closing, not the field."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The label moves without a spring and the field does not shake.",
+    "screenReader": "A text field named by its label, with the hint or error as its hint; a new error is announced.",
+    "touchTarget": "The whole field is the target, 56 pt tall."
+  }
+}

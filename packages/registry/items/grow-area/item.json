@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "grow-area",
+  "title": "Grow Area",
+  "description": "A multi-line field that springs taller a line at a time, with a ring that fills towards the character limit.",
+  "category": "input",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["grow-area.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "A native text input in a box whose height springs; the ring is a tiny Skia canvas with one trimmed arc. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 27,
+        "baselineMs": 18,
+        "jankyPercent": 2.86,
+        "atRest": "idle",
+        "memoryMb": 143,
+        "notes": "Measured while typing three long lines and deleting them; the keyboard stays open."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The field resizes and the ring fills without springs.",
+    "screenReader": "A multi-line text field named by its label, plus a count of characters left.",
+    "touchTarget": "The whole field is the target, at least three lines tall."
+  }
+}

@@ -1,0 +1,32 @@
+## Usage
+
+```tsx
+import { GlideRadio } from '@/components/kinetik/glide-radio';
+
+<GlideRadio
+  accessibilityLabel="Notify me about"
+  options={[
+    { value: 'all', label: 'Everything' },
+    { value: 'mentions', label: 'Mentions and replies' },
+    { value: 'none', label: 'Nothing' },
+  ]}
+  value={level}
+  onValueChange={setLevel}
+/>;
+```
+
+## When to use
+
+- A single choice from a short, visible list in a settings screen or a form.
+- Options that read best as plain rows, with an optional line of detail.
+
+## When not to use
+
+- Options that need a price or a badge to compare. Use Choice Cards.
+- Choices that take effect one by one and can be combined. Use checkboxes (Ink Check).
+
+## Notes
+
+- One dot serves the whole group: its front follows a snappy spring and its back a smooth one, so it stretches as it travels and settles round.
+- Rows are at least 48 pt tall and grow with their description.
+- With reduced motion the dot jumps to the new ring.

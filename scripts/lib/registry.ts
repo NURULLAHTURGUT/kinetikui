@@ -47,6 +47,7 @@ export const CATEGORIES = {
   interaction: 'Interaction',
   input: 'Inputs',
   disclosure: 'Disclosure',
+  overlay: 'Overlays',
   text: 'Text',
   navigation: 'Navigation',
   feedback: 'Feedback',

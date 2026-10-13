@@ -1,0 +1,65 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "theme-switch",
+  "type": "registry:item",
+  "title": "Theme Switch",
+  "description": "A light and dark switch drawn as a sun whose rays turn and draw in while a shadow slides across to leave a moon.",
+  "categories": [
+    "interaction"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/theme-switch.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/theme-switch.tsx",
+      "content": "import { Canvas, Circle, Group, Path, Skia } from '@shopify/react-native-skia';\nimport { useEffect } from 'react';\nimport { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  interpolateColor,\n  useAnimatedStyle,\n  useDerivedValue,\n  useSharedValue,\n  withSpring,\n} from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type ThemeMode = 'light' | 'dark';\n\nexport type ThemeSwitchProps = {\n  value: ThemeMode;\n  onValueChange: (value: ThemeMode) => void;\n  /** Words beside the icon, e.g. \"Dark mode\". Leave out for an icon-only button. */\n  label?: string;\n  /** Read by screen readers when there is no visible label. Defaults to \"Dark mode\". */\n  accessibilityLabel?: string;\n  /** A tap as it switches. Defaults to true. */\n  haptics?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst BOX = 48;\nconst ICON = 28;\nconst C = ICON / 2;\n\n/**\n * A light and dark switch drawn as a sun that becomes a moon. The rays turn a\n * quarter and draw in, the core swells, and a shadow slides across it to\n * leave a crescent; the colour cools from amber to a pale blue on the way.\n */\nexport function ThemeSwitch({\n  value,\n  onValueChange,\n  label,\n  accessibilityLabel = 'Dark mode',\n  haptics = true,\n  testID,\n  style,\n}: ThemeSwitchProps) {\n  const { colors, font, radius } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const dark = value === 'dark';\n  const p = useSharedValue(dark ? 1 : 0);\n  const press = useSharedValue(0);\n\n  useEffect(() => {\n    p.set(withSpring(dark ? 1 : 0, spring('smooth', reduced)));\n  }, [dark, reduced, p]);\n\n  const ink = useDerivedValue(() =>\n    interpolateColor(Math.min(1, Math.max(0, p.get())), [0, 1], [colors.warning, colors.sky]),\n  );\n  const core = useDerivedValue(() => 5.5 + p.get() * 3.5);\n  const biteX = useDerivedValue(() => C + 14 - p.get() * 9.5);\n  const biteY = useDerivedValue(() => C - 14 + p.get() * 10);\n  const rays = useDerivedValue(() => {\n    const t = Math.min(1, Math.max(0, p.get()));\n    const b = Skia.PathBuilder.Make();\n    const inner = 9;\n    const outer = 12.5 - t * 3.5;\n    if (outer - inner < 0.2) return b.detach();\n    for (let i = 0; i < 8; i++) {\n      const a = (i / 8) * Math.PI * 2 + t * (Math.PI / 2);\n      b.moveTo(C + Math.cos(a) * inner, C + Math.sin(a) * inner);\n      b.lineTo(C + Math.cos(a) * outer, C + Math.sin(a) * outer);\n    }\n    return b.detach();\n  });\n\n  const shell = useAnimatedStyle(() => ({ transform: [{ scale: 1 - press.get() * 0.08 }] }));\n\n  return (\n    <Pressable\n      testID={testID}\n      onPress={() => {\n        haptic('tap');\n        onValueChange(dark ? 'light' : 'dark');\n      }}\n      onPressIn={() => press.set(withSpring(1, spring('snappy', reduced)))}\n      onPressOut={() => press.set(withSpring(0, spring('bouncy', reduced)))}\n      accessibilityRole=\"switch\"\n      accessibilityLabel={label ?? accessibilityLabel}\n      accessibilityState={{ checked: dark }}\n      style={[styles.row, style]}\n    >\n      <Animated.View\n        style={[\n          styles.box,\n          {\n            backgroundColor: colors.surfaceRaised,\n            borderColor: colors.border,\n            borderRadius: radius.pill,\n          },\n          shell,\n        ]}\n      >\n        <Canvas style={styles.icon}>\n          <Group layer>\n            <Circle cx={C} cy={C} r={core} color={ink} />\n            <Circle cx={biteX} cy={biteY} r={7.5} color={ink} blendMode=\"dstOut\" />\n          </Group>\n          <Path path={rays} style=\"stroke\" strokeWidth={2} strokeCap=\"round\" color={ink} />\n        </Canvas>\n      </Animated.View>\n      {label ? (\n        <View style={styles.text}>\n          <Text\n            style={{ color: colors.text, fontSize: font.size.md, fontWeight: font.weight.medium }}\n          >\n            {label}\n          </Text>\n          <Text style={{ color: colors.textMuted, fontSize: font.size.xs }}>\n            {dark ? 'On' : 'Off'}\n          </Text>\n        </View>\n      ) : null}\n    </Pressable>\n  );\n}\n\nconst styles = StyleSheet.create({\n  row: {\n    flexDirection: 'row',\n    alignItems: 'center',\n    gap: 12,\n    minHeight: BOX,\n    alignSelf: 'flex-start',\n  },\n  box: { width: BOX, height: BOX, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },\n  icon: { width: ICON, height: ICON },\n  text: { gap: 1 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "interaction",
+    "web": "live",
+    "perf": {
+      "budget": "A 28 pt Skia canvas driven by one shared value: two circles in a layer and one path of eight rays. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 22,
+          "p90Ms": 24,
+          "baselineMs": 17,
+          "jankyPercent": 0.39,
+          "atRest": "idle",
+          "memoryMb": 153,
+          "notes": "Steady 22 ms on this emulator for a small Skia canvas; the same run measured Reveal Field (also Skia) at 17 ms."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The icon changes at once.",
+      "screenReader": "A switch named \"Dark mode\" (or by its label) that is on in dark mode.",
+      "touchTarget": "48 by 48 pt, or the whole row with a label."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { ThemeSwitch } from '@/components/kinetik/theme-switch';\n\n<ThemeSwitch value={scheme} onValueChange={setScheme} label=\"Dark mode\" />;\n\n// Pass the same value to the provider to switch the whole app:\n<KinetikProvider scheme={scheme}>{app}</KinetikProvider>;\n```\n\n## When to use\n\n- A settings row or a header button that switches the app between light and dark.\n- Anywhere a plain switch would need an extra icon to explain itself.\n\n## When not to use\n\n- Three choices (light, dark, follow the system). Use Glide Radio or a segmented control.\n- Settings unrelated to appearance. Use Pulse Toggle.\n\n## Notes\n\n- It is a switch for screen readers: \"Dark mode\", on or off. With `label` the words sit beside the icon and name it.\n- The icon is one small Skia canvas: the crescent is a circle cut out of the core in an offscreen layer.\n- With reduced motion the sun becomes the moon at once.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add theme-switch`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

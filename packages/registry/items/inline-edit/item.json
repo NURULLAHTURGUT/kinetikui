@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "inline-edit",
+  "title": "Inline Edit",
+  "description": "Text you rename in place: it becomes a field without moving, an underline draws in, and a check confirms the save.",
+  "category": "input",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["inline-edit.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One native text input while editing and two shared values; the icons are 16 pt Skia paths. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 20,
+        "p90Ms": 26,
+        "baselineMs": 18,
+        "jankyPercent": 8.57,
+        "atRest": "idle",
+        "memoryMb": 149,
+        "notes": "p99 spikes are the keyboard opening when editing starts."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The underline and buttons appear without a spring; the check still fades.",
+    "screenReader": "A button that reads the label and the value; while editing, a text field plus Cancel and Save buttons.",
+    "touchTarget": "The text and both buttons are at least 44 pt tall."
+  }
+}

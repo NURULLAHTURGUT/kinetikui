@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "slot-text",
+  "type": "registry:item",
+  "title": "Slot Text",
+  "description": "Text that changes like a slot machine: each character spins through its own kind and brakes onto the new one.",
+  "categories": [
+    "text"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/slot-text.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/slot-text.tsx",
+      "content": "import { useEffect, useState } from 'react';\nimport {\n  StyleSheet,\n  Text,\n  View,\n  type StyleProp,\n  type TextStyle,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  Easing,\n  useAnimatedStyle,\n  useSharedValue,\n  withDelay,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type SlotTextProps = {\n  /** The text. Change it and every reel spins to its new character. */\n  text: string;\n  /** Style for the characters. Defaults to a large, bold line in the theme text colour. */\n  textStyle?: StyleProp<TextStyle>;\n  /** Characters each reel passes on the way. Defaults to 6. */\n  spins?: number;\n  /** Delay between one reel and the next, in ms. Defaults to 45. */\n  stagger?: number;\n  /** Read by screen readers. Defaults to the text. */\n  accessibilityLabel?: string;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst NBSP = String.fromCharCode(0xa0);\nconst DIGITS = '0123456789';\nconst UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';\nconst LOWER = 'abcdefghijklmnopqrstuvwxyz';\nconst SPIN = 520;\n// Quick off the mark, then a long, soft landing like a reel braking.\nconst LAND = Easing.bezier(0.18, 0.7, 0.2, 1);\n\n/**\n * The characters a reel passes between `from` and `to`, drawn from the same\n * kind as the target (digits for digits, letters for letters). Seeded, so a\n * render always gives the same reel.\n */\nexport function reelGlyphs(to: string, count: number, seed: number): string[] {\n  const set = /\\d/.test(to) ? DIGITS : /[A-Z]/.test(to) ? UPPER : /[a-z]/.test(to) ? LOWER : '';\n  if (!set) return [];\n  let s = (seed * 2654435761) >>> 0 || 1;\n  return Array.from({ length: count }, () => {\n    s = (s * 1103515245 + 12345) >>> 0;\n    return set[s % set.length]!;\n  });\n}\n\n/**\n * Text that changes like a slot machine. Each character is a reel that spins\n * through a few glyphs of its own kind and brakes onto the new character,\n * left to right, while the reel's width eases to fit what it lands on.\n */\nexport function SlotText({\n  text,\n  textStyle,\n  spins = 6,\n  stagger = 45,\n  accessibilityLabel,\n  testID,\n  style,\n}: SlotTextProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const glyph = StyleSheet.flatten([\n    {\n      color: colors.text,\n      fontSize: font.size['3xl'],\n      fontWeight: font.weight.bold,\n      letterSpacing: font.tracking.tight,\n    },\n    textStyle,\n  ]);\n  const size = glyph.fontSize ?? font.size['3xl'];\n  const lineHeight = glyph.lineHeight ?? Math.round(size * 1.2);\n  const styleKey = JSON.stringify(glyph);\n\n  // Character widths, measured once per character and text style.\n  const [metrics, setMetrics] = useState({ styleKey, widths: {} as Record<string, number> });\n  if (metrics.styleKey !== styleKey) setMetrics({ styleKey, widths: {} });\n  const { widths } = metrics;\n\n  // While text changes length, the longer of the two keeps its reels so the\n  // extra ones can spin away to nothing. Once every reel has stopped, the\n  // spare reels and the spin strips are dropped.\n  const [state, setState] = useState({ text, prev: text, gen: 0, slots: text.length });\n  if (state.text !== text) {\n    setState({\n      text,\n      prev: state.text,\n      gen: state.gen + 1,\n      slots: Math.max(state.text.length, text.length),\n    });\n  }\n  const { gen, slots } = state;\n  const settled = state.prev === state.text;\n  const settleAfter = SPIN + spins * 18 + slots * stagger + 60;\n  useEffect(() => {\n    if (settled) return;\n    const id = setTimeout(\n      () => setState((s) => (s.gen === gen ? { ...s, prev: s.text, slots: s.text.length } : s)),\n      reduced ? 0 : settleAfter,\n    );\n    return () => clearTimeout(id);\n  }, [gen, settled, reduced, settleAfter]);\n\n  const chars = Array.from(text);\n  const prevChars = Array.from(state.prev);\n  const missing = [...new Set(chars)].filter((c) => widths[c] === undefined);\n\n  return (\n    <View\n      testID={testID}\n      accessible\n      accessibilityRole=\"text\"\n      accessibilityLabel={accessibilityLabel ?? text}\n      style={[styles.row, style]}\n    >\n      {missing.length > 0 ? (\n        <View\n          style={styles.measure}\n          pointerEvents=\"none\"\n          importantForAccessibility=\"no-hide-descendants\"\n        >\n          {missing.map((c) => (\n            <Text\n              key={c}\n              style={glyph}\n              onLayout={(e) => {\n                const w = e.nativeEvent.layout.width;\n                setMetrics((m) =>\n                  m.styleKey !== styleKey || m.widths[c] !== undefined\n                    ? m\n                    : { ...m, widths: { ...m.widths, [c]: w } },\n                );\n              }}\n            >\n              {c === ' ' ? NBSP : c}\n            </Text>\n          ))}\n        </View>\n      ) : null}\n      {Array.from({ length: Math.max(slots, chars.length) }, (_, i) => {\n        const to = chars[i] ?? '';\n        const from = prevChars[i] ?? '';\n        return (\n          <Reel\n            key={i}\n            from={from}\n            to={to}\n            gen={gen}\n            index={i}\n            width={to === '' ? 0 : widths[to]}\n            spins={spins}\n            delay={i * stagger}\n            lineHeight={lineHeight}\n            glyph={glyph}\n            reduced={reduced}\n          />\n        );\n      })}\n    </View>\n  );\n}\n\ntype ReelProps = {\n  from: string;\n  to: string;\n  gen: number;\n  index: number;\n  width: number | undefined;\n  spins: number;\n  delay: number;\n  lineHeight: number;\n  glyph: TextStyle;\n  reduced: boolean;\n};\n\nfunction Reel({\n  from,\n  to,\n  gen,\n  index,\n  width,\n  spins,\n  delay,\n  lineHeight,\n  glyph,\n  reduced,\n}: ReelProps) {\n  const spinning = gen > 0 && from !== to && !reduced;\n  const strip = spinning ? [from, ...reelGlyphs(to || from, spins, gen * 31 + index), to] : [to];\n  const travel = (strip.length - 1) * lineHeight;\n  const y = useSharedValue(0);\n  const w = useSharedValue(width ?? 0);\n\n  useEffect(() => {\n    if (!spinning) {\n      y.set(0);\n      return;\n    }\n    y.set(0);\n    y.set(withDelay(delay, withTiming(-travel, { duration: SPIN + spins * 18, easing: LAND })));\n  }, [gen, spinning, travel, delay, spins, y]);\n  useEffect(() => {\n    if (width === undefined) return;\n    w.set(reduced ? width : withDelay(delay, withTiming(width, { duration: SPIN, easing: LAND })));\n  }, [width, delay, reduced, w]);\n\n  const box = useAnimatedStyle(() => (width === undefined ? {} : { width: w.get() }));\n  const roll = useAnimatedStyle(() => ({ transform: [{ translateY: y.get() }] }));\n\n  return (\n    <Animated.View\n      style={[styles.reel, { height: lineHeight }, box]}\n      accessibilityElementsHidden\n      importantForAccessibility=\"no-hide-descendants\"\n    >\n      <Animated.View style={roll}>\n        {strip.map((c, i) => (\n          <Text key={i} style={[glyph, styles.cell, { lineHeight, height: lineHeight }]}>\n            {c === ' ' || c === '' ? NBSP : c}\n          </Text>\n        ))}\n      </Animated.View>\n    </Animated.View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  row: { flexDirection: 'row', alignSelf: 'flex-start' },\n  measure: { position: 'absolute', opacity: 0, flexDirection: 'row', left: 0, top: 0 },\n  reel: { overflow: 'hidden', alignItems: 'center' },\n  cell: { textAlign: 'center', includeFontPadding: false },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "text",
+    "web": "live",
+    "perf": {
+      "budget": "One small text strip per character, moved by one transform; widths are measured once per character. Spin strips are dropped when the reels stop.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 25,
+          "baselineMs": 17,
+          "jankyPercent": 5.84,
+          "atRest": "idle",
+          "memoryMb": 160,
+          "notes": "Spikes are the first frame of a spin, when every reel lays out its strip of glyphs."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The new text appears at once.",
+      "screenReader": "Reads the whole text once; the reels are hidden.",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { SlotText } from '@/components/kinetik/slot-text';\n\n<SlotText text={`$${total.toLocaleString('en-US')}`} />;\n```\n\n## When to use\n\n- A short figure or word that changes at a moment worth noticing: a reward, a score, a result, a code being revealed.\n- Headlines that cycle through a few words.\n\n## When not to use\n\n- Numbers that change often or continuously, such as a live price. Use Odometer, which rolls without spinning.\n- Long sentences. Every character is its own reel.\n\n## Notes\n\n- Each reel spins through glyphs of the same kind as its new character (digits for digits, letters for letters), so a number never flashes letters.\n- Reels start left to right `stagger` ms apart and their widths ease to fit the characters they land on; extra reels spin away to nothing.\n- The whole text is read once by screen readers; the reels are hidden.\n- With reduced motion the new text appears at once.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add slot-text`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

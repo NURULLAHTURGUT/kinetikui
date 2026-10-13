@@ -1,0 +1,40 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "signature-pad",
+  "title": "Signature Pad",
+  "description": "Sign with a finger: the ink is full when slow and thins with speed, with Undo and a Clear that fades it away.",
+  "category": "input",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["signature-pad.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One Skia canvas. Only the stroke being drawn is rebuilt, on the UI thread, as points arrive; finished strokes are cached paths. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 16,
+        "p90Ms": 17,
+        "baselineMs": 18,
+        "jankyPercent": 6.29,
+        "atRest": "idle",
+        "memoryMb": 147
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Clear removes the ink at once instead of fading it.",
+    "screenReader": "An image named \"Signature\" that says whether it is empty or how many strokes it has, plus Undo and Clear buttons.",
+    "touchTarget": "The pad is the full width and 200 pt tall; Undo and Clear are 44 pt tall."
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "countdown",
+  "type": "registry:item",
+  "title": "Countdown",
+  "description": "A countdown whose digits drop in as they change; at zero the tiles step back for a Live pill with a beating dot.",
+  "categories": [
+    "feedback"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/countdown.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/countdown.tsx",
+      "content": "import { useEffect, useState } from 'react';\nimport { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  cancelAnimation,\n  useAnimatedStyle,\n  useSharedValue,\n  withRepeat,\n  withSequence,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { durations, easings, spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type CountdownParts = { days: number; hours: number; minutes: number; seconds: number };\n\nexport type CountdownProps = {\n  /** When it reaches zero: a Date or a timestamp in milliseconds. */\n  to: Date | number;\n  /** Called once when the time is up. */\n  onComplete?: () => void;\n  /** Words under each unit. Defaults to English. */\n  labels?: Partial<Record<keyof CountdownParts, string>>;\n  /** Shown once the time is up. Defaults to \"Live now\". */\n  liveLabel?: string;\n  /** Read before the time by screen readers. Defaults to \"Starts in\". */\n  accessibilityLabel?: string;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst UNITS: (keyof CountdownParts)[] = ['days', 'hours', 'minutes', 'seconds'];\nconst NAMES: Record<keyof CountdownParts, string> = {\n  days: 'Days',\n  hours: 'Hours',\n  minutes: 'Minutes',\n  seconds: 'Seconds',\n};\nconst DIGIT_H = 44;\n\n/** Splits a duration in milliseconds into whole days, hours, minutes and seconds. */\nexport function splitTime(ms: number): CountdownParts {\n  const s = Math.max(0, Math.ceil(ms / 1000));\n  return {\n    days: Math.floor(s / 86400),\n    hours: Math.floor((s % 86400) / 3600),\n    minutes: Math.floor((s % 3600) / 60),\n    seconds: s % 60,\n  };\n}\n\nfunction spoken(p: CountdownParts): string {\n  const part = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`;\n  const out: string[] = [];\n  if (p.days) out.push(part(p.days, 'day'));\n  if (p.hours) out.push(part(p.hours, 'hour'));\n  if (p.minutes) out.push(part(p.minutes, 'minute'));\n  if (out.length === 0) out.push(part(p.seconds, 'second'));\n  return out.join(', ');\n}\n\n/**\n * A countdown to a launch or an event. Each digit drops in from above as it\n * changes, like a split-flap board seen side-on, and at zero the tiles step\n * back while a \"Live now\" pill with a beating dot takes their place.\n */\nexport function Countdown({\n  to,\n  onComplete,\n  labels,\n  liveLabel = 'Live now',\n  accessibilityLabel = 'Starts in',\n  testID,\n  style,\n}: CountdownProps) {\n  const { colors, font } = useKinetikTheme();\n  const target = typeof to === 'number' ? to : to.getTime();\n  const [now, setNow] = useState(() => Date.now());\n  const left = Math.max(0, target - now);\n  const live = left <= 0;\n  const parts = splitTime(left);\n  // Days stay hidden for a countdown that started under a day.\n  const [withDays] = useState(() => splitTime(target - Date.now()).days > 0);\n\n  useEffect(() => {\n    if (live) return;\n    // Ticks on the second boundary so the seconds change together with the clock.\n    let id: ReturnType<typeof setTimeout>;\n    const tick = () => {\n      setNow(Date.now());\n      id = setTimeout(tick, 1000 - (Date.now() % 1000) + 5);\n    };\n    id = setTimeout(tick, 1000 - (Date.now() % 1000) + 5);\n    return () => clearTimeout(id);\n  }, [live]);\n\n  useEffect(() => {\n    if (live) onComplete?.();\n    // Only the moment it goes live matters, not a new callback.\n    // eslint-disable-next-line react-hooks/exhaustive-deps\n  }, [live]);\n\n  const units = withDays ? UNITS : UNITS.slice(1);\n\n  return (\n    <View\n      testID={testID}\n      accessible\n      accessibilityRole=\"timer\"\n      accessibilityLabel={live ? liveLabel : `${accessibilityLabel} ${spoken(parts)}`}\n      style={[styles.root, style]}\n    >\n      {live ? (\n        <Live label={liveLabel} />\n      ) : (\n        <View style={styles.row}>\n          {units.map((unit, i) => (\n            <View key={unit} style={styles.row}>\n              {i > 0 ? (\n                <Text\n                  style={[\n                    styles.colon,\n                    {\n                      color: colors.textSubtle,\n                      fontSize: font.size['2xl'],\n                      fontWeight: font.weight.semibold,\n                    },\n                  ]}\n                >\n                  :\n                </Text>\n              ) : null}\n              <Tile\n                value={parts[unit]}\n                label={labels?.[unit] ?? NAMES[unit]}\n                wide={unit === 'days' && parts.days > 99}\n              />\n            </View>\n          ))}\n        </View>\n      )}\n    </View>\n  );\n}\n\nfunction Tile({ value, label, wide }: { value: number; label: string; wide: boolean }) {\n  const { colors, font, radius } = useKinetikTheme();\n  const text = String(value).padStart(wide ? 3 : 2, '0');\n  return (\n    <View style={styles.tile}>\n      <View\n        style={[\n          styles.digits,\n          { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.md },\n        ]}\n      >\n        {Array.from(text).map((d, i) => (\n          <Digit key={text.length - i} digit={d} />\n        ))}\n      </View>\n      <Text\n        style={{\n          color: colors.textSubtle,\n          fontSize: font.size.xs,\n          letterSpacing: font.tracking.wide,\n        }}\n      >\n        {label.toUpperCase()}\n      </Text>\n    </View>\n  );\n}\n\n/** A digit that drops in from above when it changes while the old one falls away. */\nfunction Digit({ digit }: { digit: string }) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const [roll, setRoll] = useState({ digit, prev: digit, n: 0 });\n  if (roll.digit !== digit) setRoll({ digit, prev: roll.digit, n: roll.n + 1 });\n  const p = useSharedValue(1);\n  useEffect(() => {\n    if (roll.n === 0 || reduced) return;\n    p.set(0);\n    p.set(withTiming(1, { duration: durations.base + 60, easing: easings.standard }));\n  }, [roll.n, reduced, p]);\n\n  const incoming = useAnimatedStyle(() => ({\n    opacity: p.get(),\n    transform: [{ translateY: (p.get() - 1) * DIGIT_H * 0.55 }],\n  }));\n  const outgoing = useAnimatedStyle(() => ({\n    opacity: 1 - p.get(),\n    transform: [{ translateY: p.get() * DIGIT_H * 0.55 }],\n  }));\n  const style = {\n    color: colors.text,\n    fontSize: font.size['2xl'],\n    fontWeight: font.weight.semibold,\n    fontVariant: ['tabular-nums' as const],\n  };\n  return (\n    <View style={styles.cell}>\n      {roll.prev !== roll.digit ? (\n        <Animated.Text style={[style, styles.ghost, outgoing]}>{roll.prev}</Animated.Text>\n      ) : null}\n      <Animated.Text style={[style, incoming]}>{digit}</Animated.Text>\n    </View>\n  );\n}\n\nfunction Live({ label }: { label: string }) {\n  const { colors, font, radius } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const pop = useSharedValue(reduced ? 1 : 0);\n  const beat = useSharedValue(0);\n  useEffect(() => {\n    pop.set(withSpring(1, spring('bouncy', reduced)));\n    if (reduced) return;\n    beat.set(\n      withRepeat(\n        withSequence(\n          withTiming(1, { duration: 700, easing: easings.inOut }),\n          withTiming(0, { duration: 700, easing: easings.inOut }),\n        ),\n        -1,\n      ),\n    );\n    return () => cancelAnimation(beat);\n  }, [reduced, pop, beat]);\n\n  const pill = useAnimatedStyle(() => ({\n    opacity: Math.min(1, pop.get() * 1.4),\n    transform: [{ scale: 0.7 + pop.get() * 0.3 }],\n  }));\n  const halo = useAnimatedStyle(() => ({\n    opacity: 0.5 * (1 - beat.get()),\n    transform: [{ scale: 1 + beat.get() * 1.4 }],\n  }));\n\n  return (\n    <Animated.View\n      style={[\n        styles.live,\n        { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.pill },\n        pill,\n      ]}\n    >\n      <View style={styles.dotBox}>\n        <Animated.View style={[styles.dot, { backgroundColor: colors.danger }, halo]} />\n        <View style={[styles.dot, { backgroundColor: colors.danger }]} />\n      </View>\n      <Text\n        style={{ color: colors.text, fontSize: font.size.lg, fontWeight: font.weight.semibold }}\n      >\n        {label}\n      </Text>\n    </Animated.View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  root: { alignItems: 'center', minHeight: DIGIT_H + 28 },\n  row: { flexDirection: 'row', alignItems: 'flex-start' },\n  colon: { marginHorizontal: 4, lineHeight: DIGIT_H + 4 },\n  tile: { alignItems: 'center', gap: 6 },\n  digits: { flexDirection: 'row', borderWidth: 1, paddingHorizontal: 6, overflow: 'hidden' },\n  cell: { height: DIGIT_H + 4, minWidth: 20, alignItems: 'center', justifyContent: 'center' },\n  ghost: { position: 'absolute' },\n  live: {\n    flexDirection: 'row',\n    alignItems: 'center',\n    gap: 10,\n    paddingHorizontal: 20,\n    height: DIGIT_H + 8,\n    borderWidth: 1,\n    marginTop: 4,\n  },\n  dotBox: { width: 10, height: 10, alignItems: 'center', justifyContent: 'center' },\n  dot: { position: 'absolute', width: 10, height: 10, borderRadius: 5 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "feedback",
+    "web": "live",
+    "perf": {
+      "budget": "One timer per second re-renders a few text cells; each changed digit animates two texts. Once live, only the dot loops.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 18,
+          "baselineMs": 18,
+          "jankyPercent": 3.68,
+          "atRest": "animating",
+          "memoryMb": 148,
+          "notes": "Animating at rest: the seconds tick once a second. A finished countdown only loops the dot."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Digits change in place and the live dot holds still.",
+      "screenReader": "A timer that reads the time left in words, then the live label.",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { Countdown } from '@/components/kinetik/countdown';\n\n<Countdown\n  to={new Date('2026-11-02T17:00:00Z')}\n  accessibilityLabel=\"The keynote starts in\"\n  onComplete={() => setLive(true)}\n/>;\n```\n\n## When to use\n\n- Launches, sales, live events and deadlines where the exact moment matters.\n- A waiting screen before something opens.\n\n## When not to use\n\n- Elapsed time, like a stopwatch or a call length. Count up instead.\n- Anything that could pressure people unfairly, such as fake scarcity timers.\n\n## Notes\n\n- It ticks on the second boundary, so the seconds change with the system clock; days appear only when the countdown starts a day or more away.\n- At zero the tiles give way to `liveLabel` with a beating dot, and `onComplete` is called once.\n- Screen readers read it as a timer, such as \"Starts in 2 hours, 30 minutes\", without seconds unless under a minute.\n- With reduced motion digits change in place and the dot does not beat.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add countdown`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

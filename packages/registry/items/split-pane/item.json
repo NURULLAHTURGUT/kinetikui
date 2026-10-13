@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "split-pane",
+  "title": "Split Pane",
+  "description": "Two panes with a handle between them: drag to trade space, let go and it springs to the nearest stop.",
+  "category": "disclosure",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["split-pane.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views; the first pane's size and the handle read two shared values, so dragging lays out only the two panes. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "baselineMs": 18,
+        "jankyPercent": 1.43,
+        "atRest": "idle",
+        "memoryMb": 142
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The divider jumps to its resting point and the handle does not grow.",
+    "screenReader": "The divider is an adjustable element with the first pane's share as a percentage, stepping between resting points.",
+    "touchTarget": "The divider is a full-width target 44 pt tall."
+  }
+}

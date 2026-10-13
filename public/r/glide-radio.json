@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "glide-radio",
+  "type": "registry:item",
+  "title": "Glide Radio",
+  "description": "A radio group with one dot that travels between the rings like a drop of ink, stretching as it goes.",
+  "categories": [
+    "input"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/glide-radio.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/glide-radio.tsx",
+      "content": "import { useEffect, useRef, useState } from 'react';\nimport { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type GlideRadioOption = {\n  value: string;\n  label: string;\n  description?: string;\n  disabled?: boolean;\n};\n\nexport type GlideRadioProps = {\n  options: readonly GlideRadioOption[];\n  value: string;\n  onValueChange: (value: string) => void;\n  /** Names the group for screen readers, e.g. \"Notifications\". */\n  accessibilityLabel: string;\n  /** A tick when the choice changes. Defaults to true. */\n  haptics?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst RING = 22;\nconst DOT = 10;\nconst ROW = 48;\n\n/**\n * A radio group with a single dot that travels. Choosing another option sends\n * the dot down (or up) the column of rings like a drop of ink: its front\n * races ahead, the back catches up, and it settles round in the new ring.\n */\nexport function GlideRadio({\n  options,\n  value,\n  onValueChange,\n  accessibilityLabel,\n  haptics = true,\n  testID,\n  style,\n}: GlideRadioProps) {\n  const { colors } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const [centers, setCenters] = useState<Record<string, number>>({});\n  const lead = useSharedValue(0);\n  const tail = useSharedValue(0);\n  const placed = useRef(false);\n  const target = centers[value];\n\n  useEffect(() => {\n    if (target === undefined) return;\n    // The first placement is instant; after that the dot travels.\n    if (reduced || !placed.current) {\n      lead.set(target);\n      tail.set(target);\n    } else {\n      lead.set(withSpring(target, spring('snappy')));\n      tail.set(withSpring(target, spring('smooth')));\n    }\n    placed.current = true;\n  }, [target, reduced, lead, tail]);\n\n  const drop = useAnimatedStyle(() => {\n    const a = lead.get();\n    const b = tail.get();\n    const stretch = Math.abs(a - b);\n    return {\n      opacity: target === undefined ? 0 : 1,\n      top: Math.min(a, b) - DOT / 2,\n      height: DOT + stretch,\n      // A long drop thins a little, like ink pulled along.\n      transform: [{ scaleX: 1 - Math.min(0.3, stretch / 120) }],\n    };\n  });\n\n  return (\n    <View\n      testID={testID}\n      accessibilityRole=\"radiogroup\"\n      accessibilityLabel={accessibilityLabel}\n      style={style}\n    >\n      {options.map((option) => {\n        const selected = option.value === value;\n        return (\n          <Pressable\n            key={option.value}\n            onPress={() => {\n              if (selected) return;\n              haptic('tick');\n              onValueChange(option.value);\n            }}\n            disabled={option.disabled}\n            onLayout={(e) => {\n              const { y, height } = e.nativeEvent.layout;\n              const c = y + height / 2;\n              setCenters((m) => (m[option.value] === c ? m : { ...m, [option.value]: c }));\n            }}\n            accessibilityRole=\"radio\"\n            accessibilityLabel={[option.label, option.description].filter(Boolean).join(', ')}\n            accessibilityState={{ checked: selected, disabled: option.disabled }}\n            style={[styles.row, { opacity: option.disabled ? 0.4 : 1 }]}\n          >\n            <View\n              style={[styles.ring, { borderColor: selected ? colors.azure : colors.borderStrong }]}\n            />\n            <Label option={option} selected={selected} />\n          </Pressable>\n        );\n      })}\n      <Animated.View\n        pointerEvents=\"none\"\n        style={[styles.drop, { backgroundColor: colors.azure }, drop]}\n      />\n    </View>\n  );\n}\n\nfunction Label({ option, selected }: { option: GlideRadioOption; selected: boolean }) {\n  const { colors, font } = useKinetikTheme();\n  return (\n    <View style={styles.text}>\n      <Text\n        style={{\n          color: colors.text,\n          fontSize: font.size.md,\n          fontWeight: selected ? font.weight.semibold : font.weight.regular,\n        }}\n      >\n        {option.label}\n      </Text>\n      {option.description ? (\n        <Text style={{ color: colors.textMuted, fontSize: font.size.sm }}>\n          {option.description}\n        </Text>\n      ) : null}\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  row: { minHeight: ROW, flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 6 },\n  ring: { width: RING, height: RING, borderRadius: RING / 2, borderWidth: 2 },\n  text: { flex: 1, gap: 1 },\n  drop: {\n    position: 'absolute',\n    left: (RING - DOT) / 2,\n    width: DOT,\n    borderRadius: DOT / 2,\n  },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "input",
+    "web": "live",
+    "perf": {
+      "budget": "Plain views; one dot driven by two shared values serves the whole group. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 18,
+          "baselineMs": 18,
+          "jankyPercent": 0.2,
+          "atRest": "idle",
+          "memoryMb": 142
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The dot jumps to the new ring without stretching.",
+      "screenReader": "A radio group named by accessibilityLabel; each row is a radio that reads its label and description.",
+      "touchTarget": "Each row is the target, at least 48 pt tall."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { GlideRadio } from '@/components/kinetik/glide-radio';\n\n<GlideRadio\n  accessibilityLabel=\"Notify me about\"\n  options={[\n    { value: 'all', label: 'Everything' },\n    { value: 'mentions', label: 'Mentions and replies' },\n    { value: 'none', label: 'Nothing' },\n  ]}\n  value={level}\n  onValueChange={setLevel}\n/>;\n```\n\n## When to use\n\n- A single choice from a short, visible list in a settings screen or a form.\n- Options that read best as plain rows, with an optional line of detail.\n\n## When not to use\n\n- Options that need a price or a badge to compare. Use Choice Cards.\n- Choices that take effect one by one and can be combined. Use checkboxes (Ink Check).\n\n## Notes\n\n- One dot serves the whole group: its front follows a snappy spring and its back a smooth one, so it stretches as it travels and settles round.\n- Rows are at least 48 pt tall and grow with their description.\n- With reduced motion the dot jumps to the new ring.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add glide-radio`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "tree-view",
+  "title": "Tree View",
+  "description": "Nested folders whose branches grow open to their measured height as the chevron turns and rows drift in.",
+  "category": "disclosure",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["tree-view.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views; each open branch springs one height value. Children are built on first open. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "baselineMs": 18,
+        "jankyPercent": 3.24,
+        "atRest": "idle",
+        "memoryMb": 152
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Branches open and close at once.",
+    "screenReader": "Every row is a button with its label and detail; branches report expanded or collapsed, and closed branches are hidden.",
+    "touchTarget": "Rows are 44 pt tall and span the full width."
+  }
+}

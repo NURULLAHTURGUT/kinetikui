@@ -1,0 +1,28 @@
+## Usage
+
+```tsx
+import { MonthCalendar } from '@/components/kinetik/month-calendar';
+
+// One date
+<MonthCalendar value={date} onChange={setDate} marked={eventDays} />;
+
+// A range
+<MonthCalendar mode="range" range={stay} onRangeChange={setStay} minDate={new Date()} />;
+```
+
+## When to use
+
+- Picking a date where the day of the week matters: a booking, a delivery slot, a meeting.
+- Picking a stay or a period, with `mode="range"`.
+
+## When not to use
+
+- Dates far in the past, such as a birthday. Use wheels or a typed date.
+- A time of day. Use Time Wheel.
+
+## Notes
+
+- The disc glides between days of the same month; arrows or a horizontal swipe turn the page and the new month slides in from that side.
+- In range mode the first tap sets the start, the second the end, and a third starts again. A tap before the start moves the start.
+- `monthNames`, `dayNames` and `weekStartsOn` localise it. Days outside `minDate`/`maxDate` are dimmed and cannot be chosen.
+- Every day is a button that reads its full date for screen readers; the selected days say so.

@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "stream-graph",
+  "title": "Stream Graph",
+  "description": "Layered streams on a centred baseline that morph between datasets; tap a layer to lift it and read its share.",
+  "category": "data",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["stream-graph.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One Skia canvas, one path per layer; a morph interpolates the paths on the UI thread. Shapes are built once per dataset. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 30,
+        "baselineMs": 18,
+        "jankyPercent": 9.39,
+        "atRest": "idle",
+        "memoryMb": 147
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "New data replaces the shapes at once; isolating a layer still fades the others.",
+    "screenReader": "The graph is an image that reads each layer's total; each key is a button with a selected state.",
+    "touchTarget": "The keys are 44 pt tall; the whole graph can be tapped."
+  }
+}

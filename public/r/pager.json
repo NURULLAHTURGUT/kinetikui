@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "pager",
+  "type": "registry:item",
+  "title": "Pager",
+  "description": "Pagination with a pill that glides to the page; the row keeps its width while the numbers roll in place.",
+  "categories": [
+    "navigation"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/pager.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/pager.tsx",
+      "content": "import { useEffect, useState } from 'react';\nimport { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { durations, easings, spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget } from '../../lib/kinetik/tokens/tokens';\n\nexport type PagerProps = {\n  /** The current page, from 1. */\n  page: number;\n  pageCount: number;\n  onPageChange: (page: number) => void;\n  /** Pages shown on each side of the current one, between the gaps. Defaults to 0. */\n  siblings?: number;\n  /** Names the control. Defaults to \"Pages\". */\n  accessibilityLabel?: string;\n  /** A tick on each change. Defaults to true. */\n  haptics?: boolean;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nexport type PagerSlot = number | 'gap';\n\nconst CELL = minTouchTarget;\n\n/**\n * The slots to show: the first and last page, the current one with its\n * siblings, and a gap where pages are skipped. Past a few pages the number of\n * slots stays the same, so the control never changes width.\n */\nexport function pagerSlots(page: number, count: number, siblings = 0): PagerSlot[] {\n  const slots = siblings * 2 + 5;\n  if (count <= slots) return Array.from({ length: count }, (_, i) => i + 1);\n  const left = Math.max(page - siblings, 1);\n  const right = Math.min(page + siblings, count);\n  const leftGap = left > 3;\n  const rightGap = right < count - 2;\n  const span = 3 + siblings * 2;\n  if (!leftGap && rightGap) {\n    return [...Array.from({ length: span }, (_, i) => i + 1), 'gap', count];\n  }\n  if (leftGap && !rightGap) {\n    return [1, 'gap', ...Array.from({ length: span }, (_, i) => count - span + i + 1)];\n  }\n  return [1, 'gap', ...Array.from({ length: right - left + 1 }, (_, i) => left + i), 'gap', count];\n}\n\n/**\n * Pagination with a pill that glides to the current page. The row keeps its\n * width: when the window of numbers moves, the digits roll to their new\n * values in place instead of the buttons shifting about.\n */\nexport function Pager({\n  page,\n  pageCount,\n  onPageChange,\n  siblings = 0,\n  accessibilityLabel = 'Pages',\n  haptics = true,\n  testID,\n  style,\n}: PagerProps) {\n  const { colors, radius } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const count = Math.max(1, pageCount);\n  const current = Math.min(Math.max(1, page), count);\n  const slots = pagerSlots(current, count, siblings);\n  const at = slots.indexOf(current);\n  const x = useSharedValue(at * CELL);\n\n  useEffect(() => {\n    x.set(reduced ? at * CELL : withSpring(at * CELL, spring('snappy')));\n  }, [at, reduced, x]);\n  const pill = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }] }));\n\n  const go = (p: number) => {\n    const next = Math.min(Math.max(1, p), count);\n    if (next === current) return;\n    haptic('tick');\n    onPageChange(next);\n  };\n\n  return (\n    <View testID={testID} accessibilityLabel={accessibilityLabel} style={[styles.row, style]}>\n      <Arrow dir={-1} disabled={current === 1} onPress={() => go(current - 1)} />\n      <View style={styles.slots}>\n        <Animated.View\n          pointerEvents=\"none\"\n          style={[styles.pill, { backgroundColor: colors.ember, borderRadius: radius.md }, pill]}\n        />\n        {slots.map((slot, i) =>\n          slot === 'gap' ? (\n            <View\n              key={`gap-${i}`}\n              style={styles.cell}\n              accessibilityElementsHidden\n              importantForAccessibility=\"no\"\n            >\n              <Text style={{ color: colors.textSubtle }}>…</Text>\n            </View>\n          ) : (\n            <Slot\n              key={`slot-${i}`}\n              value={slot}\n              current={slot === current}\n              reduced={reduced}\n              onPress={() => go(slot)}\n            />\n          ),\n        )}\n      </View>\n      <Arrow dir={1} disabled={current === count} onPress={() => go(current + 1)} />\n    </View>\n  );\n}\n\ntype SlotProps = { value: number; current: boolean; reduced: boolean; onPress: () => void };\n\n/** One numbered button. When its number changes, the old one rolls out and the new one in. */\nfunction Slot({ value, current, reduced, onPress }: SlotProps) {\n  const { colors, font } = useKinetikTheme();\n  const [roll, setRoll] = useState({ value, prev: value, dir: 1, n: 0 });\n  if (roll.value !== value) {\n    setRoll({ value, prev: roll.value, dir: value > roll.value ? 1 : -1, n: roll.n + 1 });\n  }\n  const p = useSharedValue(1);\n  useEffect(() => {\n    if (roll.n === 0 || reduced) return;\n    p.set(0);\n    p.set(withTiming(1, { duration: durations.base, easing: easings.standard }));\n  }, [roll.n, reduced, p]);\n\n  const incoming = useAnimatedStyle(() => ({\n    opacity: p.get(),\n    transform: [{ translateY: (1 - p.get()) * 10 * roll.dir }],\n  }));\n  const outgoing = useAnimatedStyle(() => ({\n    opacity: 1 - p.get(),\n    transform: [{ translateY: -p.get() * 10 * roll.dir }],\n  }));\n  const text = {\n    color: current ? colors.onEmber : colors.text,\n    fontSize: font.size.md,\n    fontWeight: current ? font.weight.semibold : font.weight.regular,\n    fontVariant: ['tabular-nums' as const],\n  };\n\n  return (\n    <Pressable\n      onPress={onPress}\n      accessibilityRole=\"button\"\n      accessibilityLabel={`Page ${value}`}\n      accessibilityState={{ selected: current }}\n      style={styles.cell}\n    >\n      {roll.prev !== roll.value ? (\n        <Animated.Text style={[text, styles.ghost, outgoing]}>{roll.prev}</Animated.Text>\n      ) : null}\n      <Animated.Text style={[text, incoming]}>{value}</Animated.Text>\n    </Pressable>\n  );\n}\n\nfunction Arrow({\n  dir,\n  disabled,\n  onPress,\n}: {\n  dir: 1 | -1;\n  disabled: boolean;\n  onPress: () => void;\n}) {\n  const { colors, radius } = useKinetikTheme();\n  return (\n    <Pressable\n      onPress={onPress}\n      disabled={disabled}\n      accessibilityRole=\"button\"\n      accessibilityLabel={dir === 1 ? 'Next page' : 'Previous page'}\n      accessibilityState={{ disabled }}\n      style={({ pressed }) => [\n        styles.cell,\n        {\n          borderRadius: radius.md,\n          backgroundColor: pressed ? colors.surfaceSunken : undefined,\n          opacity: disabled ? 0.3 : 1,\n        },\n      ]}\n    >\n      <View style={[styles.icon, { transform: [{ scaleX: dir }] }]}>\n        <View style={[styles.stroke, styles.up, { backgroundColor: colors.text }]} />\n        <View style={[styles.stroke, styles.down, { backgroundColor: colors.text }]} />\n      </View>\n    </Pressable>\n  );\n}\n\nconst styles = StyleSheet.create({\n  row: { flexDirection: 'row', alignItems: 'center', alignSelf: 'center' },\n  slots: { flexDirection: 'row' },\n  pill: { position: 'absolute', left: 4, top: 4, width: CELL - 8, height: CELL - 8 },\n  cell: {\n    width: CELL,\n    height: CELL,\n    alignItems: 'center',\n    justifyContent: 'center',\n    overflow: 'hidden',\n  },\n  ghost: { position: 'absolute' },\n  icon: { width: 14, height: 14 },\n  stroke: { position: 'absolute', width: 8, height: 1.8, borderRadius: 1, left: 4 },\n  up: { top: 4.2, transform: [{ rotate: '45deg' }] },\n  down: { top: 8.8, transform: [{ rotate: '-45deg' }] },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "navigation",
+    "web": "live",
+    "perf": {
+      "budget": "Plain views; one pill on one shared value and one more per slot for the roll. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 18,
+          "baselineMs": 18,
+          "jankyPercent": 5.1,
+          "atRest": "idle",
+          "memoryMb": 143
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The pill jumps and the numbers change in place.",
+      "screenReader": "Buttons named \"Page 9\" with the current one selected, plus Previous and Next page buttons that are disabled at the ends.",
+      "touchTarget": "Every slot and arrow is 44 by 44 pt."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { Pager } from '@/components/kinetik/pager';\n\n<Pager page={page} pageCount={24} onPageChange={setPage} />;\n```\n\n## When to use\n\n- Long lists split into pages people jump between: search results, orders, records.\n- Places where knowing \"page 9 of 24\" matters more than endless scrolling.\n\n## When not to use\n\n- Feeds people scroll through once. Load more as they reach the end.\n- Swiping between a few full-screen slides. Use Page Dots.\n\n## Notes\n\n- The first and last pages are always shown, with the current page between gaps; the number of slots never changes, so the row keeps its width.\n- `siblings` adds pages either side of the current one; each slot is 44 pt, so `siblings={1}` needs about 400 pt.\n- `pagerSlots(page, count, siblings)` is exported if you want the same logic elsewhere.\n- With reduced motion the pill jumps and digits change in place.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add pager`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

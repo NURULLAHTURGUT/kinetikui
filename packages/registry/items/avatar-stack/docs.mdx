@@ -1,0 +1,31 @@
+## Usage
+
+```tsx
+import { AvatarStack } from '@/components/kinetik/avatar-stack';
+
+<AvatarStack
+  people={[
+    { id: 'a', name: 'Maya Lindqvist', image: mayaPhoto },
+    { id: 'b', name: 'Leo Okafor' },
+    { id: 'c', name: 'Ines Duarte' },
+  ]}
+  max={4}
+/>;
+```
+
+## When to use
+
+- Showing who is on a project, in a chat or at an event, in the space of one line.
+- Places where people sometimes want the names but not always.
+
+## When not to use
+
+- A full member list with roles and actions. Use a list screen.
+- A single person. Show one avatar with the name beside it.
+
+## Notes
+
+- Stacked, it shows `max` faces and a "+n" chip; spread out, it shows up to `maxOpen` faces with first names beneath.
+- Faces without an `image` show one or two initials. Set `ringColor` to the colour behind the stack so the overlaps look cut out.
+- It is one button for screen readers that names everyone (up to six, then "and n more") and says whether it is expanded.
+- With reduced motion the faces move at once.

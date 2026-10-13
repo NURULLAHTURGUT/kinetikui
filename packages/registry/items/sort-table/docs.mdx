@@ -1,0 +1,35 @@
+## Usage
+
+```tsx
+import { SortTable } from '@/components/kinetik/sort-table';
+
+<SortTable
+  columns={[
+    { key: 'city', title: 'City', flex: 1.6 },
+    { key: 'orders', title: 'Orders', align: 'right' },
+    { key: 'growth', title: 'Growth', align: 'right', format: (v) => `${v}%` },
+  ]}
+  rows={[
+    { id: 'lis', city: 'Lisbon', orders: 1840, growth: 12 },
+    { id: 'ber', city: 'Berlin', orders: 3120, growth: 4 },
+  ]}
+  initialSort={{ key: 'orders', dir: 'desc' }}
+/>;
+```
+
+## When to use
+
+- A short table of records people compare by different measures: cities, plans, players, products.
+- Places where watching rows move tells people what changed when they re-sort.
+
+## When not to use
+
+- Long lists (more than about 50 rows). Every row is laid out at once; use a virtualised list with a sort menu.
+- Wide tables with many columns on a phone. Show fewer columns or a card per record.
+
+## Notes
+
+- A new column sorts numbers high to low and text A to Z; tapping it again flips the direction. Ties keep their original order.
+- Rows keep their identity (`id`) and spring from their old place to their new one.
+- Headers read their sort state ("Orders, sorted descending") and every row reads each column's title and value.
+- With reduced motion rows jump to their new places.

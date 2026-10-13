@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "float-field",
+  "type": "registry:item",
+  "title": "Float Field",
+  "description": "A text field whose label rises to the top edge on focus, with a ring that fades in and a shake for errors.",
+  "categories": [
+    "input"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/float-field.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/float-field.tsx",
+      "content": "import { useEffect, useState } from 'react';\nimport {\n  AccessibilityInfo,\n  StyleSheet,\n  TextInput,\n  View,\n  type StyleProp,\n  type TextInputProps,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  interpolateColor,\n  useAnimatedStyle,\n  useSharedValue,\n  withSequence,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { durations, easings, spring, timing } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type FloatFieldProps = Omit<\n  TextInputProps,\n  'style' | 'placeholder' | 'value' | 'onChangeText' | 'multiline'\n> & {\n  /** Sits inside the empty field and floats up to the top edge once it has focus or text. */\n  label: string;\n  value: string;\n  onChangeText: (text: string) => void;\n  /** Shown in red under the field; the field shakes once each time a new error appears. */\n  error?: string;\n  /** Helper text under the field, replaced by the error while there is one. */\n  hint?: string;\n  testID?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst HEIGHT = 56;\nconst LINE = 22;\n/** How far the label rises: from the middle of the field to its top padding. */\nconst RISE = HEIGHT / 2 - 15;\nconst SMALL = 0.78;\n\n/**\n * A text field whose label lives inside it. On focus the label rises and\n * shrinks to the top edge while a ring fades in around the field; an error\n * turns the ring red, shakes the field once and slides its message in below.\n */\nexport function FloatField({\n  label,\n  value,\n  onChangeText,\n  error,\n  hint,\n  editable = true,\n  onFocus,\n  onBlur,\n  testID,\n  style,\n  ...input\n}: FloatFieldProps) {\n  const { colors, font, radius, space } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const [focused, setFocused] = useState(false);\n  const floated = focused || value.length > 0;\n  const invalid = Boolean(error);\n\n  const lift = useSharedValue(floated ? 1 : 0);\n  const ring = useSharedValue(0);\n  const shake = useSharedValue(0);\n\n  useEffect(() => {\n    lift.set(withSpring(floated ? 1 : 0, spring('snappy', reduced)));\n  }, [floated, reduced, lift]);\n  useEffect(() => {\n    ring.set(withTiming(focused ? 1 : 0, timing('quick', reduced)));\n  }, [focused, reduced, ring]);\n  useEffect(() => {\n    if (!error) return;\n    AccessibilityInfo.announceForAccessibility(error);\n    if (reduced) return;\n    const step = { duration: 45, easing: easings.inOut };\n    shake.set(\n      withSequence(\n        withTiming(-6, step),\n        withTiming(6, step),\n        withTiming(-4, step),\n        withTiming(3, step),\n        withSpring(0, spring('snappy')),\n      ),\n    );\n  }, [error, reduced, shake]);\n\n  const accent = invalid ? colors.danger : colors.azure;\n\n  const shell = useAnimatedStyle(() => ({ transform: [{ translateX: shake.get() }] }));\n  const outline = useAnimatedStyle(() => ({ opacity: invalid ? 1 : ring.get() }));\n  const labelMotion = useAnimatedStyle(() => {\n    const p = lift.get();\n    return {\n      color: interpolateColor(\n        ring.get(),\n        [0, 1],\n        [invalid ? colors.danger : colors.textMuted, accent],\n      ),\n      transform: [{ translateY: -RISE * p }, { scale: 1 - (1 - SMALL) * p }],\n    };\n  });\n\n  const message = error ?? hint;\n\n  return (\n    <View testID={testID} style={[{ gap: space[1.5], opacity: editable ? 1 : 0.5 }, style]}>\n      <Animated.View\n        style={[\n          styles.field,\n          {\n            backgroundColor: colors.surface,\n            borderColor: colors.borderStrong,\n            borderRadius: radius.md,\n          },\n          shell,\n        ]}\n      >\n        <Animated.View\n          pointerEvents=\"none\"\n          style={[styles.ring, { borderColor: accent, borderRadius: radius.md + 1 }, outline]}\n        />\n        <Animated.Text\n          pointerEvents=\"none\"\n          numberOfLines={1}\n          accessibilityElementsHidden\n          importantForAccessibility=\"no\"\n          style={[\n            styles.label,\n            { left: space[4], right: space[4], fontSize: font.size.md, lineHeight: LINE },\n            labelMotion,\n          ]}\n        >\n          {label}\n        </Animated.Text>\n        <TextInput\n          {...input}\n          value={value}\n          onChangeText={onChangeText}\n          editable={editable}\n          accessibilityLabel={label}\n          accessibilityHint={message}\n          onFocus={(e) => {\n            setFocused(true);\n            onFocus?.(e);\n          }}\n          onBlur={(e) => {\n            setFocused(false);\n            onBlur?.(e);\n          }}\n          selectionColor={accent}\n          cursorColor={accent}\n          style={[\n            styles.input,\n            {\n              color: colors.text,\n              fontSize: font.size.md,\n              paddingHorizontal: space[4],\n            },\n          ]}\n        />\n      </Animated.View>\n      {message ? (\n        <Message\n          key={message}\n          text={message}\n          color={invalid ? colors.danger : colors.textSubtle}\n          size={font.size.xs}\n          indent={space[4]}\n          reduced={reduced}\n        />\n      ) : null}\n    </View>\n  );\n}\n\ntype MessageProps = { text: string; color: string; size: number; indent: number; reduced: boolean };\n\n/** Each new message drops in from just above its place. */\nfunction Message({ text, color, size, indent, reduced }: MessageProps) {\n  const shown = useSharedValue(reduced ? 1 : 0);\n  useEffect(() => {\n    shown.set(withTiming(1, { duration: durations.base, easing: easings.standard }));\n  }, [shown]);\n  const motion = useAnimatedStyle(() => ({\n    opacity: shown.get(),\n    transform: [{ translateY: (1 - shown.get()) * -4 }],\n  }));\n  return (\n    <Animated.Text\n      accessibilityElementsHidden\n      importantForAccessibility=\"no\"\n      style={[{ color, fontSize: size, paddingHorizontal: indent }, motion]}\n    >\n      {text}\n    </Animated.Text>\n  );\n}\n\nconst styles = StyleSheet.create({\n  field: { height: HEIGHT, borderWidth: 1, justifyContent: 'center' },\n  ring: { position: 'absolute', top: -1, left: -1, right: -1, bottom: -1, borderWidth: 2 },\n  label: {\n    position: 'absolute',\n    top: (HEIGHT - LINE) / 2 - 1,\n    transformOrigin: 'left center',\n  },\n  input: { height: HEIGHT - 2, paddingTop: 20, paddingBottom: 4 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "input",
+    "web": "live",
+    "perf": {
+      "budget": "A native text input with three shared values: label, ring and shake. Nothing runs at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-13",
+          "build": "release",
+          "frameMs": 19,
+          "p90Ms": 25,
+          "baselineMs": 18,
+          "jankyPercent": 12.58,
+          "atRest": "idle",
+          "memoryMb": 135,
+          "notes": "The run types into both fields; the janky frames are the keyboard opening and closing, not the field."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The label moves without a spring and the field does not shake.",
+      "screenReader": "A text field named by its label, with the hint or error as its hint; a new error is announced.",
+      "touchTarget": "The whole field is the target, 56 pt tall."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { FloatField } from '@/components/kinetik/float-field';\n\n<FloatField\n  label=\"Email\"\n  hint=\"We only use it for receipts.\"\n  error={invalid ? 'That does not look like an email address.' : undefined}\n  value={email}\n  onChangeText={setEmail}\n  keyboardType=\"email-address\"\n  autoCapitalize=\"none\"\n/>;\n```\n\n## When to use\n\n- Forms where space is tight and every field needs a visible name: sign up, checkout, profile.\n- Fields that validate on blur and need to say what is wrong right under the input.\n\n## When not to use\n\n- Long text. Use Grow Area, which grows with what is typed.\n- Search. A search field reads better with an icon and no floating label.\n\n## Notes\n\n- Every other `TextInput` prop (keyboard type, auto-complete, secure entry, return key) is passed through.\n- The label is the field's accessible name and the hint or error is its hint; a new error is also announced.\n- With reduced motion the label still moves, without a spring, and the field does not shake.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add float-field`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

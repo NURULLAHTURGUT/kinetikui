@@ -1,0 +1,35 @@
+## Usage
+
+```tsx
+import { TreeView } from '@/components/kinetik/tree-view';
+
+<TreeView
+  data={[
+    {
+      id: 'app',
+      label: 'app',
+      children: [{ id: 'home', label: 'index.tsx', detail: '4 KB' }],
+    },
+  ]}
+  defaultExpanded={['app']}
+  selected={current}
+  onSelect={(node) => setCurrent(node.id)}
+/>;
+```
+
+## When to use
+
+- Hierarchies people browse a level at a time: folders, categories, an outline, settings groups.
+- Places where seeing the path to an item helps, not just the item.
+
+## When not to use
+
+- Flat lists. Use plain rows.
+- Deep trees on a phone (more than three or four levels). Drill into a new screen per level instead.
+
+## Notes
+
+- A branch grows to its measured height while its rows drift in; nested branches resize their parents as they open.
+- Children are built the first time a branch opens and kept afterwards, so large trees stay cheap.
+- Every row is a button; branches say whether they are expanded and the selected row says it is selected.
+- With reduced motion branches open and close at once.

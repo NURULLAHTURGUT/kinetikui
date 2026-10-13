@@ -1,0 +1,41 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "side-drawer",
+  "title": "Side Drawer",
+  "description": "A navigation drawer that springs in from the side as its rows follow one by one; drag it back to close.",
+  "category": "overlay",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-safe-area-context",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["side-drawer.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "A transparent modal of plain views; the panel, scrim and rows read two shared values. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 20,
+        "p90Ms": 28,
+        "baselineMs": 18,
+        "jankyPercent": 8.37,
+        "atRest": "idle",
+        "memoryMb": 147,
+        "notes": "p99 spikes are the first frame of the modal window opening."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The drawer appears and disappears without sliding, rows included.",
+    "screenReader": "Rows are menu items with a selected state; outside the panel is a \"Close menu\" button, and Back closes it.",
+    "touchTarget": "Rows are 48 pt tall and nearly the full width of the panel."
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "month-calendar",
+  "title": "Month Calendar",
+  "description": "Pick a date or a range: a disc glides between days, months slide in from the side and a swipe turns the page.",
+  "category": "input",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["month-calendar.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "42 plain day cells; one disc on three shared values, and one value slides each new month in. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 22,
+        "baselineMs": 18,
+        "jankyPercent": 1.85,
+        "atRest": "idle",
+        "memoryMb": 154
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The disc jumps to the new day and months change in place.",
+    "screenReader": "A header with the month, Previous and Next buttons, and a button for every day that reads its full date and selected state.",
+    "touchTarget": "Day cells are 44 pt tall and a seventh of the width; the arrows are 44 pt."
+  }
+}

@@ -1,0 +1,27 @@
+## Usage
+
+```tsx
+import { SignaturePad, signatureSvg } from '@/components/kinetik/signature-pad';
+
+<SignaturePad onChange={setStrokes} />;
+
+// Later, to save or upload:
+const svg = signatureSvg(strokes, 320, 200, '#111111');
+```
+
+## When to use
+
+- Signing to accept something: a delivery, a lease, a consent form.
+- Quick hand-drawn input such as initials.
+
+## When not to use
+
+- Drawing or note-taking apps. They need pressure, colours, erasing and zoom.
+- As the only way to agree to something: offer a typed name or a checkbox too, for people who cannot draw.
+
+## Notes
+
+- Ink is widest when the finger moves slowly and thins with speed, then each stroke is stored as points with a width (`InkPoint`).
+- `inkOutline` turns a stroke into a filled Skia path and `signatureSvg` turns all strokes into an SVG document.
+- The stroke being drawn is built on the UI thread; finished strokes are kept as paths and never rebuilt.
+- With reduced motion Clear removes the ink at once instead of fading it.

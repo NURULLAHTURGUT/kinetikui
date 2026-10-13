@@ -1,0 +1,24 @@
+## Usage
+
+```tsx
+import { SplitPane } from '@/components/kinetik/split-pane';
+
+<SplitPane style={{ height: 520 }} first={<Map />} second={<PlaceList />} />;
+```
+
+## When to use
+
+- Two related views people balance against each other: a map and a list, a preview and its settings, a chat and a document.
+- Tablet layouts side by side with `direction="horizontal"`.
+
+## When not to use
+
+- A sheet that slides over content. Use Morph Sheet or Action Sheet.
+- Content people only switch between. Use Scroll Tabs.
+
+## Notes
+
+- The divider follows the finger, then springs to the nearest of `snapPoints`, carrying the flick's speed into the spring.
+- `minSize` keeps either pane from vanishing. Give the component a fixed height (or width when horizontal).
+- The divider is an adjustable element: screen readers step it between the resting points.
+- It is a 44 pt target that overlaps the panes, while only 12 pt of space separates them.

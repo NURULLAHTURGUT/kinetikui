@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "pop-dialog",
+  "title": "Pop Dialog",
+  "description": "A dialog that rises and settles on a soft spring over a dimmed screen, and sinks back before it unmounts.",
+  "category": "overlay",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-worklets"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["pop-dialog.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "A transparent modal of plain views; the scrim and card read one shared value. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 30,
+        "baselineMs": 18,
+        "jankyPercent": 10.34,
+        "atRest": "idle",
+        "memoryMb": 144,
+        "notes": "p99 spikes are the first frame of the modal window opening."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The dialog appears and disappears without moving.",
+    "screenReader": "A modal window with a heading and named action buttons; the escape gesture and Back close it.",
+    "touchTarget": "Actions are at least 48 pt tall; outside the card is one large close target."
+  }
+}

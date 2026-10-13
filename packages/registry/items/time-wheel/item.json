@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "time-wheel",
+  "title": "Time Wheel",
+  "description": "Wheels for a time of day: rows tilt away like a drum, each wheel snaps row by row with a tick.",
+  "category": "input",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-worklets"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["time-wheel.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Native scroll views; each row reads its wheel's scroll offset in one animated style. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "baselineMs": 18,
+        "jankyPercent": 10.59,
+        "atRest": "idle",
+        "memoryMb": 145,
+        "notes": "Janky frames come from the native fling and snap of the scroll views; rows stay at 17 ms median."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Rows stay flat and changes from outside jump instead of scrolling.",
+    "screenReader": "Each wheel is an adjustable element named after its part of the time, with the shown value.",
+    "touchTarget": "Each wheel is 72 by 200 pt."
+  }
+}

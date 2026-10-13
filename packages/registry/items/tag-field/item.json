@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "tag-field",
+  "title": "Tag Field",
+  "description": "Typed words that pop into tags while the rest make room; a duplicate makes the existing tag jump instead.",
+  "category": "input",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["tag-field.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Plain views with Reanimated layout transitions, which run only when a tag is added or removed. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 23,
+        "baselineMs": 18,
+        "jankyPercent": 4.76,
+        "atRest": "idle",
+        "memoryMb": 137,
+        "notes": "p99 spikes are the keyboard opening and closing."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Tags appear and disappear at once and the rest move without a spring.",
+    "screenReader": "A text field named by its label whose hint lists the tags; each tag has a Remove button. Changes are announced.",
+    "touchTarget": "Each remove button is 44 by 44 pt; the field is at least 52 pt tall."
+  }
+}

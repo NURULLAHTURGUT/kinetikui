@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "count-badge",
+  "title": "Count Badge",
+  "description": "A count on the corner of an icon that springs in, jumps as it rises, rolls its number and shrinks away at zero.",
+  "category": "feedback",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["count-badge.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One small view and three shared values; it animates only when the count changes. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 21,
+        "p90Ms": 24,
+        "baselineMs": 18,
+        "jankyPercent": 1.02,
+        "atRest": "idle",
+        "memoryMb": 146
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The number changes in place without the jump; the badge still appears and disappears.",
+    "screenReader": "The badge reads its label, such as \"3 unread\"; it is hidden at zero.",
+    "touchTarget": "Not interactive; the element under it keeps its own target."
+  }
+}

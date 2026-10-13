@@ -1,0 +1,41 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "brush-chart",
+  "title": "Brush Chart",
+  "description": "A long series with an overview strip: drag the window or its handles and the chart above zooms to it.",
+  "category": "data",
+  "phase": 2,
+  "version": "1.0.0",
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["brush-chart.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Two Skia canvases. The visible part is rebuilt on the UI thread while dragging; the overview path is built once per size. Nothing runs at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-13",
+        "build": "release",
+        "frameMs": 16,
+        "p90Ms": 18,
+        "baselineMs": 17,
+        "jankyPercent": 2.93,
+        "atRest": "idle",
+        "memoryMb": 163,
+        "notes": "Before the window stopped re-rendering React on every drag frame this was 32 ms median with 36% janky frames."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Screen reader steps move the window at once instead of springing.",
+    "screenReader": "The chart is an image that reads the visible range and its first and last values; the strip is an adjustable range.",
+    "touchTarget": "The whole strip is the target, 52 pt tall; handles respond 22 pt either side."
+  }
+}
