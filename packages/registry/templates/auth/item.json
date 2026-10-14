@@ -1,0 +1,42 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "auth",
+  "title": "Auth",
+  "description": "Passwordless sign-in: an email, a one-time code with a resend timer, and a check once you are in.",
+  "category": "screen",
+  "phase": 3,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-safe-area-context"],
+  "registryDependencies": [
+    "kinetik-tokens",
+    "kinetik-motion",
+    "code-field",
+    "press-jelly",
+    "word-cascade"
+  ],
+  "files": ["auth.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Steps slide in with one layout animation each; the code row and the final check are UI-thread springs. The resend countdown re-renders once a second while it runs.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 23,
+        "baselineMs": 17,
+        "jankyPercent": 6.88,
+        "atRest": "idle",
+        "memoryMb": 154,
+        "notes": "Most janky frames are the software keyboard and the step slide on the emulator; the code row itself stays at the baseline."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Steps cross-fade instead of sliding, the check appears without popping or a ring, and the code row does not shake or wave (Code Field).",
+    "screenReader": "Each step leads with its title. The code field is named Verification code; checking, a wrong code and a resent code are announced. The countdown reads \"You can resend the code in 24 seconds\".",
+    "touchTarget": "The email field is 52 pt; buttons and links are at least 44 pt."
+  }
+}

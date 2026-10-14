@@ -4,36 +4,40 @@ import { StyleSheet, Text, View } from 'react-native';
 import { defineControls } from '../../demo-kit/types';
 import { PressJelly } from '../../items/press-jelly/press-jelly';
 import { useKinetikTheme } from '../../shared/tokens/theme';
-import { OnboardingFlow } from './onboarding-flow';
+import { Onboarding } from './onboarding';
 
 export const controls = defineControls({});
 
-export default function OnboardingFlowDemo() {
+export default function OnboardingDemo() {
   const { colors, font, space } = useKinetikTheme();
   const [run, setRun] = useState(0);
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState<string | null>(null);
 
   if (done) {
     return (
-      <View style={[styles.done, { backgroundColor: colors.background, gap: space[4] }]}>
-        <Text style={{ color: colors.text, fontSize: font.size.xl, fontWeight: font.weight.bold }}>
-          Welcome aboard
-        </Text>
+      <View style={[styles.center, { backgroundColor: colors.background, gap: space[4] }]}>
+        <Text style={{ color: colors.textMuted, fontSize: font.size.md }}>{done}</Text>
         <PressJelly
           variant="surface"
           onPress={() => {
-            setDone(false);
+            setDone(null);
             setRun((r) => r + 1);
           }}
         >
-          Replay onboarding
+          Start over
         </PressJelly>
       </View>
     );
   }
-  return <OnboardingFlow key={run} onFinish={() => setDone(true)} />;
+  return (
+    <Onboarding
+      key={run}
+      onFinish={() => setDone('Onboarding finished')}
+      onSkip={() => setDone('Skipped for now')}
+    />
+  );
 }
 
 const styles = StyleSheet.create({
-  done: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });

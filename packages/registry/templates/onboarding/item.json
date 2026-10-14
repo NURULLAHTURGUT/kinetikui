@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "onboarding",
+  "title": "Onboarding",
+  "description": "A paged welcome with animated illustration panels, a progress line that follows the swipe and word-by-word titles.",
+  "category": "screen",
+  "phase": 3,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-safe-area-context"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "press-jelly", "word-cascade"],
+  "files": ["onboarding.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Only the current slide's illustration animates (UI-thread springs and loops); the others rest. The progress line is a scroll-driven worklet.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 24,
+        "baselineMs": 17,
+        "jankyPercent": 0.53,
+        "atRest": "animating",
+        "memoryMb": 156,
+        "notes": "Animating at rest: the current slide’s illustration keeps drifting or looping while it is on screen."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Illustrations show their finished state without looping, and titles appear without rising (Word Cascade). Paging is user-driven, so it stays.",
+    "screenReader": "Only the current slide is exposed. The progress line reads \"Step 2 of 3\". The button is named Continue, then Get started; Maybe later is a separate button.",
+    "touchTarget": "The main button is 56 pt tall; Maybe later is at least 44 pt."
+  }
+}

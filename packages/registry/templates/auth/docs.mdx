@@ -1,0 +1,32 @@
+## Usage
+
+```tsx
+import { Auth } from '@/components/kinetik/screens/auth';
+
+<Auth
+  onSendCode={(email) => auth.sendOtp({ email })}
+  onVerify={async (email, code) => {
+    const { error } = await auth.verifyOtp({ email, token: code });
+    if (error) throw error;
+  }}
+  onDone={() => router.replace('/home')}
+/>;
+```
+
+The demo accepts the code **123456**.
+
+## When to use
+
+- Passwordless sign-in or sign-up with a one-time code sent by email (Supabase, Clerk, Firebase email links, your own API).
+- Confirming an address after sign-up.
+
+## When not to use
+
+- Codes sent by SMS: the copy, keyboard and field label assume email. Change them before you reuse the flow.
+- Accounts with passwords: use the Login screen.
+
+## Notes
+
+- `onVerify` runs as soon as the last digit is entered. Reject to shake and clear the code; resolve to play the success wave and move to the final step.
+- Resend unlocks after `resendAfter` seconds (default 30) and restarts the timer each time it is used.
+- Codes paste and autofill from the keyboard suggestion (Code Field handles one-time-code autofill).

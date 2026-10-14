@@ -28,7 +28,7 @@
         }
       ],
       "meta": {
-        "version": "1.2.0",
+        "version": "1.3.0",
         "kind": "shared",
         "platforms": [
           "ios",
@@ -62,7 +62,7 @@
         }
       ],
       "meta": {
-        "version": "1.2.0",
+        "version": "1.3.0",
         "kind": "shared",
         "platforms": [
           "ios",
@@ -90,7 +90,7 @@
         }
       ],
       "meta": {
-        "version": "1.2.0",
+        "version": "1.3.0",
         "kind": "shared",
         "platforms": [
           "ios",
@@ -117,7 +117,7 @@
         }
       ],
       "meta": {
-        "version": "1.2.0",
+        "version": "1.3.0",
         "kind": "shared",
         "platforms": [
           "ios",
@@ -144,7 +144,7 @@
         }
       ],
       "meta": {
-        "version": "1.2.0",
+        "version": "1.3.0",
         "kind": "shared",
         "platforms": [
           "ios",
@@ -168,7 +168,7 @@
         }
       ],
       "meta": {
-        "version": "1.2.0",
+        "version": "1.3.0",
         "kind": "shared",
         "platforms": [
           "ios",
@@ -194,7 +194,7 @@
         }
       ],
       "meta": {
-        "version": "1.2.0",
+        "version": "1.3.0",
         "kind": "shared",
         "platforms": [
           "ios",
@@ -6836,10 +6836,10 @@
       }
     },
     {
-      "name": "onboarding-flow",
+      "name": "auth",
       "type": "registry:block",
-      "title": "Onboarding Flow",
-      "description": "A paged welcome flow: spotlit illustrations that drift with the swipe, story-style progress, a button that grows.",
+      "title": "Auth",
+      "description": "Passwordless sign-in: an email, a one-time code with a resend timer, and a check once you are in.",
       "categories": [
         "screen"
       ],
@@ -6851,17 +6851,15 @@
       "registryDependencies": [
         "https://kinetik-ui.dev/r/kinetik-tokens.json",
         "https://kinetik-ui.dev/r/kinetik-motion.json",
-        "https://kinetik-ui.dev/r/aurora-veil.json",
-        "https://kinetik-ui.dev/r/glint-card.json",
-        "https://kinetik-ui.dev/r/scramble-text.json",
-        "https://kinetik-ui.dev/r/tilt-deck.json",
+        "https://kinetik-ui.dev/r/code-field.json",
+        "https://kinetik-ui.dev/r/press-jelly.json",
         "https://kinetik-ui.dev/r/word-cascade.json"
       ],
       "files": [
         {
-          "path": "public/r/src/components/kinetik/screens/onboarding-flow.tsx",
+          "path": "public/r/src/components/kinetik/screens/auth.tsx",
           "type": "registry:file",
-          "target": "~/components/kinetik/screens/onboarding-flow.tsx"
+          "target": "~/components/kinetik/screens/auth.tsx"
         }
       ],
       "meta": {
@@ -6875,13 +6873,152 @@
         "category": "screen",
         "web": "live",
         "perf": {
-          "budget": "One shader background plus the visible slide. Paging, parallax, the progress bars and the growing button are scroll-driven worklets; nothing runs on the JS thread while swiping.",
-          "measurements": []
+          "budget": "Steps slide in with one layout animation each; the code row and the final check are UI-thread springs. The resend countdown re-renders once a second while it runs.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 17,
+              "p90Ms": 23,
+              "baselineMs": 17,
+              "jankyPercent": 6.88,
+              "atRest": "idle",
+              "memoryMb": 154,
+              "notes": "Most janky frames are the software keyboard and the step slide on the emulator; the code row itself stays at the baseline."
+            }
+          ]
         },
         "a11y": {
-          "reducedMotion": "Titles appear without cascading and the background holds still (handled by Word Cascade and Aurora Veil). Paging is user-driven, so it stays.",
-          "screenReader": "Only the current slide is exposed. The progress bars read as \"Step 2 of 3\". The round button is named Continue, then Get started. Skip is hidden on the last slide.",
-          "touchTarget": "Skip is at least 44 pt; the round button is 56 pt and spans the width on the last slide."
+          "reducedMotion": "Steps cross-fade instead of sliding, the check appears without popping or a ring, and the code row does not shake or wave (Code Field).",
+          "screenReader": "Each step leads with its title. The code field is named Verification code; checking, a wrong code and a resent code are announced. The countdown reads \"You can resend the code in 24 seconds\".",
+          "touchTarget": "The email field is 52 pt; buttons and links are at least 44 pt."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "login",
+      "type": "registry:block",
+      "title": "Login",
+      "description": "An email and password sign-in that settles in row by row, with inline errors and provider buttons.",
+      "categories": [
+        "screen"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-safe-area-context",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/press-jelly.json",
+        "https://kinetik-ui.dev/r/reveal-field.json",
+        "https://kinetik-ui.dev/r/word-cascade.json"
+      ],
+      "files": [
+        {
+          "path": "public/r/src/components/kinetik/screens/login.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/screens/login.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "template",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "screen",
+        "web": "live",
+        "perf": {
+          "budget": "The entrance is a one-off layout animation per block on the UI thread; after that the screen is static apart from the button's press spring.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 18,
+              "p90Ms": 27,
+              "baselineMs": 17,
+              "jankyPercent": 5.78,
+              "atRest": "idle",
+              "memoryMb": 157,
+              "notes": "Most janky frames are the software keyboard opening and closing on the emulator; scrolling the form stays at the baseline."
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "Blocks appear in place, the title appears without rising and the password eye switches without animating (Reveal Field).",
+          "screenReader": "Fields are named Email and Password; their errors are read as they appear. A failed sign-in is an alert. The button reports when it is busy.",
+          "touchTarget": "Fields are 52 pt tall; the button is 56 pt; links are at least 44 pt."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "onboarding",
+      "type": "registry:block",
+      "title": "Onboarding",
+      "description": "A paged welcome with animated illustration panels, a progress line that follows the swipe and word-by-word titles.",
+      "categories": [
+        "screen"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-safe-area-context",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/press-jelly.json",
+        "https://kinetik-ui.dev/r/word-cascade.json"
+      ],
+      "files": [
+        {
+          "path": "public/r/src/components/kinetik/screens/onboarding.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/screens/onboarding.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "template",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "screen",
+        "web": "live",
+        "perf": {
+          "budget": "Only the current slide's illustration animates (UI-thread springs and loops); the others rest. The progress line is a scroll-driven worklet.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 18,
+              "p90Ms": 24,
+              "baselineMs": 17,
+              "jankyPercent": 0.53,
+              "atRest": "animating",
+              "memoryMb": 156,
+              "notes": "Animating at rest: the current slide’s illustration keeps drifting or looping while it is on screen."
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "Illustrations show their finished state without looping, and titles appear without rising (Word Cascade). Paging is user-driven, so it stays.",
+          "screenReader": "Only the current slide is exposed. The progress line reads \"Step 2 of 3\". The button is named Continue, then Get started; Maybe later is a separate button.",
+          "touchTarget": "The main button is 56 pt tall; Maybe later is at least 44 pt."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }
@@ -6890,20 +7027,20 @@
       "name": "paywall",
       "type": "registry:block",
       "title": "Paywall",
-      "description": "A subscription screen with a drifting gradient hero, rolling plan prices and confetti on purchase.",
+      "description": "A subscription screen: a glowing mark, a self-advancing feature carousel and swipeable plan cards.",
       "categories": [
         "screen"
       ],
       "dependencies": [
-        "react-native-safe-area-context"
+        "react-native-reanimated",
+        "react-native-safe-area-context",
+        "react-native-worklets"
       ],
       "registryDependencies": [
         "https://kinetik-ui.dev/r/kinetik-tokens.json",
-        "https://kinetik-ui.dev/r/confetti-burst.json",
-        "https://kinetik-ui.dev/r/grain-drift.json",
-        "https://kinetik-ui.dev/r/odometer.json",
-        "https://kinetik-ui.dev/r/press-jelly.json",
-        "https://kinetik-ui.dev/r/shine-text.json"
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/page-dots.json",
+        "https://kinetik-ui.dev/r/press-jelly.json"
       ],
       "files": [
         {
@@ -6913,7 +7050,7 @@
         }
       ],
       "meta": {
-        "version": "1.0.0",
+        "version": "2.0.0",
         "kind": "template",
         "platforms": [
           "ios",
@@ -6923,42 +7060,56 @@
         "category": "screen",
         "web": "live",
         "perf": {
-          "budget": "One shader hero (scrolls away with the content) and a looping sheen on the title. Price changes roll digits on the UI thread; confetti runs only for ~3 s after a purchase.",
-          "measurements": []
+          "budget": "The mark turns on the UI thread; the feature phones and dots follow the scroll in worklets. The carousel advances on a timer with one scroll per step. Plan cards are plain views.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 22,
+              "p90Ms": 25,
+              "baselineMs": 17,
+              "jankyPercent": 0.1,
+              "atRest": "animating",
+              "memoryMb": 147,
+              "notes": "Animating at rest: the mark keeps turning while the paywall is open; the carousel advances every 4 s."
+            }
+          ]
         },
         "a11y": {
-          "reducedMotion": "The hero and title sheen hold still, prices change without rolling and no confetti is drawn (handled by each component).",
-          "screenReader": "Plans are a radio group (\"Yearly, $39.99 per year, Save 44%, selected\"). The monthly price is read as one value. The button announces which plan it buys and its busy state.",
-          "touchTarget": "Plan cards are 72 pt tall; close, links and the main button are at least 44 pt."
+          "reducedMotion": "The mark holds still, the carousel does not advance on its own and pages change without scrolling.",
+          "screenReader": "The title is a header. Only the current feature is exposed and the dots read \"Feature 2 of 3\". Each plan reads its monthly price, what is billed and the saving; its button names the plan and shows when it is busy.",
+          "touchTarget": "Close, the links and the plan buttons are at least 44 pt."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }
     },
     {
-      "name": "player-sheet",
+      "name": "profile",
       "type": "registry:block",
-      "title": "Player Sheet",
-      "description": "A music library whose mini player opens into a full player: tilting cover, elastic scrubber.",
+      "title": "Profile",
+      "description": "A profile and settings screen: a turning avatar ring, stats that count up and grouped rows with switches.",
       "categories": [
         "screen"
       ],
       "dependencies": [
-        "react-native-safe-area-context"
+        "react-native-reanimated",
+        "react-native-safe-area-context",
+        "react-native-worklets"
       ],
       "registryDependencies": [
         "https://kinetik-ui.dev/r/kinetik-tokens.json",
-        "https://kinetik-ui.dev/r/elastic-slider.json",
-        "https://kinetik-ui.dev/r/morph-sheet.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-count.json",
         "https://kinetik-ui.dev/r/press-jelly.json",
-        "https://kinetik-ui.dev/r/pulse-toggle.json",
-        "https://kinetik-ui.dev/r/scramble-text.json",
-        "https://kinetik-ui.dev/r/tilt-deck.json"
+        "https://kinetik-ui.dev/r/pulse-toggle.json"
       ],
       "files": [
         {
-          "path": "public/r/src/components/kinetik/screens/player-sheet.tsx",
+          "path": "public/r/src/components/kinetik/screens/profile.tsx",
           "type": "registry:file",
-          "target": "~/components/kinetik/screens/player-sheet.tsx"
+          "target": "~/components/kinetik/screens/profile.tsx"
         }
       ],
       "meta": {
@@ -6972,61 +7123,27 @@
         "category": "screen",
         "web": "live",
         "perf": {
-          "budget": "Nothing animates while idle. The sheet, cover tilt and scrubber are gesture-driven worklets; the title scramble runs for under a second per track change. The stand-in clock updates once a second and is replaced by your player's position.",
-          "measurements": []
+          "budget": "The avatar ring turns on the UI thread. Stats count up for about a second after the screen opens (re-rendering on animation frames), then the screen is static.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 21,
+              "p90Ms": 23,
+              "baselineMs": 17,
+              "jankyPercent": 0,
+              "atRest": "animating",
+              "memoryMb": 151,
+              "notes": "Animating at rest: the avatar ring keeps turning while the screen is open."
+            }
+          ]
         },
         "a11y": {
-          "reducedMotion": "The sheet opens with a short fade, the cover does not tilt, the title changes without scrambling and the scrubber does not stretch (handled by each component).",
-          "screenReader": "Tracks are buttons with title, artist and length; the current one is marked selected. The mini player reads \"Now playing\" and opens the player. The sheet is modal with an escape action; the scrubber is adjustable and reads the time.",
-          "touchTarget": "Rows are 64 pt; play, previous, next and the mini player button are at least 44 pt."
-        },
-        "requires": "React Native New Architecture (Reanimated 4)"
-      }
-    },
-    {
-      "name": "profile-hero",
-      "type": "registry:block",
-      "title": "Profile Hero",
-      "description": "A profile screen: parallax cover, follow button with a rolling count, liquid tabs and loading skeletons.",
-      "categories": [
-        "screen"
-      ],
-      "dependencies": [],
-      "registryDependencies": [
-        "https://kinetik-ui.dev/r/kinetik-tokens.json",
-        "https://kinetik-ui.dev/r/grain-drift.json",
-        "https://kinetik-ui.dev/r/liquid-tabs.json",
-        "https://kinetik-ui.dev/r/odometer.json",
-        "https://kinetik-ui.dev/r/parallax-header.json",
-        "https://kinetik-ui.dev/r/press-jelly.json",
-        "https://kinetik-ui.dev/r/skeleton-sweep.json",
-        "https://kinetik-ui.dev/r/toast-stack.json"
-      ],
-      "files": [
-        {
-          "path": "public/r/src/components/kinetik/screens/profile-hero.tsx",
-          "type": "registry:file",
-          "target": "~/components/kinetik/screens/profile-hero.tsx"
-        }
-      ],
-      "meta": {
-        "version": "1.0.0",
-        "kind": "template",
-        "platforms": [
-          "ios",
-          "android",
-          "web"
-        ],
-        "category": "screen",
-        "web": "live",
-        "perf": {
-          "budget": "The cover shader runs while the header is on screen; the parallax, collapsing bar and tab indicator are scroll- and spring-driven worklets. The grid is plain views.",
-          "measurements": []
-        },
-        "a11y": {
-          "reducedMotion": "The cover holds still, the header scrolls without parallax, counts change without rolling and skeletons do not sweep (handled by each component).",
-          "screenReader": "The name is a header; each stat reads as one value (\"24,817 followers\"); tabs are a tab list; skeletons announce \"Loading posts\". Following shows a toast with an Undo action.",
-          "touchTarget": "Buttons and tabs are at least 44 pt."
+          "reducedMotion": "The ring holds still, stats show their final values and blocks appear without settling in.",
+          "screenReader": "The name and section titles are headers. Each stat reads as one value (\"24.8k Followers\"); rows are buttons with their detail as a hint, and switches are named after their row.",
+          "touchTarget": "Rows are 56 pt tall; buttons and switches are at least 44 pt."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }

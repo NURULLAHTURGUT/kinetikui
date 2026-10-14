@@ -11,7 +11,7 @@
 
 <p align="center">
   <strong>Motion parts for Expo.</strong><br />
-  111 animated components and 4 screen templates for React Native, copied into your app as source.
+  111 animated components and 5 screen templates for React Native, copied into your app as source.
 </p>
 
 <p align="center">
@@ -49,7 +49,7 @@ npx kinetik-ui add glint-card
 
 ## What you get
 
-- **111 components and 4 screen templates**, each with a live demo, a props table and notes on when _not_ to use it.
+- **111 components and 5 screen templates**, each with a live demo, a props table and notes on when _not_ to use it.
 - **Runs on the UI thread.** Gestures, springs and shaders are worklets; a busy JavaScript thread does not drop frames.
 - **Accessible by default.** Every component has a reduced-motion version, screen-reader labels and roles, and 44 pt touch targets. See the [checklist](docs/accessibility.md).
 - **One design language.** Colours, spacing, type, shadows and three springs come from shared tokens; nothing hard-codes a colour. Brand it with `<KinetikProvider colors={{ ember: '#7C5CFF' }}>`.
@@ -170,10 +170,11 @@ npx kinetik-ui add glint-card
 |             | Treemap           | Nested, near-square tiles; tap a group to zoom into it.                             |
 |             | Usage Meter       | What fills an allowance, segment by segment.                                        |
 |             | Waffle Chart      | A ten-by-ten grid where each cell is one percent.                                   |
-| Screens     | Onboarding Flow   | A paged welcome flow over an aurora with cascading titles.                          |
-|             | Paywall           | Plans with rolling prices and confetti on purchase.                                 |
-|             | Player Sheet      | A music library whose mini player opens into a full player.                         |
-|             | Profile Hero      | A profile with a parallax cover, a rolling follower count and liquid tabs.          |
+| Screens     | Onboarding        | A paged welcome with animated illustration panels and word-by-word titles.          |
+|             | Paywall           | A feature carousel that advances on its own and swipeable plan cards.               |
+|             | Login             | Email and password sign-in with inline errors and provider buttons.                 |
+|             | Auth              | Passwordless sign-in: an email, a one-time code and a check once you are in.        |
+|             | Profile           | An avatar in a turning ring, stats that count up and grouped settings rows.         |
 
 Screen templates install into `components/kinetik/screens/` and bring the components they use.
 

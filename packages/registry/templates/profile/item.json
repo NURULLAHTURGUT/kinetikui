@@ -1,0 +1,42 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "profile",
+  "title": "Profile",
+  "description": "A profile and settings screen: a turning avatar ring, stats that count up and grouped rows with switches.",
+  "category": "screen",
+  "phase": 3,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-safe-area-context"],
+  "registryDependencies": [
+    "kinetik-tokens",
+    "kinetik-motion",
+    "kinetik-count",
+    "press-jelly",
+    "pulse-toggle"
+  ],
+  "files": ["profile.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The avatar ring turns on the UI thread. Stats count up for about a second after the screen opens (re-rendering on animation frames), then the screen is static.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 21,
+        "p90Ms": 23,
+        "baselineMs": 17,
+        "jankyPercent": 0,
+        "atRest": "animating",
+        "memoryMb": 151,
+        "notes": "Animating at rest: the avatar ring keeps turning while the screen is open."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The ring holds still, stats show their final values and blocks appear without settling in.",
+    "screenReader": "The name and section titles are headers. Each stat reads as one value (\"24.8k Followers\"); rows are buttons with their detail as a hint, and switches are named after their row.",
+    "touchTarget": "Rows are 56 pt tall; buttons and switches are at least 44 pt."
+  }
+}

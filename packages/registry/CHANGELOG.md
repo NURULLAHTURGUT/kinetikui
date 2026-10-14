@@ -1,5 +1,13 @@
 # @kinetik/registry
 
+## 1.3.0
+
+### Minor Changes
+
+- **Five new screen templates.** Onboarding, Paywall, Login, Auth and Profile replace the earlier screens: simpler layouts with animated illustrations, a self-advancing feature carousel with swipeable plan cards, email and password sign-in, passwordless sign-in with a one-time code, and a profile with grouped settings. They install into `components/kinetik/screens/`.
+
+  **Removed:** the Onboarding Flow, Player Sheet and Profile Hero templates, and the old Paywall layout (`paywall` now installs the new design).
+
 ## 1.2.0
 
 ### Minor Changes

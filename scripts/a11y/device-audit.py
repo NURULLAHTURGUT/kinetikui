@@ -122,8 +122,11 @@ def audit(name, route, dp, size, title):
         # the top bar so only the component and its demo are judged.
         if y2 <= int(260):
             continue
-        # Partly off screen: its visible bounds are not its real size.
+        # Partly off screen: its visible bounds are not its real size. A node
+        # touching one side edge only is a card peeking in from a carousel.
         if y2 >= height - 2 or x1 < 0 or x2 > width:
+            continue
+        if (x1 <= 2) != (x2 >= width - 2):
             continue
         interactive = node.get('clickable') == 'true' or node.get('checkable') == 'true'
         if not interactive:

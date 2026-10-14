@@ -30,8 +30,11 @@ const ms = (s: string) => Number.parseFloat(s);
 const date = new Date().toISOString().slice(0, 10);
 
 for (const [name, [, idle, , janky, p50, p90, , pss]] of rows) {
-  const metaFile = path.join(ROOT, 'packages', 'registry', 'items', name, 'item.json');
-  if (!fs.existsSync(metaFile)) {
+  // Components live in items/, screen templates in templates/.
+  const metaFile = ['items', 'templates']
+    .map((dir) => path.join(ROOT, 'packages', 'registry', dir, name, 'item.json'))
+    .find((f) => fs.existsSync(f));
+  if (!metaFile) {
     console.warn(`skip ${name}: no such component`);
     continue;
   }

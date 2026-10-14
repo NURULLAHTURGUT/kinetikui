@@ -1,0 +1,37 @@
+## Usage
+
+```tsx
+import { Onboarding } from '@/components/kinetik/screens/onboarding';
+
+<Onboarding
+  slides={[
+    { key: 'track', tag: 'Welcome', title: 'Every habit in one calm place' },
+    { key: 'setup', tag: 'Easy setup', title: 'Set up your account in under a minute' },
+    {
+      key: 'remind',
+      tag: 'Stay on top',
+      title: 'A nudge only when it really matters',
+      visual: (active) => <MyIllustration playing={active} />,
+    },
+  ]}
+  onFinish={() => router.replace('/sign-up')}
+  onSkip={() => router.replace('/home')}
+/>;
+```
+
+Slides without a `visual` use the built-in illustrations (a fanned card stack, a self-ticking checklist and a notification). Pass your own `visual` to show product shots or animations; it receives `active` so it can play only while its slide is on screen.
+
+## When to use
+
+- The first launch, to set expectations in two to four short slides.
+- Before sign-up, when people should know what they get for an account.
+
+## When not to use
+
+- To explain controls the app could make obvious: put hints where the controls are.
+- More than four slides. People skip long tours; keep the rest for later moments.
+
+## Notes
+
+- The button advances the pager; on the last slide it becomes Get started and calls `onFinish`. Swiping works too.
+- Leave out `onSkip` to hide Maybe later, for flows that must be completed.

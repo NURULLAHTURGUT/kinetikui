@@ -4,16 +4,22 @@
 import { Paywall } from '@/components/kinetik/screens/paywall';
 
 <Paywall
+  title="Days Pro"
   plans={[
     {
       id: 'annual',
-      title: 'Annual',
-      price: 49.99,
+      title: 'Annual Plan',
+      description: 'Save more with the annual plan.',
+      price: 5.99,
       period: 'year',
       badge: 'Best value',
-      trialDays: 7,
+      trialDays: 3,
     },
-    { id: 'monthly', title: 'Monthly', price: 6.99, period: 'month' },
+    { id: 'monthly', title: 'Monthly Plan', price: 1.99, period: 'month' },
+  ]}
+  features={[
+    { key: 'workdays', title: 'Work days countdown', body: 'Know how many workdays are left.' },
+    { key: 'widgets', title: 'Home screen widgets', body: 'Your next date, always in sight.' },
   ]}
   onPurchase={(plan) => purchases.buy(plan.id)}
   onRestore={() => purchases.restore()}
@@ -23,20 +29,20 @@ import { Paywall } from '@/components/kinetik/screens/paywall';
 />;
 ```
 
-`onPurchase` may return a promise: the button shows a spinner until it settles, confetti fires when it resolves and the screen stays put if it rejects.
+`onPurchase` may return a promise: that plan's button shows a spinner until it settles, reads "You’re all set" when it resolves and returns to normal if it rejects.
 
 ## When to use
 
-- A dedicated upgrade screen opened from a locked feature or from settings.
-- Two or three plans with one clearly recommended.
+- A dedicated upgrade screen opened from a locked feature, settings or the end of onboarding.
+- Two or three plans, each explained on its own card.
 
 ## When not to use
 
-- On first launch, before people have seen the product.
-- With store prices you have not localised: pass the store's price and `currency`, or replace the price lines with the store's formatted strings.
+- Before people have seen what the product does.
+- With prices you have not localised: pass the store's price and `currency`, or replace the price lines with the store's formatted strings.
 
 ## Notes
 
-- The pre-selected plan is the first one with a `badge`. The large price shows the monthly equivalent and rolls when the plan changes.
-- The terms line under the button is generated from the selected plan; check it against your store's requirements.
-- Wire it to your purchase library (RevenueCat, expo-iap, …); the template does not talk to a store.
+- The saving chip compares each plan's monthly price with the most expensive plan and shows from 5% up.
+- Features advance every `autoAdvance` seconds (default 4) and pause while someone swipes them. Pass a `visual` per feature for your own screenshots.
+- Wire it to your purchase library (RevenueCat, expo-iap, …); the template does not talk to a store. Check the price and renewal wording against your store's rules.

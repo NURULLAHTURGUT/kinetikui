@@ -1,0 +1,46 @@
+## Usage
+
+```tsx
+import { Login } from '@/components/kinetik/screens/login';
+
+<Login
+  onLogin={async ({ email, password }) => {
+    const { error } = await auth.signIn({ email, password });
+    if (error) throw new Error('Email or password is incorrect.');
+    router.replace('/home');
+  }}
+  onForgotPassword={() => router.push('/reset')}
+  onSignUp={() => router.push('/sign-up')}
+  providers={[
+    {
+      id: 'apple',
+      label: 'Continue with Apple',
+      icon: <AppleLogo />,
+      onPress: signInWithApple,
+    },
+    {
+      id: 'google',
+      label: 'Continue with Google',
+      icon: <GoogleLogo />,
+      onPress: signInWithGoogle,
+    },
+  ]}
+/>;
+```
+
+`onLogin` runs only when the email looks valid and the password is not empty. Return a promise to show a spinner; throw an `Error` and its message appears above the button.
+
+## When to use
+
+- Apps with email and password accounts, optionally next to Apple or Google sign-in.
+
+## When not to use
+
+- Passwordless sign-in: use the Auth screen, which sends a one-time code.
+- Sign-up: it needs different copy, password rules and consent; build it from the same parts.
+
+## Notes
+
+- Provider buttons take your own icons, so you can follow each provider's branding rules.
+- The form sits in a `KeyboardAvoidingView` and scrolls, so the button stays reachable with the keyboard open.
+- Pass `logo` to replace the mark at the top with your app icon.

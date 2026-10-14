@@ -113,10 +113,11 @@ import * as usageMeter from './items/usage-meter/demo';
 import * as waffleChart from './items/waffle-chart/demo';
 import * as wordCascade from './items/word-cascade/demo';
 import * as wordRotator from './items/word-rotator/demo';
-import * as onboardingFlow from './templates/onboarding-flow/demo';
+import * as auth from './templates/auth/demo';
+import * as login from './templates/login/demo';
+import * as onboarding from './templates/onboarding/demo';
 import * as paywall from './templates/paywall/demo';
-import * as playerSheet from './templates/player-sheet/demo';
-import * as profileHero from './templates/profile-hero/demo';
+import * as profile from './templates/profile/demo';
 
 export const categories = {
   "background": "Background",
@@ -257,8 +258,9 @@ export const demos: DemoEntry[] = [
   { name: "waffle-chart", title: "Waffle Chart", description: "A ten-by-ten grid where each cell is one percent; cells fill in a wave and new data washes across the grid.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: waffleChart.controls, Demo: waffleChart.default },
   { name: "word-cascade", title: "Word Cascade", description: "A paragraph that arrives word by word, each word rising into place after the last.", category: "text", phase: 1, web: "live", version: "1.0.0", controls: wordCascade.controls, Demo: wordCascade.default },
   { name: "word-rotator", title: "Word Rotator", description: "A line with one word that keeps changing, rolling out and in letter by letter while its gap springs to fit.", category: "text", phase: 2, web: "live", version: "1.0.0", controls: wordRotator.controls, Demo: wordRotator.default },
-  { name: "onboarding-flow", title: "Onboarding Flow", description: "A paged welcome flow: spotlit illustrations that drift with the swipe, story-style progress, a button that grows.", category: "screen", phase: 3, web: "live", version: "1.0.0", controls: onboardingFlow.controls, Demo: onboardingFlow.default },
-  { name: "paywall", title: "Paywall", description: "A subscription screen with a drifting gradient hero, rolling plan prices and confetti on purchase.", category: "screen", phase: 3, web: "live", version: "1.0.0", controls: paywall.controls, Demo: paywall.default },
-  { name: "player-sheet", title: "Player Sheet", description: "A music library whose mini player opens into a full player: tilting cover, elastic scrubber.", category: "screen", phase: 3, web: "live", version: "1.0.0", controls: playerSheet.controls, Demo: playerSheet.default },
-  { name: "profile-hero", title: "Profile Hero", description: "A profile screen: parallax cover, follow button with a rolling count, liquid tabs and loading skeletons.", category: "screen", phase: 3, web: "live", version: "1.0.0", controls: profileHero.controls, Demo: profileHero.default },
+  { name: "auth", title: "Auth", description: "Passwordless sign-in: an email, a one-time code with a resend timer, and a check once you are in.", category: "screen", phase: 3, web: "live", version: "1.0.0", controls: auth.controls, Demo: auth.default },
+  { name: "login", title: "Login", description: "An email and password sign-in that settles in row by row, with inline errors and provider buttons.", category: "screen", phase: 3, web: "live", version: "1.0.0", controls: login.controls, Demo: login.default },
+  { name: "onboarding", title: "Onboarding", description: "A paged welcome with animated illustration panels, a progress line that follows the swipe and word-by-word titles.", category: "screen", phase: 3, web: "live", version: "1.0.0", controls: onboarding.controls, Demo: onboarding.default },
+  { name: "paywall", title: "Paywall", description: "A subscription screen: a glowing mark, a self-advancing feature carousel and swipeable plan cards.", category: "screen", phase: 3, web: "live", version: "2.0.0", controls: paywall.controls, Demo: paywall.default },
+  { name: "profile", title: "Profile", description: "A profile and settings screen: a turning avatar ring, stats that count up and grouped rows with switches.", category: "screen", phase: 3, web: "live", version: "1.0.0", controls: profile.controls, Demo: profile.default },
 ];

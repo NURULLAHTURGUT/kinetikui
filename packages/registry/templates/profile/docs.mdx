@@ -1,0 +1,51 @@
+## Usage
+
+```tsx
+import { Profile } from '@/components/kinetik/screens/profile';
+
+<Profile
+  user={{ name: user.name, handle: user.email, avatar: { uri: user.photoUrl } }}
+  stats={[
+    { label: 'Posts', value: 128 },
+    { label: 'Followers', value: 24817 },
+    { label: 'Following', value: 312 },
+  ]}
+  plan={{ title: 'Pro', detail: 'Renews on 3 March', onPress: () => router.push('/plan') }}
+  sections={[
+    {
+      title: 'Account',
+      rows: [
+        { key: 'info', label: 'Personal info', icon: <UserIcon />, onPress: openInfo },
+        { key: 'payment', label: 'Payment methods', detail: 'Visa •• 42', onPress: openCards },
+      ],
+    },
+    {
+      title: 'Preferences',
+      rows: [
+        {
+          key: 'notifications',
+          label: 'Notifications',
+          toggle: { value: notify, onValueChange: setNotify },
+        },
+      ],
+    },
+  ]}
+  onEdit={() => router.push('/profile/edit')}
+  onSignOut={signOut}
+/>;
+```
+
+## When to use
+
+- The account tab of an app: who you are, a few numbers and the settings that belong to you.
+
+## When not to use
+
+- A public profile other people visit: it needs follow and message actions, not settings.
+- Long settings trees: link to a separate settings screen from one row instead.
+
+## Notes
+
+- Without `avatar` the initials of `name` are shown. Counts above 9,999 shorten to 12.4k and 1.2M.
+- A row with `toggle` becomes a switch; any other row is a button with a chevron. `onSignOut` adds a red Sign out row at the end.
+- Row icons are yours to pass, so they match the rest of your app.

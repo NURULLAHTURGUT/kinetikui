@@ -2,28 +2,35 @@
   "$schema": "../../schema/item.schema.json",
   "name": "paywall",
   "title": "Paywall",
-  "description": "A subscription screen with a drifting gradient hero, rolling plan prices and confetti on purchase.",
+  "description": "A subscription screen: a glowing mark, a self-advancing feature carousel and swipeable plan cards.",
   "category": "screen",
   "phase": 3,
-  "version": "1.0.0",
-  "dependencies": ["react-native-safe-area-context"],
-  "registryDependencies": [
-    "kinetik-tokens",
-    "confetti-burst",
-    "grain-drift",
-    "odometer",
-    "press-jelly",
-    "shine-text"
-  ],
+  "version": "2.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-safe-area-context"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "page-dots", "press-jelly"],
   "files": ["paywall.tsx"],
   "web": "live",
   "perf": {
-    "budget": "One shader hero (scrolls away with the content) and a looping sheen on the title. Price changes roll digits on the UI thread; confetti runs only for ~3 s after a purchase.",
-    "measurements": []
+    "budget": "The mark turns on the UI thread; the feature phones and dots follow the scroll in worklets. The carousel advances on a timer with one scroll per step. Plan cards are plain views.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 22,
+        "p90Ms": 25,
+        "baselineMs": 17,
+        "jankyPercent": 0.1,
+        "atRest": "animating",
+        "memoryMb": 147,
+        "notes": "Animating at rest: the mark keeps turning while the paywall is open; the carousel advances every 4 s."
+      }
+    ]
   },
   "a11y": {
-    "reducedMotion": "The hero and title sheen hold still, prices change without rolling and no confetti is drawn (handled by each component).",
-    "screenReader": "Plans are a radio group (\"Yearly, $39.99 per year, Save 44%, selected\"). The monthly price is read as one value. The button announces which plan it buys and its busy state.",
-    "touchTarget": "Plan cards are 72 pt tall; close, links and the main button are at least 44 pt."
+    "reducedMotion": "The mark holds still, the carousel does not advance on its own and pages change without scrolling.",
+    "screenReader": "The title is a header. Only the current feature is exposed and the dots read \"Feature 2 of 3\". Each plan reads its monthly price, what is billed and the saving; its button names the plan and shows when it is busy.",
+    "touchTarget": "Close, the links and the plan buttons are at least 44 pt."
   }
 }

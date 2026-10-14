@@ -1,0 +1,42 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "login",
+  "title": "Login",
+  "description": "An email and password sign-in that settles in row by row, with inline errors and provider buttons.",
+  "category": "screen",
+  "phase": 3,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-safe-area-context"],
+  "registryDependencies": [
+    "kinetik-tokens",
+    "kinetik-motion",
+    "press-jelly",
+    "reveal-field",
+    "word-cascade"
+  ],
+  "files": ["login.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The entrance is a one-off layout animation per block on the UI thread; after that the screen is static apart from the button's press spring.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 27,
+        "baselineMs": 17,
+        "jankyPercent": 5.78,
+        "atRest": "idle",
+        "memoryMb": 157,
+        "notes": "Most janky frames are the software keyboard opening and closing on the emulator; scrolling the form stays at the baseline."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Blocks appear in place, the title appears without rising and the password eye switches without animating (Reveal Field).",
+    "screenReader": "Fields are named Email and Password; their errors are read as they appear. A failed sign-in is an alert. The button reports when it is busy.",
+    "touchTarget": "Fields are 52 pt tall; the button is 56 pt; links are at least 44 pt."
+  }
+}
