@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "vinyl-player",
+  "title": "Vinyl Player",
+  "description": "A music card whose cover is a record half out of its sleeve, spinning while it plays and coasting to a stop.",
+  "category": "card",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-svg"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["vinyl-player.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "While playing, the record turns with one repeating UI-thread timing and the progress with another; the time re-renders four times a second. Paused, nothing animates.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "baselineMs": 17,
+        "jankyPercent": 1.39,
+        "atRest": "idle",
+        "memoryMb": 171
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The record does not spin or drop in; controls change state without the ring flash or icon pop.",
+    "screenReader": "Title and artist read as one line; the progress is adjustable in ten-second steps; Mute is a switch; Previous, Play/Pause and Next are buttons.",
+    "touchTarget": "Controls and the mute switch are 48 pt; the progress bar's touch area is 44 pt tall."
+  }
+}

@@ -1,0 +1,32 @@
+## Usage
+
+```tsx
+import { TopicPicker } from '@/components/kinetik/topic-picker';
+
+<TopicPicker
+  topics={[
+    { id: 'basketball', label: 'Basketball', emoji: '🏀' },
+    { id: 'fruits', label: 'Fruits', emoji: '🍋' },
+    { id: 'weather', label: 'Weather', emoji: '☔' },
+  ]}
+  selected={interests}
+  onChange={setInterests}
+  minimum={3}
+  submit={{ label: 'Submit', onPress: saveInterests }}
+/>;
+```
+
+## When to use
+
+- Picking interests during onboarding, from roughly nine to thirty short topics.
+
+## When not to use
+
+- Choices people must read carefully: moving targets are harder to read. Use a static grid.
+- A single choice: use radios or Choice Cards.
+
+## Notes
+
+- Topics are dealt across `rows` in turn; rows drift in opposite directions at slightly different speeds.
+- With reduced motion the rows stop drifting and scroll by hand instead.
+- Picked chips take a soft colour from the theme accents, so the set stays on palette.

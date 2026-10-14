@@ -1,0 +1,27 @@
+## Usage
+
+```tsx
+import { FlightTrack } from '@/components/kinetik/flight-track';
+
+<FlightTrack
+  from={{ code: 'LHR', city: 'London, UK', time: '20:50', zone: 'GMT+1' }}
+  to={{ code: 'OPO', city: 'Porto, PT', time: '22:40', zone: 'GMT+1' }}
+  progress={elapsed / duration}
+/>;
+```
+
+## When to use
+
+- Live flight or trip status in a travel app, a booking or a widget.
+- Any journey between two points with a known start and end time: deliveries, train legs, transfers.
+
+## When not to use
+
+- Journeys with stops: one route line cannot show them. Show a timeline instead.
+- When progress is unknown: an estimate that jumps backwards confuses people.
+
+## Notes
+
+- `progress` is yours to compute (for example elapsed time over scheduled time). Each change glides the plane along the route.
+- Below 460 pt wide the times move under the route so the codes keep their size.
+- The plane is the Tabler Icons plane (MIT licence, via iconstack.io).

@@ -1,0 +1,32 @@
+## Usage
+
+```tsx
+import { StreakCard } from '@/components/kinetik/streak-card';
+
+<StreakCard
+  count={streak.days}
+  days={[
+    { label: 'Mo', state: 'done' },
+    { label: 'Tu', state: 'missed' },
+    { label: 'We', state: 'done' },
+    { label: 'Th', state: 'today' },
+    { label: 'Fr', state: 'upcoming' },
+  ]}
+  onContinue={close}
+/>;
+```
+
+## When to use
+
+- Celebrating a habit kept, right after the user finishes the day's task.
+
+## When not to use
+
+- Every app open: the burst is a reward and loses meaning if it plays all the time.
+- Long histories: show a calendar instead of a week row.
+
+## Notes
+
+- The confetti and the number replay whenever `count` changes, with a success haptic after the first render.
+- The week row centres on the day marked `today` and fades out at the sides, so pass a few days either side.
+- `accent` colours today's mark and a few confetti pieces; the rest of the confetti stays quiet grey.

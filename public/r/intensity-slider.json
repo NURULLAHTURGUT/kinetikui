@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "intensity-slider",
+  "type": "registry:item",
+  "title": "Intensity Slider",
+  "description": "A soft gradient slider in a card with a slim handle and a Low-to-High ruler that lights up to the value.",
+  "categories": [
+    "input"
+  ],
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/intensity-slider.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/intensity-slider.tsx",
+      "content": "import { useEffect, useState } from 'react';\nimport {\n  StyleSheet,\n  Text,\n  View,\n  type AccessibilityActionEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport { Gesture, GestureDetector } from 'react-native-gesture-handler';\nimport Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { gradient } from '../../lib/kinetik/tokens/gradient';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget, withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type IntensitySliderProps = {\n  /** 0–100. */\n  value: number;\n  /** Called on each whole step while dragging. */\n  onValueChange?: (value: number) => void;\n  onSlidingComplete?: (value: number) => void;\n  /** Heading above the track. Defaults to \"Intensity\". */\n  label?: string;\n  /** Words under the ends of the track. Default to \"Low\" and \"High\". */\n  lowLabel?: string;\n  highLabel?: string;\n  /** Number of tick marks between the end labels. Defaults to 24. */\n  ticks?: number;\n  /** Fill colour. Defaults to the theme sky blue. */\n  color?: string;\n  disabled?: boolean;\n  /** A tick each time the fill crosses a mark. Defaults to true. */\n  haptics?: boolean;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst TRACK = 22;\n\n/**\n * A wide, soft slider in a card: a pale gradient fills the track up to a\n * slim handle, the handle grows while held, and the ruler underneath lights\n * up to the value, ticking as the fill passes each mark.\n */\nexport function IntensitySlider({\n  value,\n  onValueChange,\n  onSlidingComplete,\n  label = 'Intensity',\n  lowLabel = 'Low',\n  highLabel = 'High',\n  ticks = 24,\n  color,\n  disabled = false,\n  haptics = true,\n  style,\n}: IntensitySliderProps) {\n  const { colors, radius, space, font, shadow } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const fillColor = color ?? colors.sky;\n\n  const width = useSharedValue(0);\n  const progress = useSharedValue(value / 100);\n  const held = useSharedValue(0);\n  const committed = useSharedValue(Math.round(value));\n  const dragging = useSharedValue(false);\n  const [shown, setShown] = useState<number | null>(null);\n  const now = shown ?? Math.round(value);\n\n  useEffect(() => {\n    if (dragging.get()) return;\n    const p = Math.max(0, Math.min(100, value)) / 100;\n    progress.set(reduced ? p : withSpring(p, spring('smooth')));\n    committed.set(Math.round(value));\n  }, [value, reduced, progress, committed, dragging]);\n\n  const emit = (v: number, tick: boolean) => {\n    setShown(v);\n    onValueChange?.(v);\n    if (tick) haptic('tick');\n  };\n  const complete = (v: number) => {\n    setShown(null);\n    onSlidingComplete?.(v);\n  };\n\n  const moveTo = (x: number) => {\n    'worklet';\n    const w = width.get();\n    if (w <= 0) return;\n    const p = Math.max(0, Math.min(1, x / w));\n    progress.set(p);\n    const v = Math.round(p * 100);\n    const before = committed.get();\n    if (v !== before) {\n      committed.set(v);\n      // Tick when the value crosses a ruler mark.\n      const mark = (n: number) => Math.floor((n / 100) * (ticks + 1));\n      scheduleOnRN(emit, v, mark(v) !== mark(before));\n    }\n  };\n\n  const release = () => {\n    'worklet';\n    dragging.set(false);\n    held.set(withSpring(0, spring('smooth', reduced)));\n    scheduleOnRN(complete, committed.get());\n  };\n\n  const pan = Gesture.Pan()\n    .withTestId('intensity-slider')\n    .enabled(!disabled)\n    .activeOffsetX([-4, 4])\n    .failOffsetY([-14, 14])\n    .onBegin(() => {\n      dragging.set(true);\n      held.set(withSpring(1, spring('snappy', reduced)));\n    })\n    .onStart((e) => moveTo(e.x))\n    .onUpdate((e) => moveTo(e.x))\n    .onFinalize(() => release());\n\n  const tap = Gesture.Tap()\n    .withTestId('intensity-slider-tap')\n    .enabled(!disabled)\n    .onEnd((e) => {\n      moveTo(e.x);\n      release();\n    });\n\n  const fill = useAnimatedStyle(() => ({\n    width: Math.max(TRACK / 2, progress.get() * width.get()),\n  }));\n  const handle = useAnimatedStyle(() => ({\n    transform: [\n      { translateX: Math.max(6, progress.get() * width.get()) - 8 },\n      { scaleY: 1 + held.get() * 0.35 },\n      { scaleX: 1 + held.get() * 0.5 },\n    ],\n  }));\n\n  const onAccessibilityAction = (e: AccessibilityActionEvent) => {\n    if (disabled) return;\n    const v = Math.max(\n      0,\n      Math.min(100, committed.get() + (e.nativeEvent.actionName === 'increment' ? 5 : -5)),\n    );\n    committed.set(v);\n    progress.set(withSpring(v / 100, spring('snappy', reduced)));\n    onValueChange?.(v);\n    onSlidingComplete?.(v);\n  };\n\n  const lit = Math.round((now / 100) * (ticks - 1));\n\n  return (\n    <View\n      style={[\n        styles.card,\n        {\n          backgroundColor: colors.surfaceRaised,\n          borderColor: colors.border,\n          borderRadius: radius.lg,\n          padding: space[4],\n          gap: space[3],\n          boxShadow: shadow.md,\n          opacity: disabled ? 0.45 : 1,\n        },\n        style,\n      ]}\n    >\n      <Text style={{ color: colors.text, fontSize: font.size.md, fontWeight: font.weight.medium }}>\n        {label}\n      </Text>\n      <GestureDetector gesture={Gesture.Race(pan, tap)}>\n        <View\n          collapsable={false}\n          accessible\n          accessibilityRole=\"adjustable\"\n          accessibilityLabel={label}\n          accessibilityValue={{ min: 0, max: 100, now, text: `${now}%` }}\n          accessibilityState={{ disabled }}\n          accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}\n          onAccessibilityAction={onAccessibilityAction}\n          onLayout={(e) => width.set(e.nativeEvent.layout.width)}\n          style={styles.hit}\n        >\n          <View\n            style={[\n              styles.track,\n              { backgroundColor: colors.surfaceSunken, borderRadius: radius.xs },\n            ]}\n          >\n            <Animated.View\n              style={[\n                styles.fill,\n                { borderRadius: radius.xs },\n                gradient(\n                  `linear-gradient(90deg, ${withAlpha(fillColor, 0.35)} 0%, ${withAlpha(fillColor, 0.85)} 100%)`,\n                ),\n                fill,\n              ]}\n            />\n          </View>\n          <Animated.View\n            pointerEvents=\"none\"\n            style={[styles.handle, { backgroundColor: colors.azure }, handle]}\n          />\n        </View>\n      </GestureDetector>\n      <View style={[styles.ruler, { gap: space[2] }]}>\n        <Text style={{ color: colors.textMuted, fontSize: font.size.sm }}>{lowLabel}</Text>\n        <View style={styles.ticks}>\n          {Array.from({ length: ticks }, (_, i) => (\n            <View\n              key={i}\n              style={[\n                styles.tick,\n                { backgroundColor: i <= lit && now > 0 ? colors.textMuted : colors.track },\n              ]}\n            />\n          ))}\n        </View>\n        <Text style={{ color: colors.textMuted, fontSize: font.size.sm }}>{highLabel}</Text>\n      </View>\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  card: { borderWidth: StyleSheet.hairlineWidth },\n  hit: { height: minTouchTarget, justifyContent: 'center' },\n  track: { height: TRACK, overflow: 'hidden' },\n  fill: { height: '100%' },\n  handle: { position: 'absolute', left: 0, width: 4, height: 16, borderRadius: 2 },\n  ruler: { flexDirection: 'row', alignItems: 'center' },\n  ticks: { flex: 1, flexDirection: 'row', justifyContent: 'space-between' },\n  tick: { width: 1.5, height: 10, borderRadius: 1 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "input",
+    "web": "live",
+    "perf": {
+      "budget": "Dragging moves the handle and fill on the UI thread; React re-renders once per whole step to light the ruler.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-14",
+          "build": "release",
+          "frameMs": 21,
+          "p90Ms": 24,
+          "baselineMs": 17,
+          "jankyPercent": 0.38,
+          "atRest": "idle",
+          "memoryMb": 158
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The handle does not grow while held and the fill settles without a spring.",
+      "screenReader": "Adjustable role reading the value as a percentage; increment and decrement move by 5.",
+      "touchTarget": "The track is 44 pt tall across the full width."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { IntensitySlider } from '@/components/kinetik/intensity-slider';\n\n<IntensitySlider value={strength} onValueChange={setStrength} label=\"Blur\" />;\n```\n\n## When to use\n\n- A single 0–100 strength in an editor: effect intensity, blur, opacity, noise.\n- Inside a popover opened from a toolbar value, as in the demo.\n\n## When not to use\n\n- Ranges that are not percentages: label the ends and format the value yourself, or use another slider.\n\n## Notes\n\n- The ruler lights up to the value and a haptic ticks each time the fill crosses a mark.\n- `color` sets the fill; the handle uses the theme azure.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add intensity-slider`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

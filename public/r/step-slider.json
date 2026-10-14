@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "step-slider",
+  "type": "registry:item",
+  "title": "Step Slider",
+  "description": "A slider with a few fixed stops marked as dots, a snapping knob and a spinning action button.",
+  "categories": [
+    "input"
+  ],
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/step-slider.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/step-slider.tsx",
+      "content": "import { useEffect, type ReactNode } from 'react';\nimport {\n  Pressable,\n  StyleSheet,\n  View,\n  type AccessibilityActionEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport { Gesture, GestureDetector } from 'react-native-gesture-handler';\nimport Animated, {\n  interpolate,\n  useAnimatedStyle,\n  useSharedValue,\n  withSpring,\n  withTiming,\n  type SharedValue,\n} from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring, timing } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget, withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type StepSliderAction = {\n  icon: ReactNode;\n  /** Accessible name, e.g. \"Generate again\". */\n  label: string;\n  onPress: () => void;\n  /** Turn the icon a full circle on each press, for refresh-style actions. Defaults to true. */\n  spin?: boolean;\n};\n\nexport type StepSliderProps = {\n  /** The selected step, from 0. */\n  value: number;\n  onValueChange: (value: number) => void;\n  /** Number of stops. Defaults to 4. */\n  steps?: number;\n  /** Names for the stops, read by screen readers, e.g. [\"Low\", \"Medium\", \"High\", \"Max\"]. */\n  labels?: readonly string[];\n  /** Accessible name. */\n  label: string;\n  /** A round button at the end, e.g. regenerate. */\n  action?: StepSliderAction;\n  disabled?: boolean;\n  /** A tick on every stop. Defaults to true. */\n  haptics?: boolean;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst THUMB = 22;\n\n/**\n * A slider with a few fixed stops marked as dots. The knob follows the finger\n * and snaps to the nearest stop with a small overshoot; dots it has passed\n * fade back, and the optional button at the end spins when pressed.\n */\nexport function StepSlider({\n  value,\n  onValueChange,\n  steps = 4,\n  labels,\n  label,\n  action,\n  disabled = false,\n  haptics = true,\n  style,\n}: StepSliderProps) {\n  const { colors, radius, space, shadow } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const last = Math.max(1, steps - 1);\n\n  const width = useSharedValue(0);\n  const pos = useSharedValue(value);\n  const held = useSharedValue(0);\n  const committed = useSharedValue(value);\n  const dragging = useSharedValue(false);\n\n  useEffect(() => {\n    if (dragging.get()) return;\n    pos.set(reduced ? value : withSpring(value, spring('bouncy')));\n    committed.set(value);\n  }, [value, reduced, pos, committed, dragging]);\n\n  const emit = (v: number) => {\n    onValueChange(v);\n    haptic('tick');\n  };\n\n  const moveTo = (x: number) => {\n    'worklet';\n    const w = width.get() - THUMB;\n    if (w <= 0) return;\n    const p = Math.max(0, Math.min(1, (x - THUMB / 2) / w)) * last;\n    pos.set(p);\n    const v = Math.round(p);\n    if (v !== committed.get()) {\n      committed.set(v);\n      scheduleOnRN(emit, v);\n    }\n  };\n\n  const release = () => {\n    'worklet';\n    dragging.set(false);\n    held.set(withSpring(0, spring('smooth', reduced)));\n    pos.set(withSpring(committed.get(), spring('bouncy', reduced)));\n  };\n\n  const pan = Gesture.Pan()\n    .withTestId('step-slider')\n    .enabled(!disabled)\n    .activeOffsetX([-4, 4])\n    .failOffsetY([-14, 14])\n    .onBegin(() => {\n      dragging.set(true);\n      held.set(withSpring(1, spring('snappy', reduced)));\n    })\n    .onStart((e) => moveTo(e.x))\n    .onUpdate((e) => moveTo(e.x))\n    .onFinalize(() => release());\n\n  const tap = Gesture.Tap()\n    .withTestId('step-slider-tap')\n    .enabled(!disabled)\n    .onEnd((e) => {\n      moveTo(e.x);\n      release();\n    });\n\n  const thumb = useAnimatedStyle(() => ({\n    transform: [\n      { translateX: (pos.get() / last) * Math.max(0, width.get() - THUMB) },\n      { scale: 1 + held.get() * 0.2 },\n    ],\n  }));\n\n  const onAccessibilityAction = (e: AccessibilityActionEvent) => {\n    if (disabled) return;\n    const next = committed.get() + (e.nativeEvent.actionName === 'increment' ? 1 : -1);\n    const v = Math.max(0, Math.min(last, next));\n    if (v === committed.get()) return;\n    committed.set(v);\n    pos.set(withSpring(v, spring('bouncy', reduced)));\n    onValueChange(v);\n  };\n\n  const text = labels?.[value] ?? `Step ${value + 1} of ${steps}`;\n\n  return (\n    <View\n      style={[\n        styles.panel,\n        {\n          backgroundColor: colors.surfaceRaised,\n          borderRadius: radius.lg,\n          paddingLeft: space[3],\n          paddingRight: action ? space[1] : space[3],\n          gap: space[2],\n          opacity: disabled ? 0.45 : 1,\n        },\n        style,\n      ]}\n    >\n      <GestureDetector gesture={Gesture.Race(pan, tap)}>\n        <View\n          collapsable={false}\n          accessible\n          accessibilityRole=\"adjustable\"\n          accessibilityLabel={label}\n          accessibilityValue={{ min: 0, max: last, now: value, text }}\n          accessibilityState={{ disabled }}\n          accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}\n          onAccessibilityAction={onAccessibilityAction}\n          onLayout={(e) => width.set(e.nativeEvent.layout.width)}\n          style={styles.hit}\n        >\n          <View style={[styles.line, { backgroundColor: colors.track }]} />\n          <View style={styles.dots} pointerEvents=\"none\">\n            {Array.from({ length: steps }, (_, i) => (\n              <Dot key={i} index={i} pos={pos} />\n            ))}\n          </View>\n          <Animated.View\n            pointerEvents=\"none\"\n            style={[\n              styles.thumb,\n              { backgroundColor: colors.highlight, boxShadow: shadow.md },\n              thumb,\n            ]}\n          />\n        </View>\n      </GestureDetector>\n      {action ? <SpinButton action={action} disabled={disabled} /> : null}\n    </View>\n  );\n}\n\n/** A stop marker that grows as the knob comes near and dims once it is behind it. */\nfunction Dot({ index, pos }: { index: number; pos: SharedValue<number> }) {\n  const { colors } = useKinetikTheme();\n  const style = useAnimatedStyle(() => {\n    const d = pos.get() - index;\n    return {\n      opacity: d > 0.5 ? 0.45 : 1,\n      transform: [{ scale: interpolate(Math.abs(d), [0, 1], [1.6, 1], 'clamp') }],\n    };\n  });\n  return (\n    <View style={styles.dotSlot}>\n      <Animated.View style={[styles.dot, { backgroundColor: colors.text }, style]} />\n    </View>\n  );\n}\n\nfunction SpinButton({ action, disabled }: { action: StepSliderAction; disabled: boolean }) {\n  const { colors } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const turn = useSharedValue(0);\n  const press = useSharedValue(0);\n  const style = useAnimatedStyle(() => ({\n    transform: [{ rotate: `${turn.get() * 360}deg` }, { scale: 1 - press.get() * 0.12 }],\n  }));\n  return (\n    <Pressable\n      accessibilityRole=\"button\"\n      accessibilityLabel={action.label}\n      disabled={disabled}\n      onPress={() => {\n        if (action.spin !== false && !reduced) {\n          turn.set(withTiming(Math.round(turn.get()) + 1, { ...timing('slow'), duration: 600 }));\n        }\n        action.onPress();\n      }}\n      onPressIn={() => press.set(withSpring(1, spring('snappy', reduced)))}\n      onPressOut={() => press.set(withSpring(0, spring('bouncy', reduced)))}\n      style={({ pressed }) => [\n        styles.action,\n        { backgroundColor: pressed ? withAlpha(colors.text, 0.06) : 'transparent' },\n      ]}\n    >\n      <Animated.View style={style}>{action.icon}</Animated.View>\n    </Pressable>\n  );\n}\n\nconst styles = StyleSheet.create({\n  panel: { minHeight: 56, flexDirection: 'row', alignItems: 'center' },\n  hit: { flex: 1, height: minTouchTarget, justifyContent: 'center' },\n  line: { position: 'absolute', left: THUMB / 2, right: THUMB / 2, height: 2, borderRadius: 1 },\n  dots: {\n    position: 'absolute',\n    left: 0,\n    right: 0,\n    flexDirection: 'row',\n    justifyContent: 'space-between',\n  },\n  dotSlot: { width: THUMB, alignItems: 'center' },\n  dot: { width: 6, height: 6, borderRadius: 3 },\n  thumb: { position: 'absolute', left: 0, width: THUMB, height: THUMB, borderRadius: THUMB / 2 },\n  action: {\n    width: minTouchTarget,\n    height: minTouchTarget,\n    borderRadius: minTouchTarget / 2,\n    alignItems: 'center',\n    justifyContent: 'center',\n  },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "input",
+    "web": "live",
+    "perf": {
+      "budget": "The knob and dots are driven by one shared value on the UI thread; React re-renders only when the stop changes.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-14",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 18,
+          "baselineMs": 17,
+          "jankyPercent": 1.26,
+          "atRest": "idle",
+          "memoryMb": 150
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The knob snaps without overshoot and the action icon does not spin.",
+      "screenReader": "Adjustable role reading the stop name (or \"Step 2 of 4\"); increment and decrement move one stop.",
+      "touchTarget": "The track is 44 pt tall; the action button is 44 pt."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { StepSlider } from '@/components/kinetik/step-slider';\n\n<StepSlider\n  label=\"Creativity\"\n  steps={4}\n  labels={['Subtle', 'Balanced', 'Bold', 'Wild']}\n  value={level}\n  onValueChange={setLevel}\n  action={{ icon: <RefreshIcon />, label: 'Generate again', onPress: regenerate }}\n/>;\n```\n\n## When to use\n\n- Three to six levels that read as a scale: strength, quality, creativity.\n- Next to an action that uses the level, such as generate or apply.\n\n## When not to use\n\n- Unrelated choices: use Segment Bar.\n- Fine values: use Value Slider.\n\n## Notes\n\n- Pass `labels` so screen readers read the level by name.\n- The action spins a full turn on each press; set `spin: false` for actions that are not refresh-like.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add step-slider`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

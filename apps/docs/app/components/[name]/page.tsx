@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import QRCode from 'qrcode';
 
 import type { Controls } from '@kinetik/registry/demo-kit/types';
 
@@ -17,7 +16,6 @@ import {
   getComponent,
   navOrder,
   describeMeasurement,
-  SITE,
   type PropsTable,
 } from '../../../lib/data';
 import { highlight, renderMarkdown } from '../../../lib/markdown';
@@ -43,14 +41,9 @@ export default async function ComponentPage({ params }: { params: Promise<Params
   const c = getComponent(name);
   if (!c) notFound();
 
-  const [docsHtml, sources, qr] = await Promise.all([
+  const [docsHtml, sources] = await Promise.all([
     renderMarkdown(c.docs),
     Promise.all(c.source.map(async (f) => ({ ...f, html: await highlight(f.content, 'tsx') }))),
-    QRCode.toString(`${SITE.playgroundScheme}://${c.category === 'screen' ? 's' : 'c'}/${c.name}`, {
-      type: 'svg',
-      margin: 0,
-      color: { dark: '#0B0D12', light: '#FFFFFF' },
-    }),
   ]);
   const main = sources.find((s) => s.path.endsWith(`/${c.name}.tsx`));
   const shared = sources.filter((s) => s !== main);
@@ -73,7 +66,6 @@ export default async function ComponentPage({ params }: { params: Promise<Params
     { id: 'usage', label: 'Usage' },
     { id: 'props', label: 'Props' },
     { id: 'quality', label: 'Performance and accessibility' },
-    { id: 'device', label: 'Try it on a device' },
     { id: 'source', label: 'Source files' },
   ];
 
@@ -246,22 +238,6 @@ export default async function ComponentPage({ params }: { params: Promise<Params
                 </div>
               </dl>
             </div>
-          </div>
-        </section>
-
-        <section className="doc-section" id="device">
-          <h2>Try it on a device</h2>
-          <div className="note device">
-            <div
-              className="qr"
-              role="img"
-              aria-label={`QR code that opens ${c.title} in the Kinetik playground`}
-              dangerouslySetInnerHTML={{ __html: qr }}
-            />
-            <p className="muted">
-              Scan with a phone that has the Kinetik playground installed to open this demo with
-              real haptics and sensors.
-            </p>
           </div>
         </section>
 

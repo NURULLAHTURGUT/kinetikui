@@ -1,0 +1,26 @@
+## Usage
+
+```tsx
+import { BookPocket } from '@/components/kinetik/book-pocket';
+
+<BookPocket
+  title="Fantasy"
+  count={8}
+  books={shelf.slice(0, 3).map((b) => ({ id: b.id, title: b.title, cover: { uri: b.coverUrl } }))}
+  onPress={() => router.push('/shelf/fantasy')}
+/>;
+```
+
+## When to use
+
+- Grouping a collection (books, albums, decks) into tappable shelves where the covers do the talking.
+
+## When not to use
+
+- Long lists of single items: use a list or a grid of covers.
+
+## Notes
+
+- Up to four covers show, back to front. Pass `cover` for an image; without one a typographic cover is drawn from `tones`.
+- Covers rise while the pocket is pressed (and while a pointer hovers on the web), then slide back on release.
+- The pocket blurs only the covers behind it (`BlurTargetView`), so it works the same on Android, iOS and the web.

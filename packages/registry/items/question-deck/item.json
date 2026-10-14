@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "question-deck",
+  "title": "Question Deck",
+  "description": "A questionnaire card on a loose stack: answers spring in, questions slide and the cards behind shuffle.",
+  "category": "card",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["question-deck.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Each step runs one layout animation and a shuffle spring on the UI thread; at rest nothing animates.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 25,
+        "baselineMs": 17,
+        "jankyPercent": 3.79,
+        "atRest": "idle",
+        "memoryMb": 208,
+        "notes": "Most janky frames are the step slide; at rest nothing animates."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Questions cross-fade and the stack does not shuffle.",
+    "screenReader": "Progress reads \"Question 2 of 6\"; the question is a header; options are radios; Next is disabled until something is picked.",
+    "touchTarget": "Options, Back, Next and Close are at least 44 pt."
+  }
+}

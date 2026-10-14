@@ -1,0 +1,29 @@
+## Usage
+
+```tsx
+import { AspectPicker } from '@/components/kinetik/aspect-picker';
+
+<AspectPicker
+  value={ratio}
+  onChange={setRatio}
+  options={[
+    { value: '1:1', ratio: 1, label: 'Square' },
+    { value: '16:9', ratio: 16 / 9, label: 'Widescreen' },
+    { value: '9:16', ratio: 9 / 16, label: 'Story' },
+  ]}
+  action={{ icon: <MoreIcon />, label: 'More ratios', onPress: openRatios }}
+/>;
+```
+
+## When to use
+
+- Choosing a crop or canvas shape in a photo, video or design editor.
+
+## When not to use
+
+- More than four or five ratios in a row: show the common ones and put the rest behind the action.
+
+## Notes
+
+- Frames are drawn to scale from `ratio`, so any ratio works without icons.
+- Defaults to square, 3:2 and 2:3.

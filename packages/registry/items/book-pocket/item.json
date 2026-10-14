@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "book-pocket",
+  "title": "Book Pocket",
+  "description": "Book covers tucked in a frosted acrylic pocket: they drop in, and rise and fan out while pressed or hovered.",
+  "category": "card",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["expo-blur", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["book-pocket.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Covers move by transforms from one UI-thread spring; the pocket is one blur view over them. Nothing animates at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 25,
+        "p90Ms": 31,
+        "baselineMs": 17,
+        "jankyPercent": 6.56,
+        "atRest": "idle",
+        "memoryMb": 172,
+        "notes": "Measured with four pockets, each a blur view over its covers. Frame stats put app work at about 2 ms and render-thread work at 7 ms a frame; the rest is the emulator waiting on its virtual GPU."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Covers appear in place and jump between tucked and lifted without the spring.",
+    "screenReader": "The pocket reads as one button with the shelf and count (\"Fantasy, 8 books\").",
+    "touchTarget": "The whole pocket and its covers are the button."
+  }
+}

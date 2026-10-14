@@ -1,0 +1,26 @@
+## Usage
+
+```tsx
+import { WalletStack } from '@/components/kinetik/wallet-stack';
+
+<WalletStack
+  balance={account.balance}
+  cards={account.cards.map((c) => ({ id: c.id, name: c.product, last4: c.last4 }))}
+  onCardPress={(card) => router.push(`/cards/${card.id}`)}
+/>;
+```
+
+## When to use
+
+- A wallet or accounts overview with two to four cards and one total.
+
+## When not to use
+
+- Many cards: the pocket shows up to four. Use a list or Parallax Carousel.
+- Showing full card numbers: faces show the name and last four digits only.
+
+## Notes
+
+- Each card is a Glint Card: while the wallet is open, the light follows your finger across a card (no motion sensors, so opening stays smooth). Pass your own `background` gradients to match real card designs; no card-network logos are drawn.
+- Cards are only tappable while the wallet is open; tapping the pocket opens and closes it.
+- The balance counts up when it changes; cents show quieter after the whole amount.

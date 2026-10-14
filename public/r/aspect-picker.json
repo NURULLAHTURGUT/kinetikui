@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "aspect-picker",
+  "type": "registry:item",
+  "title": "Aspect Picker",
+  "description": "Aspect-ratio frames drawn to scale; a soft square slides to the pick and its frame grows a touch.",
+  "categories": [
+    "input"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/aspect-picker.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/aspect-picker.tsx",
+      "content": "import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';\nimport {\n  Pressable,\n  StyleSheet,\n  View,\n  type LayoutChangeEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget, withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type AspectOption = {\n  value: string;\n  /** Width divided by height, e.g. 1, 3 / 2 or 9 / 16. */\n  ratio: number;\n  /** Read by screen readers, e.g. \"Square\" or \"Portrait 2 by 3\". */\n  label: string;\n};\n\nexport type AspectPickerAction = {\n  icon: ReactNode;\n  /** Accessible name, e.g. \"More ratios\". */\n  label: string;\n  onPress: () => void;\n};\n\nexport type AspectPickerProps = {\n  value: string;\n  onChange: (value: string) => void;\n  /** Defaults to square, landscape 3:2 and portrait 2:3. */\n  options?: readonly AspectOption[];\n  /** Names the group for screen readers. Defaults to \"Aspect ratio\". */\n  label?: string;\n  /** A button after the ratios, e.g. more ratios. */\n  action?: AspectPickerAction;\n  disabled?: boolean;\n  /** A tick when the ratio changes. Defaults to true. */\n  haptics?: boolean;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst DEFAULT_OPTIONS: AspectOption[] = [\n  { value: '1:1', ratio: 1, label: 'Square' },\n  { value: '3:2', ratio: 3 / 2, label: 'Landscape 3 by 2' },\n  { value: '2:3', ratio: 2 / 3, label: 'Portrait 2 by 3' },\n];\n\n/** The longest side of each ratio frame, in pt. */\nconst FRAME = 20;\n\n/**\n * A row of aspect-ratio frames drawn to scale. A soft square slides to the\n * one you pick, and that frame brightens and grows a touch as it lands.\n */\nexport function AspectPicker({\n  value,\n  onChange,\n  options = DEFAULT_OPTIONS,\n  label = 'Aspect ratio',\n  action,\n  disabled = false,\n  haptics = true,\n  style,\n}: AspectPickerProps) {\n  const { colors, radius, space } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const slots = useRef<Record<string, number>>({});\n  const [measured, setMeasured] = useState(0);\n  const x = useSharedValue(0);\n  const shown = useSharedValue(0);\n  const placed = useRef(false);\n\n  useEffect(() => {\n    const at = slots.current[value];\n    if (at === undefined) return;\n    shown.set(1);\n    if (!placed.current || reduced) {\n      x.set(at);\n      placed.current = true;\n      return;\n    }\n    x.set(withSpring(at, spring('smooth')));\n  }, [value, measured, reduced, x, shown]);\n\n  const onSlotLayout = (key: string) => (e: LayoutChangeEvent) => {\n    slots.current[key] = e.nativeEvent.layout.x;\n    setMeasured((m) => m + 1);\n  };\n\n  const highlight = useAnimatedStyle(() => ({\n    opacity: shown.get(),\n    transform: [{ translateX: x.get() }],\n  }));\n\n  return (\n    <View\n      style={[\n        styles.panel,\n        {\n          backgroundColor: colors.surfaceRaised,\n          borderRadius: radius.lg,\n          paddingHorizontal: space[3],\n          opacity: disabled ? 0.45 : 1,\n        },\n        style,\n      ]}\n    >\n      <View accessibilityRole=\"radiogroup\" accessibilityLabel={label} style={styles.row}>\n        <Animated.View\n          pointerEvents=\"none\"\n          style={[\n            styles.highlight,\n            { backgroundColor: withAlpha(colors.text, 0.12), borderRadius: radius.sm },\n            highlight,\n          ]}\n        />\n        {options.map((o, i) => (\n          <Fragment key={o.value}>\n            {i > 0 ? <View style={[styles.rule, { backgroundColor: colors.border }]} /> : null}\n            <Choice\n              option={o}\n              on={o.value === value}\n              disabled={disabled}\n              onLayout={onSlotLayout(o.value)}\n              onPress={() => {\n                haptic('tick');\n                onChange(o.value);\n              }}\n            />\n          </Fragment>\n        ))}\n        {action ? (\n          <>\n            <View style={[styles.rule, { backgroundColor: colors.border }]} />\n            <Pressable\n              accessibilityRole=\"button\"\n              accessibilityLabel={action.label}\n              disabled={disabled}\n              onPress={action.onPress}\n              style={({ pressed }) => [styles.slot, { opacity: pressed ? 0.6 : 1 }]}\n            >\n              {action.icon}\n            </Pressable>\n          </>\n        ) : null}\n      </View>\n    </View>\n  );\n}\n\nfunction Choice({\n  option,\n  on,\n  disabled,\n  onLayout,\n  onPress,\n}: {\n  option: AspectOption;\n  on: boolean;\n  disabled: boolean;\n  onLayout: (e: LayoutChangeEvent) => void;\n  onPress: () => void;\n}) {\n  const { colors } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const lift = useSharedValue(on ? 1 : 0);\n\n  useEffect(() => {\n    lift.set(reduced ? (on ? 1 : 0) : withSpring(on ? 1 : 0, spring('bouncy')));\n  }, [on, reduced, lift]);\n\n  const frame = useAnimatedStyle(() => ({ transform: [{ scale: 1 + lift.get() * 0.12 }] }));\n  const wide = option.ratio >= 1;\n  const w = wide ? FRAME : FRAME * option.ratio;\n  const h = wide ? FRAME / option.ratio : FRAME;\n\n  return (\n    <Pressable\n      accessibilityRole=\"radio\"\n      accessibilityLabel={option.label}\n      accessibilityState={{ checked: on, disabled }}\n      disabled={disabled}\n      onLayout={onLayout}\n      onPress={on ? undefined : onPress}\n      style={styles.slot}\n    >\n      <Animated.View\n        style={[\n          styles.frame,\n          { width: w, height: h, borderColor: on ? colors.text : colors.textMuted },\n          frame,\n        ]}\n      />\n    </Pressable>\n  );\n}\n\nconst styles = StyleSheet.create({\n  panel: { minHeight: 56, justifyContent: 'center' },\n  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },\n  highlight: { position: 'absolute', left: 0, width: minTouchTarget, height: minTouchTarget },\n  slot: {\n    width: minTouchTarget,\n    height: minTouchTarget,\n    alignItems: 'center',\n    justifyContent: 'center',\n  },\n  frame: { borderWidth: 1.75, borderRadius: 3 },\n  rule: { width: StyleSheet.hairlineWidth, height: 16 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "input",
+    "web": "live",
+    "perf": {
+      "budget": "The highlight and the picked frame move with UI-thread springs on change; at rest nothing animates.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-14",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 18,
+          "baselineMs": 17,
+          "jankyPercent": 0.21,
+          "atRest": "idle",
+          "memoryMb": 147
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The highlight jumps and the frame changes without growing.",
+      "screenReader": "A radio group named \"Aspect ratio\"; each frame is a radio named by its label, e.g. \"Portrait 2 by 3\".",
+      "touchTarget": "Each ratio and the action button are 44 pt square."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { AspectPicker } from '@/components/kinetik/aspect-picker';\n\n<AspectPicker\n  value={ratio}\n  onChange={setRatio}\n  options={[\n    { value: '1:1', ratio: 1, label: 'Square' },\n    { value: '16:9', ratio: 16 / 9, label: 'Widescreen' },\n    { value: '9:16', ratio: 9 / 16, label: 'Story' },\n  ]}\n  action={{ icon: <MoreIcon />, label: 'More ratios', onPress: openRatios }}\n/>;\n```\n\n## When to use\n\n- Choosing a crop or canvas shape in a photo, video or design editor.\n\n## When not to use\n\n- More than four or five ratios in a row: show the common ones and put the rest behind the action.\n\n## Notes\n\n- Frames are drawn to scale from `ratio`, so any ratio works without icons.\n- Defaults to square, 3:2 and 2:3.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add aspect-picker`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

@@ -1,0 +1,33 @@
+## Usage
+
+```tsx
+import { QuestionDeck } from '@/components/kinetik/question-deck';
+
+<QuestionDeck
+  questions={[
+    {
+      id: 'how',
+      title: 'How would you like to make change happen?',
+      options: ['D.I.Y.', 'Contractor', 'Property Manager'],
+    },
+    { id: 'when', title: 'When would you like to start?', options: ['This month', 'Later'] },
+  ]}
+  onComplete={(answers) => saveProfile(answers)}
+  onClose={() => router.back()}
+/>;
+```
+
+## When to use
+
+- Short onboarding or intake questionnaires: two to eight single-choice questions.
+
+## When not to use
+
+- Long forms or questions that need typing: use a form.
+- Multiple choice: each question takes exactly one answer.
+
+## Notes
+
+- Next stays disabled until an option is picked; Back keeps earlier answers.
+- `onComplete` receives every answer keyed by question id.
+- The Next button uses `accent` (the theme success green by default).

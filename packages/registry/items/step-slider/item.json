@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "step-slider",
+  "title": "Step Slider",
+  "description": "A slider with a few fixed stops marked as dots, a snapping knob and a spinning action button.",
+  "category": "input",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["step-slider.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The knob and dots are driven by one shared value on the UI thread; React re-renders only when the stop changes.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "baselineMs": 17,
+        "jankyPercent": 1.26,
+        "atRest": "idle",
+        "memoryMb": 150
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The knob snaps without overshoot and the action icon does not spin.",
+    "screenReader": "Adjustable role reading the stop name (or \"Step 2 of 4\"); increment and decrement move one stop.",
+    "touchTarget": "The track is 44 pt tall; the action button is 44 pt."
+  }
+}

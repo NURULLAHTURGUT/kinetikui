@@ -1,0 +1,33 @@
+## Usage
+
+```tsx
+import { VinylPlayer } from '@/components/kinetik/vinyl-player';
+
+<VinylPlayer
+  tracks={queue.map((t) => ({
+    id: t.id,
+    title: t.title,
+    artist: t.artist,
+    cover: { uri: t.artwork },
+    duration: t.seconds,
+  }))}
+  onPlayingChange={(on) => (on ? player.play() : player.pause())}
+  onTrackChange={(t) => player.load(t.id)}
+  onMutedChange={player.setMuted}
+/>;
+```
+
+## When to use
+
+- A mini player with some character: a music app's home, a playlist header, a widget.
+
+## When not to use
+
+- As the source of truth for real audio: it keeps its own clock. Keep it in step with your player through the callbacks.
+
+## Notes
+
+- The record half sits outside the card, so leave room on the left (about 66 pt).
+- It spins while playing (one turn every six seconds) and coasts a little when paused, keeping its angle.
+- Previous restarts the track after three seconds; otherwise it goes back a track. The queue wraps around.
+- The mute button only shows when you pass `onMutedChange`.

@@ -1,0 +1,29 @@
+## Usage
+
+```tsx
+import { StepSlider } from '@/components/kinetik/step-slider';
+
+<StepSlider
+  label="Creativity"
+  steps={4}
+  labels={['Subtle', 'Balanced', 'Bold', 'Wild']}
+  value={level}
+  onValueChange={setLevel}
+  action={{ icon: <RefreshIcon />, label: 'Generate again', onPress: regenerate }}
+/>;
+```
+
+## When to use
+
+- Three to six levels that read as a scale: strength, quality, creativity.
+- Next to an action that uses the level, such as generate or apply.
+
+## When not to use
+
+- Unrelated choices: use Segment Bar.
+- Fine values: use Value Slider.
+
+## Notes
+
+- Pass `labels` so screen readers read the level by name.
+- The action spins a full turn on each press; set `spin: false` for actions that are not refresh-like.

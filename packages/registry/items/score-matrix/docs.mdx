@@ -1,0 +1,30 @@
+## Usage
+
+```tsx
+import { ScoreMatrix } from '@/components/kinetik/score-matrix';
+
+<ScoreMatrix
+  label="Athletic score"
+  score={13}
+  metrics={[
+    { label: 'Sleep', value: 88, tone: '#E2622B', icon: <MoonIcon /> },
+    { label: 'Strength', value: 170, unit: 'lbs', tone: '#6E7A44', icon: <DumbbellIcon /> },
+    { label: 'Steps', value: 1982, tone: '#9C82D6', icon: <FootprintsIcon /> },
+  ]}
+/>;
+```
+
+## When to use
+
+- One headline score with the handful of figures that feed it, on a dashboard or a weekly recap.
+
+## When not to use
+
+- Comparing scores over time: use a chart.
+
+## Notes
+
+- The dot grid lights `score / max` of its dots, bottom row first. `columns` and `rows` set its size (12 × 8 by default).
+- The card is dark on both themes so the lit dots glow; `accent` changes their colour.
+- The score always sits beside the metrics; on narrow cards the score and its dot grid shrink to fit their column.
+- Whole numbers count up as whole numbers; fractional values keep one decimal.

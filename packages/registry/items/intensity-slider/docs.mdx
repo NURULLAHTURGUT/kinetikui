@@ -1,0 +1,21 @@
+## Usage
+
+```tsx
+import { IntensitySlider } from '@/components/kinetik/intensity-slider';
+
+<IntensitySlider value={strength} onValueChange={setStrength} label="Blur" />;
+```
+
+## When to use
+
+- A single 0–100 strength in an editor: effect intensity, blur, opacity, noise.
+- Inside a popover opened from a toolbar value, as in the demo.
+
+## When not to use
+
+- Ranges that are not percentages: label the ends and format the value yourself, or use another slider.
+
+## Notes
+
+- The ruler lights up to the value and a haptic ticks each time the fill crosses a mark.
+- `color` sets the fill; the handle uses the theme azure.

@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "vital-arcs",
+  "title": "Vital Arcs",
+  "description": "A daily summary widget: concentric arcs sweep from the corner with values at their tips, round a score disc.",
+  "category": "data",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-count"],
+  "files": ["vital-arcs.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The arcs are trimmed Skia paths and the badges ride them with UI-thread timings; the score counts up for about a second. Nothing animates at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 29,
+        "baselineMs": 17,
+        "jankyPercent": 4.36,
+        "atRest": "idle",
+        "memoryMb": 160
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Arcs, badges and the score appear at their values without sweeping or counting.",
+    "screenReader": "Each row reads as one line (\"Sleep time: 7h 2m, up 12%\"), and the arcs as one summary with the score (\"16 PAI. Activity 31, Workouts 84, Rest 53\").",
+    "touchTarget": "Nothing is interactive."
+  }
+}

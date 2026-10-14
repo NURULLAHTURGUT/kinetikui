@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "intensity-slider",
+  "title": "Intensity Slider",
+  "description": "A soft gradient slider in a card with a slim handle and a Low-to-High ruler that lights up to the value.",
+  "category": "input",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["intensity-slider.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Dragging moves the handle and fill on the UI thread; React re-renders once per whole step to light the ruler.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 21,
+        "p90Ms": 24,
+        "baselineMs": 17,
+        "jankyPercent": 0.38,
+        "atRest": "idle",
+        "memoryMb": 158
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The handle does not grow while held and the fill settles without a spring.",
+    "screenReader": "Adjustable role reading the value as a percentage; increment and decrement move by 5.",
+    "touchTarget": "The track is 44 pt tall across the full width."
+  }
+}

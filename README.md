@@ -11,7 +11,7 @@
 
 <p align="center">
   <strong>Motion parts for Expo.</strong><br />
-  111 animated components and 5 screen templates for React Native, copied into your app as source.
+  136 animated components and 5 screen templates for React Native, copied into your app as source.
 </p>
 
 <p align="center">
@@ -49,7 +49,7 @@ npx kinetik-ui add glint-card
 
 ## What you get
 
-- **111 components and 5 screen templates**, each with a live demo, a props table and notes on when _not_ to use it.
+- **136 components and 5 screen templates**, each with a live demo, a props table and notes on when _not_ to use it.
 - **Runs on the UI thread.** Gestures, springs and shaders are worklets; a busy JavaScript thread does not drop frames.
 - **Accessible by default.** Every component has a reduced-motion version, screen-reader labels and roles, and 44 pt touch targets. See the [checklist](docs/accessibility.md).
 - **One design language.** Colours, spacing, type, shadows and three springs come from shared tokens; nothing hard-codes a colour. Brand it with `<KinetikProvider colors={{ ember: '#7C5CFF' }}>`.
@@ -75,6 +75,13 @@ npx kinetik-ui add glint-card
 |             | Scroll Stack      | Cards that pin to the top and pile up as you scroll.                                |
 |             | Story Card        | Full-bleed stories with progress bars: tap to step, hold to pause.                  |
 |             | Tilt Deck         | A card that tilts in 3D under the finger, with parallax layers.                     |
+|             | Question Deck     | A questionnaire card on a shuffling stack with sliding questions.                   |
+|             | Wallet Stack      | Glint Cards in a stitched pocket that fan out with a counting balance.              |
+|             | Streak Card       | A day count that pops in amid confetti over a row of week marks.                    |
+|             | Boarding Pass     | A notched paper ticket; scan the barcode and the stub tears off.                    |
+|             | Book Pocket       | Book covers in a frosted acrylic pocket that rise and fan when pressed.             |
+|             | Now Playing       | A dark music widget: the cover springs forward on play and the icon morphs.         |
+|             | Vinyl Player      | A record half out of its sleeve that spins while the track plays.                   |
 | Interaction | Beam Button       | A button with a beam of light running around its edge.                              |
 |             | Bloom Menu        | A floating button whose actions spring out one after another.                       |
 |             | Copy Chip         | A copy button whose two pages fold into a check.                                    |
@@ -93,6 +100,7 @@ npx kinetik-ui add glint-card
 |             | Swipe Row         | A list row with actions behind it; a long swipe runs the edge one.                  |
 |             | Theme Switch      | A sun whose rays turn and draw in as a shadow leaves a moon.                        |
 |             | Two-Step Button   | Splits into Cancel and Confirm before a destructive action.                         |
+|             | Peek Folder       | Tiles glowing through a glass folder pocket, springing up on tap.                   |
 | Inputs      | Choice Cards      | Option cards with one selection ring that glides between them.                      |
 |             | Code Field        | A one-time-code field: digits pop in, wrong codes shake.                            |
 |             | Filter Chips      | Chips that grow a check and turn to a tint when picked.                             |
@@ -115,6 +123,16 @@ npx kinetik-ui add glint-card
 |             | Swatch Picker     | Colour swatches with a ring that glides to the pick.                                |
 |             | Tag Field         | Typed words that pop into removable tags.                                           |
 |             | Time Wheel        | Drum-like wheels for a time of day that snap row by row.                            |
+|             | Gradient Slider   | Hue or white-balance gradient with a ring knob, live swatch and action.             |
+|             | Rotation Ruler    | A straighten dial of degree ticks that glides and snaps to level.                   |
+|             | Step Slider       | A few dotted stops with a snapping knob and a spinning action.                      |
+|             | Palette Strip     | Joined colour swatches that wipe to new colours in turn.                            |
+|             | Segment Bar       | A segmented control whose pill glides to the pick, with an action.                  |
+|             | Aspect Picker     | Aspect-ratio frames drawn to scale with a sliding highlight.                        |
+|             | Seat Picker       | Armchairs that fill as you add seats, a rolling stepper and seats left.             |
+|             | Plan Picker       | Plan cards in a tray whose pick lifts, over a button with streaming chevrons.       |
+|             | Intensity Slider  | A soft gradient slider with a Low-to-High ruler that lights to the value.           |
+|             | Topic Picker      | Topic chips drifting in opposite rows; picks pop in a soft colour.                  |
 | Disclosure  | Fade Scroll       | A scroll view whose edges fade only where there is more.                            |
 |             | Lift Menu         | Hold to lift the content above a dimmed screen with its actions.                    |
 |             | Pop Menu          | A menu that unfolds from its trigger, rows sliding in.                              |
@@ -151,6 +169,7 @@ npx kinetik-ui add glint-card
 |             | Skeleton Sweep    | Loading placeholders with one light band across the whole layout.                   |
 |             | Step Tracker      | Progress through steps: the line fills and steps take a check.                      |
 |             | Toast Stack       | Notifications that stack like cards, fan out and swipe away.                        |
+|             | Scan Progress     | A scan band lights pixel squares over an image while a ring fills.                  |
 | Data        | Activity Rings    | Concentric progress rings that wind up; past the goal they lap.                     |
 |             | Avatar Stack      | Overlapping faces that fan out with their names.                                    |
 |             | Bar Chart         | Bars that spring up in a wave and light up under the finger.                        |
@@ -170,6 +189,12 @@ npx kinetik-ui add glint-card
 |             | Treemap           | Nested, near-square tiles; tap a group to zoom into it.                             |
 |             | Usage Meter       | What fills an allowance, segment by segment.                                        |
 |             | Waffle Chart      | A ten-by-ten grid where each cell is one percent.                                   |
+|             | Flight Track      | A flight card whose route fills behind a plane with blinking lights.                |
+|             | Expense Card      | Category bars on a dashed grid that grow in, with a period menu.                    |
+|             | Credit Score      | A score that counts up over a bar meter warming from red to green.                  |
+|             | Vital Arcs        | Arcs that sweep from the corner around a score disc, values at their tips.          |
+|             | Score Matrix      | A score that counts up as a dot grid lights, beside metric rows.                    |
+|             | Agenda Card       | The date lit by a blue glow beside the next events sliding in.                      |
 | Screens     | Onboarding        | A paged welcome with animated illustration panels and word-by-word titles.          |
 |             | Paywall           | A feature carousel that advances on its own and swipeable plan cards.               |
 |             | Login             | Email and password sign-in with inline errors and provider buttons.                 |

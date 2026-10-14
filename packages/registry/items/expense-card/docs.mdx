@@ -1,0 +1,32 @@
+## Usage
+
+```tsx
+import { ExpenseCard } from '@/components/kinetik/expense-card';
+
+<ExpenseCard
+  icon={<ChartIcon />}
+  rows={[
+    { label: 'Housing', value: 6200 },
+    { label: 'Utilities', value: 1400 },
+    { label: 'Food', value: 2150 },
+  ]}
+  periods={['Weekly', 'Monthly', 'Yearly']}
+  period={period}
+  onPeriodChange={setPeriod}
+/>;
+```
+
+## When to use
+
+- A handful of categories compared on one scale, in a dashboard or finance overview.
+
+## When not to use
+
+- Trends over time: use a line or bar chart with a time axis.
+- More than six categories: the card gets long; show the top few and link to the rest.
+
+## Notes
+
+- The scale tops out at the largest value rounded up to a tidy number (`niceMax`), or at `max`.
+- Bars regrow from zero when the period changes. A category of 0 shows a small placeholder square.
+- Values format as 2K, 10K by default; pass `formatValue` for currencies.

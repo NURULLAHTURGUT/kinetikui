@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import type { CSSProperties } from 'react';
 
 import { Gallery, type GalleryGroup, type GalleryItem } from '../../components/gallery';
-import { byCategory, componentCount, navOrder, screenCount } from '../../lib/data';
+import { byCategory, componentCount, galleryOrder, screenCount } from '../../lib/data';
 import '../home.css';
 import './gallery.css';
 
@@ -23,7 +23,7 @@ function Words({ text }: { text: string }) {
 }
 
 export default function ComponentsPage() {
-  const items: GalleryItem[] = navOrder().map((c) => ({
+  const items: GalleryItem[] = galleryOrder().map((c) => ({
     name: c.name,
     title: c.title,
     description: c.description,

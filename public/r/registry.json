@@ -28,7 +28,7 @@
         }
       ],
       "meta": {
-        "version": "1.3.0",
+        "version": "1.4.0",
         "kind": "shared",
         "platforms": [
           "ios",
@@ -62,7 +62,7 @@
         }
       ],
       "meta": {
-        "version": "1.3.0",
+        "version": "1.4.0",
         "kind": "shared",
         "platforms": [
           "ios",
@@ -90,7 +90,7 @@
         }
       ],
       "meta": {
-        "version": "1.3.0",
+        "version": "1.4.0",
         "kind": "shared",
         "platforms": [
           "ios",
@@ -117,7 +117,7 @@
         }
       ],
       "meta": {
-        "version": "1.3.0",
+        "version": "1.4.0",
         "kind": "shared",
         "platforms": [
           "ios",
@@ -144,7 +144,7 @@
         }
       ],
       "meta": {
-        "version": "1.3.0",
+        "version": "1.4.0",
         "kind": "shared",
         "platforms": [
           "ios",
@@ -168,7 +168,7 @@
         }
       ],
       "meta": {
-        "version": "1.3.0",
+        "version": "1.4.0",
         "kind": "shared",
         "platforms": [
           "ios",
@@ -194,7 +194,7 @@
         }
       ],
       "meta": {
-        "version": "1.3.0",
+        "version": "1.4.0",
         "kind": "shared",
         "platforms": [
           "ios",
@@ -326,6 +326,66 @@
       }
     },
     {
+      "name": "agenda-card",
+      "type": "registry:item",
+      "title": "Agenda Card",
+      "description": "A day-at-a-glance widget: the date lit by a blue glow, events sliding in, and a bar that fills for the one under way.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-svg",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-haptics.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/agenda-card.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/agenda-card.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "The glow, rows and fill run short UI-thread springs and timings on arrival and on change. Nothing animates at rest.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 17,
+              "p90Ms": 18,
+              "baselineMs": 17,
+              "jankyPercent": 1.15,
+              "atRest": "idle",
+              "memoryMb": 150
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The glow, rows and fills appear in place; the add button does not turn.",
+          "screenReader": "The date reads as one line (\"Thursday, Oct 30, 6 events\"), each event as one line (\"Focus Time, 11:00 to 13:00, now\"), and the add button as \"Add event\".",
+          "touchTarget": "Event rows are at least 44 pt tall; the add button is 48 pt."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
       "name": "aperture-card",
       "type": "registry:item",
       "title": "Aperture Card",
@@ -382,6 +442,65 @@
           "reducedMotion": "The blades fade out instead of turning.",
           "screenReader": "Button role with expanded state; the hidden content is not exposed until the card is open.",
           "touchTarget": "The whole card (at least 200 pt tall)."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "aspect-picker",
+      "type": "registry:item",
+      "title": "Aspect Picker",
+      "description": "Aspect-ratio frames drawn to scale; a soft square slides to the pick and its frame grows a touch.",
+      "categories": [
+        "input"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-haptics.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/aspect-picker.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/aspect-picker.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "input",
+        "web": "live",
+        "perf": {
+          "budget": "The highlight and the picked frame move with UI-thread springs on change; at rest nothing animates.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 17,
+              "p90Ms": 18,
+              "baselineMs": 17,
+              "jankyPercent": 0.21,
+              "atRest": "idle",
+              "memoryMb": 147
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The highlight jumps and the frame changes without growing.",
+          "screenReader": "A radio group named \"Aspect ratio\"; each frame is a radio named by its label, e.g. \"Portrait 2 by 3\".",
+          "touchTarget": "Each ratio and the action button are 44 pt square."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }
@@ -689,6 +808,129 @@
           "reducedMotion": "Actions appear in place without travelling or staggering; the halo and the cross still change.",
           "screenReader": "The main button reports expanded; closed actions are hidden from screen readers. The escape gesture closes it.",
           "touchTarget": "60 pt main button, 48 pt actions; in the column layout the label is part of the action's target."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "boarding-pass",
+      "type": "registry:item",
+      "title": "Boarding Pass",
+      "description": "A paper boarding pass with real notches: tap the barcode to scan it and the stub tears off with a stamp.",
+      "categories": [
+        "card"
+      ],
+      "dependencies": [
+        "@shopify/react-native-skia",
+        "react-native-reanimated",
+        "react-native-svg",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-haptics.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/boarding-pass.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/boarding-pass.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "card",
+        "web": "live",
+        "perf": {
+          "budget": "The ticket shape is built once per size; the band slides in on arrival and the scan runs one UI-thread timing and spring. Nothing animates at rest.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 23,
+              "p90Ms": 30,
+              "baselineMs": 17,
+              "jankyPercent": 3.14,
+              "atRest": "idle",
+              "memoryMb": 158,
+              "notes": "Measured during scans (scanner line with a blurred glow, then the stub tearing). Frame stats put app work at about 2 ms and render-thread work at 1 ms a frame; the rest is the emulator waiting on its virtual GPU."
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The pass appears in place and a scan tears and stamps the stub at once, with no scanner line.",
+          "screenReader": "The pass reads as one summary (route, times, passenger, gate and seat); the barcode is a button that becomes \"Boarded\".",
+          "touchTarget": "The whole stub, 112 pt tall, is the scan button."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "book-pocket",
+      "type": "registry:item",
+      "title": "Book Pocket",
+      "description": "Book covers tucked in a frosted acrylic pocket: they drop in, and rise and fan out while pressed or hovered.",
+      "categories": [
+        "card"
+      ],
+      "dependencies": [
+        "expo-blur",
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-haptics.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/book-pocket.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/book-pocket.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "card",
+        "web": "live",
+        "perf": {
+          "budget": "Covers move by transforms from one UI-thread spring; the pocket is one blur view over them. Nothing animates at rest.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 25,
+              "p90Ms": 31,
+              "baselineMs": 17,
+              "jankyPercent": 6.56,
+              "atRest": "idle",
+              "memoryMb": 172,
+              "notes": "Measured with four pockets, each a blur view over its covers. Frame stats put app work at about 2 ms and render-thread work at 7 ms a frame; the rest is the emulator waiting on its virtual GPU."
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "Covers appear in place and jump between tucked and lifted without the spring.",
+          "screenReader": "The pocket reads as one button with the shelf and count (\"Fantasy, 8 books\").",
+          "touchTarget": "The whole pocket and its covers are the button."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }
@@ -1224,6 +1466,66 @@
           "reducedMotion": "Digits change in place and the live dot holds still.",
           "screenReader": "A timer that reads the time left in words, then the live label.",
           "touchTarget": "Not interactive."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "credit-score",
+      "type": "registry:item",
+      "title": "Credit Score",
+      "description": "A credit score card whose number counts up while a bar meter lights from red through amber to green.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-count.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/credit-score.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/credit-score.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "The meter lights bar by bar with UI-thread timings; the number counts up for about a second (re-rendering on animation frames).",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 17,
+              "p90Ms": 18,
+              "baselineMs": 17,
+              "jankyPercent": 17.14,
+              "atRest": "idle",
+              "memoryMb": 229,
+              "notes": "Janky frames come from the number counting up (a React re-render per frame for about a second)."
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The score shows at once and the bars light without the left-to-right sweep.",
+          "screenReader": "The score reads as one line with its band and scale (\"Your credit score is 712, Good, on a scale of 300 to 850\").",
+          "touchTarget": "The header button is at least 44 pt."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }
@@ -1766,6 +2068,64 @@
       }
     },
     {
+      "name": "expense-card",
+      "type": "registry:item",
+      "title": "Expense Card",
+      "description": "A spending card with a period menu and horizontal bars on a dashed grid that grow in one by one.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/expense-card.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/expense-card.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "Each bar grows once per change with a UI-thread spring; the grid and labels are static views.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 17,
+              "p90Ms": 18,
+              "baselineMs": 17,
+              "jankyPercent": 6.25,
+              "atRest": "idle",
+              "memoryMb": 154
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "Bars appear at their length and the menu opens without zooming.",
+          "screenReader": "The chart reads as one summary (\"Housing 6.2K, Utilities 1.4K, Food 2.1K\"); the period button reports whether its menu is open; options are menu items.",
+          "touchTarget": "The period button and menu options are at least 44 pt."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
       "name": "fade-scroll",
       "type": "registry:item",
       "title": "Fade Scroll",
@@ -1937,6 +2297,66 @@
           "reducedMotion": "Chips change colour and show the check at once, without growing.",
           "screenReader": "Checkboxes with a checked state, or radios with a selected state when `multiple` is false. Counts are read after the label.",
           "touchTarget": "40 pt chips drawn inside 48 pt targets."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "flight-track",
+      "type": "registry:item",
+      "title": "Flight Track",
+      "description": "A flight card whose route fills with a glowing line behind a small plane with blinking wing lights.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "@shopify/react-native-skia",
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/flight-track.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/flight-track.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "The plane rocks and its lights blink on the UI thread; the route only animates when progress changes. One small Skia canvas for the plane.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 21,
+              "p90Ms": 24,
+              "baselineMs": 17,
+              "jankyPercent": 0.1,
+              "atRest": "animating",
+              "memoryMb": 162,
+              "notes": "Animating at rest: the plane rocks and its wing lights blink while it is in the air; both stop once landed."
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The plane jumps to its place, does not rock and its lights stay on.",
+          "screenReader": "One progress bar reading the route and times (\"LHR, London, UK, to OPO, Porto, PT. Departs 20:50 GMT+1, arrives 22:40 GMT+1.\") with \"55% of the way\".",
+          "touchTarget": "Not interactive."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }
@@ -2295,6 +2715,66 @@
           "reducedMotion": "Static reflection; tilt sensor and touch tracking are not started.",
           "screenReader": "Canvas is hidden from assistive tech; pass accessibilityLabel/Role to describe the card.",
           "touchTarget": "Not interactive by itself; any controls inside keep their own targets."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "gradient-slider",
+      "type": "registry:item",
+      "title": "Gradient Slider",
+      "description": "A colour slider on a hue or white-balance gradient with a ring knob, a live swatch and an action button.",
+      "categories": [
+        "input"
+      ],
+      "dependencies": [
+        "react-native-gesture-handler",
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-haptics.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/gradient-slider.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/gradient-slider.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "input",
+        "web": "live",
+        "perf": {
+          "budget": "The gradient is a static background; the knob moves on the UI thread and its colour updates once per step.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 17,
+              "p90Ms": 22,
+              "baselineMs": 17,
+              "jankyPercent": 1.99,
+              "atRest": "idle",
+              "memoryMb": 158
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The knob follows the finger without growing and the swatch changes without popping.",
+          "screenReader": "Adjustable role with min, max, current value and formatted text. The swatch is decorative; the action button has its own name.",
+          "touchTarget": "The track is 44 pt tall; the swatch area and action button are at least 44 pt."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }
@@ -2664,6 +3144,66 @@
           "reducedMotion": "The underline and buttons appear without a spring; the check still fades.",
           "screenReader": "A button that reads the label and the value; while editing, a text field plus Cancel and Save buttons.",
           "touchTarget": "The text and both buttons are at least 44 pt tall."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "intensity-slider",
+      "type": "registry:item",
+      "title": "Intensity Slider",
+      "description": "A soft gradient slider in a card with a slim handle and a Low-to-High ruler that lights up to the value.",
+      "categories": [
+        "input"
+      ],
+      "dependencies": [
+        "react-native-gesture-handler",
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-haptics.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/intensity-slider.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/intensity-slider.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "input",
+        "web": "live",
+        "perf": {
+          "budget": "Dragging moves the handle and fill on the UI thread; React re-renders once per whole step to light the ruler.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 21,
+              "p90Ms": 24,
+              "baselineMs": 17,
+              "jankyPercent": 0.38,
+              "atRest": "idle",
+              "memoryMb": 158
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The handle does not grow while held and the fill settles without a spring.",
+          "screenReader": "Adjustable role reading the value as a percentage; increment and decrement move by 5.",
+          "touchTarget": "The track is 44 pt tall across the full width."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }
@@ -3446,6 +3986,66 @@
       }
     },
     {
+      "name": "now-playing",
+      "type": "registry:item",
+      "title": "Now Playing",
+      "description": "A dark music widget: the cover springs forward on play, the icon morphs and progress runs on the UI thread.",
+      "categories": [
+        "card"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-svg",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-haptics.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/now-playing.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/now-playing.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "card",
+        "web": "live",
+        "perf": {
+          "budget": "Progress is one UI-thread timing per track; the time labels re-render four times a second while playing. Paused, nothing animates.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 17,
+              "p90Ms": 21,
+              "baselineMs": 17,
+              "jankyPercent": 0.75,
+              "atRest": "idle",
+              "memoryMb": 174
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "Play, pause and skipping change state without the cover spring, slide or icon turn.",
+          "screenReader": "Title and subtitle read as one line; the progress is adjustable (\"1:09 of 3:43\", ten-second steps); Previous, Play/Pause and Next are buttons.",
+          "touchTarget": "Buttons are 44 pt tall; the progress bar's touch area is 44 pt tall."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
       "name": "odometer",
       "type": "registry:item",
       "title": "Odometer",
@@ -3617,6 +4217,64 @@
           "reducedMotion": "The pill jumps and the numbers change in place.",
           "screenReader": "Buttons named \"Page 9\" with the current one selected, plus Previous and Next page buttons that are disabled at the ends.",
           "touchTarget": "Every slot and arrow is 44 by 44 pt."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "palette-strip",
+      "type": "registry:item",
+      "title": "Palette Strip",
+      "description": "Colour swatches joined into one bar that wipe to new colours in turn, with a spinning shuffle button.",
+      "categories": [
+        "input"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/palette-strip.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/palette-strip.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "input",
+        "web": "live",
+        "perf": {
+          "budget": "Each swatch wipe is one UI-thread transform for about half a second after the colours change; at rest nothing animates.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 17,
+              "p90Ms": 18,
+              "baselineMs": 17,
+              "jankyPercent": 0.38,
+              "atRest": "idle",
+              "memoryMb": 146
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "Swatches change colour in place and the shuffle icon does not spin.",
+          "screenReader": "Without onSwatchPress the bar is one image named after its colours; with it, each swatch is a button named after its colour.",
+          "touchTarget": "Swatches are 44 pt tall; the action button is 44 pt."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }
@@ -3794,6 +4452,127 @@
           "reducedMotion": "The meter and the rule ticks change at once, without filling or popping.",
           "screenReader": "A secure text field named by its label, a Show password / Hide password button, and each rule read as met or not met. Changes in strength are announced.",
           "touchTarget": "The field is 52 pt tall; the reveal button is at least 44 pt."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "peek-folder",
+      "type": "registry:item",
+      "title": "Peek Folder",
+      "description": "Tiles tucked in a frosted-glass folder pocket, glowing through it; tap or hover and they spring up and fan out.",
+      "categories": [
+        "interaction"
+      ],
+      "dependencies": [
+        "@shopify/react-native-skia",
+        "react-native-reanimated",
+        "react-native-svg",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-haptics.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/peek-folder.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/peek-folder.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "interaction",
+        "web": "live",
+        "perf": {
+          "budget": "One Skia canvas: the tiles move by transforms from one UI-thread spring and the glass is a single backdrop blur. Nothing animates at rest.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 18,
+              "p90Ms": 25,
+              "baselineMs": 17,
+              "jankyPercent": 1.71,
+              "atRest": "idle",
+              "memoryMb": 153
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The tiles jump between tucked and lifted without the spring or the drop-in.",
+          "screenReader": "The folder is a button named by `label` with its expanded state; the arrow is a separate \"Open …\" button.",
+          "touchTarget": "The whole folder is the toggle; the arrow button is 44 pt."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "plan-picker",
+      "type": "registry:item",
+      "title": "Plan Picker",
+      "description": "Plan cards in a tray: the pick lifts with a popping check, over a button with streaming chevrons.",
+      "categories": [
+        "input"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-haptics.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/plan-picker.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/plan-picker.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "input",
+        "web": "live",
+        "perf": {
+          "budget": "Card lifts and checks are UI-thread springs on change; the button chevrons loop on the UI thread while it is on screen.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 22,
+              "p90Ms": 25,
+              "baselineMs": 17,
+              "jankyPercent": 0.3,
+              "atRest": "animating",
+              "memoryMb": 158,
+              "notes": "Animating at rest: the button chevrons stream in a loop while it is on screen."
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "Cards and checks change without springing and the chevrons hold still at fixed brightness.",
+          "screenReader": "A radio group; each plan is a radio reading its name, trial, monthly price and billing. The button is named by its label.",
+          "touchTarget": "Plan cards are over 80 pt tall; the button is 64 pt."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }
@@ -4151,6 +4930,66 @@
           "reducedMotion": "Thumb slides with a short timing; no stretch and no pulse ring.",
           "screenReader": "Switch role with checked and disabled states; the visible label is the accessible name.",
           "touchTarget": "Row is at least 44 pt tall; a bare toggle gets an 8 pt hit slop."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "question-deck",
+      "type": "registry:item",
+      "title": "Question Deck",
+      "description": "A questionnaire card on a loose stack: answers spring in, questions slide and the cards behind shuffle.",
+      "categories": [
+        "card"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-haptics.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/question-deck.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/question-deck.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "card",
+        "web": "live",
+        "perf": {
+          "budget": "Each step runs one layout animation and a shuffle spring on the UI thread; at rest nothing animates.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 17,
+              "p90Ms": 25,
+              "baselineMs": 17,
+              "jankyPercent": 3.79,
+              "atRest": "idle",
+              "memoryMb": 208,
+              "notes": "Most janky frames are the step slide; at rest nothing animates."
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "Questions cross-fade and the stack does not shuffle.",
+          "screenReader": "Progress reads \"Question 2 of 6\"; the question is a header; options are radios; Next is disabled until something is picked.",
+          "touchTarget": "Options, Back, Next and Close are at least 44 pt."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }
@@ -4641,6 +5480,187 @@
       }
     },
     {
+      "name": "rotation-ruler",
+      "type": "registry:item",
+      "title": "Rotation Ruler",
+      "description": "A straighten dial: a ruler of degree ticks slides under a fixed marker and snaps to level.",
+      "categories": [
+        "input"
+      ],
+      "dependencies": [
+        "react-native-gesture-handler",
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-haptics.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/rotation-ruler.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/rotation-ruler.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "input",
+        "web": "live",
+        "perf": {
+          "budget": "The tick strip is static views moved by one UI-thread transform; React re-renders once per whole degree.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 17,
+              "p90Ms": 27,
+              "baselineMs": 17,
+              "jankyPercent": 2.85,
+              "atRest": "idle",
+              "memoryMb": 156
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The ruler follows the finger but does not glide after a flick and settles without a spring.",
+          "screenReader": "Adjustable role reading \"12 degrees\"; increment and decrement move by one degree.",
+          "touchTarget": "The whole 56 pt panel is the touch area."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "scan-progress",
+      "type": "registry:item",
+      "title": "Scan Progress",
+      "description": "An analysing state for media: a scan band lights pixel squares over the image while a ring fills a pill.",
+      "categories": [
+        "feedback"
+      ],
+      "dependencies": [
+        "@shopify/react-native-skia",
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-clock.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/scan-progress.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/scan-progress.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "feedback",
+        "web": "live",
+        "perf": {
+          "budget": "The pixel field is three Skia paths rebuilt 30 times a second by one worklet while scanning; it stops completely when done. The ring is one trimmed path.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 24,
+              "p90Ms": 27,
+              "baselineMs": 17,
+              "jankyPercent": 0.17,
+              "atRest": "animating",
+              "memoryMb": 195,
+              "notes": "Animating while scanning: the pixel field redraws 30 times a second and the spinner turns; both stop when done. Most of each frame is the emulator GPU swap."
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "No pixel field or spinner rotation; the wash, the ring and the labels still show progress.",
+          "screenReader": "The pill is a progress bar named by the current step, with its percentage when known; changes are announced. Pass imageLabel to describe the image.",
+          "touchTarget": "Not interactive."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "score-matrix",
+      "type": "registry:item",
+      "title": "Score Matrix",
+      "description": "A dark score card: the figure counts up as a dot grid lights to its share, beside rows of counting metrics.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "@shopify/react-native-skia",
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-count.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/score-matrix.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/score-matrix.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "The dot grid is two Skia paths, the lit one rebuilt on the UI thread for about a second; figures count up by re-rendering their text. Nothing animates at rest.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 18,
+              "p90Ms": 30,
+              "baselineMs": 17,
+              "jankyPercent": 3.72,
+              "atRest": "idle",
+              "memoryMb": 166
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The score, dots and metric values appear at once.",
+          "screenReader": "The score reads as one line (\"Athletic score: 13 out of 100\") and each metric as one line (\"Strength: 170 lbs\").",
+          "touchTarget": "Nothing is interactive."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
       "name": "scramble-text",
       "type": "registry:item",
       "title": "Scramble Text",
@@ -4868,6 +5888,126 @@
           "reducedMotion": "The field opens and closes in place.",
           "screenReader": "A Search button that becomes a text field named by the placeholder, with Clear search and Cancel buttons. Hidden parts are hidden from screen readers.",
           "touchTarget": "The button, the clear button and the bar are all 48 pt tall."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "seat-picker",
+      "type": "registry:item",
+      "title": "Seat Picker",
+      "description": "A seat counter: armchairs that fill as you add seats, a rolling stepper and a badge of seats left.",
+      "categories": [
+        "input"
+      ],
+      "dependencies": [
+        "@shopify/react-native-skia",
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-haptics.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/seat-picker.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/seat-picker.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "input",
+        "web": "live",
+        "perf": {
+          "budget": "Seat pops and the number roll run once per change on the UI thread; at rest nothing animates. All seats share one Skia canvas.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 27,
+              "p90Ms": 30,
+              "baselineMs": 17,
+              "jankyPercent": 0.22,
+              "atRest": "idle",
+              "memoryMb": 162,
+              "notes": "Frame times are mostly the emulator GPU swap: framestats show about 6 ms of app work per frame (input, animation and drawing) and ~17 ms waiting for the swap."
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "Seats fill and empty without popping, the number changes in place and the stepper does not shake.",
+          "screenReader": "The count is an adjustable control (\"2 seats\"); the buttons are named Add a seat and Remove a seat; the badge reads \"3 seats left\" and is announced as it changes.",
+          "touchTarget": "Stepper buttons and the action are 52 pt tall; the info button is 44 pt."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "segment-bar",
+      "type": "registry:item",
+      "title": "Segment Bar",
+      "description": "A segmented control in a rounded panel whose pill glides to the pick, with an action button that pops.",
+      "categories": [
+        "input"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-haptics.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/segment-bar.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/segment-bar.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "input",
+        "web": "live",
+        "perf": {
+          "budget": "The pill moves with one UI-thread spring per change; at rest nothing animates.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 21,
+              "p90Ms": 23,
+              "baselineMs": 17,
+              "jankyPercent": 0.24,
+              "atRest": "idle",
+              "memoryMb": 150
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The pill jumps to the selection and the action button does not pop.",
+          "screenReader": "A radio group with a name; each option is a radio with its checked state; the action button has its own name.",
+          "touchTarget": "Options and the action button are at least 44 pt."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }
@@ -5655,6 +6795,66 @@
       }
     },
     {
+      "name": "step-slider",
+      "type": "registry:item",
+      "title": "Step Slider",
+      "description": "A slider with a few fixed stops marked as dots, a snapping knob and a spinning action button.",
+      "categories": [
+        "input"
+      ],
+      "dependencies": [
+        "react-native-gesture-handler",
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-haptics.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/step-slider.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/step-slider.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "input",
+        "web": "live",
+        "perf": {
+          "budget": "The knob and dots are driven by one shared value on the UI thread; React re-renders only when the stop changes.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 17,
+              "p90Ms": 18,
+              "baselineMs": 17,
+              "jankyPercent": 1.26,
+              "atRest": "idle",
+              "memoryMb": 150
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The knob snaps without overshoot and the action icon does not spin.",
+          "screenReader": "Adjustable role reading the stop name (or \"Step 2 of 4\"); increment and decrement move one stop.",
+          "touchTarget": "The track is 44 pt tall; the action button is 44 pt."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
       "name": "step-tracker",
       "type": "registry:item",
       "title": "Step Tracker",
@@ -5768,6 +6968,66 @@
           "reducedMotion": "Pictures switch without the fade or the drift; the bars still fill.",
           "screenReader": "An adjustable element named after the story, valued 'Story 2 of 5'; swipe up or down to step. Stories do not advance on their own while a screen reader runs.",
           "touchTarget": "The whole card: its left third steps back, the rest forward."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "streak-card",
+      "type": "registry:item",
+      "title": "Streak Card",
+      "description": "A streak card: the day count pops into a disc as confetti bursts around it, and the week's marks tick in.",
+      "categories": [
+        "card"
+      ],
+      "dependencies": [
+        "@shopify/react-native-skia",
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-haptics.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/streak-card.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/streak-card.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "card",
+        "web": "live",
+        "perf": {
+          "budget": "The confetti is one Skia canvas driven by a single UI-thread timing; it settles after about a second and nothing animates at rest.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 18,
+              "p90Ms": 27,
+              "baselineMs": 17,
+              "jankyPercent": 3.25,
+              "atRest": "idle",
+              "memoryMb": 168
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The number, confetti and day marks appear in place without the burst or the pulse.",
+          "screenReader": "The count reads as one label (\"2 day streak\"), the title as a header and the week as one line (\"This week: We done, Th today, Fr upcoming\").",
+          "touchTarget": "The button is 52 pt tall and full width."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }
@@ -6370,6 +7630,66 @@
       }
     },
     {
+      "name": "topic-picker",
+      "type": "registry:item",
+      "title": "Topic Picker",
+      "description": "Topic chips drifting in rows that run opposite ways; picking one pops it in a soft colour.",
+      "categories": [
+        "input"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-haptics.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/topic-picker.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/topic-picker.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "input",
+        "web": "live",
+        "perf": {
+          "budget": "Each row is one looping UI-thread transform; chips only re-render when picked.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 22,
+              "p90Ms": 25,
+              "baselineMs": 17,
+              "jankyPercent": 0,
+              "atRest": "animating",
+              "memoryMb": 159,
+              "notes": "Animating at rest: the rows drift continuously. Chips carry no shadow, which took frames from 28 to 22 ms here."
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "Rows hold still and scroll by hand instead of drifting; chips do not pop.",
+          "screenReader": "Each topic is a checkbox with its checked state; copies used for the loop are hidden. The submit button is disabled until enough are picked.",
+          "touchTarget": "Chips are 48 pt tall; the submit button is 60 pt."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
       "name": "tree-view",
       "type": "registry:item",
       "title": "Tree View",
@@ -6661,6 +7981,126 @@
       }
     },
     {
+      "name": "vinyl-player",
+      "type": "registry:item",
+      "title": "Vinyl Player",
+      "description": "A music card whose cover is a record half out of its sleeve, spinning while it plays and coasting to a stop.",
+      "categories": [
+        "card"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-svg",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-haptics.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/vinyl-player.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/vinyl-player.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "card",
+        "web": "live",
+        "perf": {
+          "budget": "While playing, the record turns with one repeating UI-thread timing and the progress with another; the time re-renders four times a second. Paused, nothing animates.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 17,
+              "p90Ms": 18,
+              "baselineMs": 17,
+              "jankyPercent": 1.39,
+              "atRest": "idle",
+              "memoryMb": 171
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The record does not spin or drop in; controls change state without the ring flash or icon pop.",
+          "screenReader": "Title and artist read as one line; the progress is adjustable in ten-second steps; Mute is a switch; Previous, Play/Pause and Next are buttons.",
+          "touchTarget": "Controls and the mute switch are 48 pt; the progress bar's touch area is 44 pt tall."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "vital-arcs",
+      "type": "registry:item",
+      "title": "Vital Arcs",
+      "description": "A daily summary widget: concentric arcs sweep from the corner with values at their tips, round a score disc.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "@shopify/react-native-skia",
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-count.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/vital-arcs.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/vital-arcs.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "The arcs are trimmed Skia paths and the badges ride them with UI-thread timings; the score counts up for about a second. Nothing animates at rest.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 18,
+              "p90Ms": 29,
+              "baselineMs": 17,
+              "jankyPercent": 4.36,
+              "atRest": "idle",
+              "memoryMb": 160
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "Arcs, badges and the score appear at their values without sweeping or counting.",
+          "screenReader": "Each row reads as one line (\"Sleep time: 7h 2m, up 12%\"), and the arcs as one summary with the score (\"16 PAI. Activity 31, Workouts 84, Rest 53\").",
+          "touchTarget": "Nothing is interactive."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
       "name": "waffle-chart",
       "type": "registry:item",
       "title": "Waffle Chart",
@@ -6714,6 +8154,68 @@
           "reducedMotion": "The grid appears filled and new data changes the colours at once.",
           "screenReader": "One image whose name lists every slice and its share. Legend entries are buttons with a selected state.",
           "touchTarget": "Legend entries are at least 44 pt tall."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "wallet-stack",
+      "type": "registry:item",
+      "title": "Wallet Stack",
+      "description": "Glint Cards tucked in a stitched leather pocket: tap to fan them out, with the balance counting up.",
+      "categories": [
+        "card"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-haptics.json",
+        "https://kinetik-ui.dev/r/kinetik-count.json",
+        "https://kinetik-ui.dev/r/glint-card.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/wallet-stack.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/wallet-stack.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "card",
+        "web": "live",
+        "perf": {
+          "budget": "Opening and closing is one UI-thread spring shared by every card. The Glint Cards follow the finger (no motion sensors) while the wallet is open; closed, nothing animates.",
+          "measurements": [
+            {
+              "device": "Pixel 9 emulator, API 35",
+              "kind": "emulator",
+              "date": "2026-10-14",
+              "build": "release",
+              "frameMs": 34,
+              "p90Ms": 38,
+              "baselineMs": 17,
+              "jankyPercent": 3.59,
+              "atRest": "idle",
+              "memoryMb": 173,
+              "notes": "Frames are measured while opening and closing: the wallet grows in height (a layout pass per frame) for about 0.6 s per toggle; framestats show ~6 ms of app work, the rest the emulator GPU. Closed or open at rest, nothing animates."
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The wallet opens and closes without springing, the balance shows at once and the cards hold a still reflection (Glint Card).",
+          "screenReader": "The pocket is a button reading the title and balance, with a hint to show or tuck the cards; cards are buttons only while the wallet is open.",
+          "touchTarget": "The pocket is about 190 pt tall; open cards are full width and 150 pt tall."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }

@@ -16,7 +16,6 @@
     "@kinetik/registry": "workspace:*",
     "marked": "^18.1.0",
     "next": "16.4.0",
-    "qrcode": "^1.5.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native-svg": "15.15.4",
@@ -24,7 +23,6 @@
     "shiki": "^4.5.0"
   },
   "devDependencies": {
-    "@types/qrcode": "^1.5.6",
     "@types/react": "~19.2.2",
     "@types/react-dom": "^19.2.0",
     "tsx": "^4.23.15",

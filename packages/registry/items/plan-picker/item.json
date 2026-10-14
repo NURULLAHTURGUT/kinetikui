@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "plan-picker",
+  "title": "Plan Picker",
+  "description": "Plan cards in a tray: the pick lifts with a popping check, over a button with streaming chevrons.",
+  "category": "input",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["plan-picker.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Card lifts and checks are UI-thread springs on change; the button chevrons loop on the UI thread while it is on screen.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 22,
+        "p90Ms": 25,
+        "baselineMs": 17,
+        "jankyPercent": 0.3,
+        "atRest": "animating",
+        "memoryMb": 158,
+        "notes": "Animating at rest: the button chevrons stream in a loop while it is on screen."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Cards and checks change without springing and the chevrons hold still at fixed brightness.",
+    "screenReader": "A radio group; each plan is a radio reading its name, trial, monthly price and billing. The button is named by its label.",
+    "touchTarget": "Plan cards are over 80 pt tall; the button is 64 pt."
+  }
+}

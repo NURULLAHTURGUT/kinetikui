@@ -1,0 +1,37 @@
+## Usage
+
+```tsx
+import { PlanPicker } from '@/components/kinetik/plan-picker';
+
+<PlanPicker
+  value={plan}
+  onChange={setPlan}
+  plans={[
+    {
+      id: 'yearly',
+      title: 'Yearly',
+      note: '14-day free trial',
+      monthly: '7.49$',
+      billed: '89.98/yr',
+    },
+    { id: 'monthly', title: 'Monthly', note: '7-day free trial', monthly: '9.98$' },
+  ]}
+  footnote="If you don’t like it, we’ll give your money back."
+  cta={{ label: 'Start free trial', onPress: () => purchases.buy(plan) }}
+/>;
+```
+
+## When to use
+
+- Choosing between two or three subscription plans on a paywall or upgrade sheet.
+
+## When not to use
+
+- More than three plans: compare them in a table instead.
+- Plans that differ in features, not price: list the features, not just the trials.
+
+## Notes
+
+- Prices are strings so you can pass the store's localised prices as they are.
+- Plan names use the platform's italic serif (Georgia on iOS and the web, the system serif on Android).
+- The button's chevrons stream towards the label in a loop; with reduced motion they hold still.

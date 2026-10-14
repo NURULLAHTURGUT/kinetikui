@@ -1,0 +1,25 @@
+## Usage
+
+```tsx
+import { RotationRuler } from '@/components/kinetik/rotation-ruler';
+
+const [angle, setAngle] = useState(0);
+
+<RotationRuler value={angle} onValueChange={setAngle} />;
+<Image source={photo} style={{ transform: [{ rotate: `${angle}deg` }] }} />;
+```
+
+## When to use
+
+- Straightening a photo or rotating a layer by small angles.
+- Any bounded angle where feel matters more than typing a number.
+
+## When not to use
+
+- Full turns: a ruler of 360 ticks is slow to sweep. Use a dial or 90° buttons.
+- Values that are not angles.
+
+## Notes
+
+- A flick glides a little before it settles on a whole degree; resting within two degrees of zero snaps to level.
+- Double-tap the ruler to level it. Haptics tick on every degree and land firmer on zero.

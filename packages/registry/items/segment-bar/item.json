@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "segment-bar",
+  "title": "Segment Bar",
+  "description": "A segmented control in a rounded panel whose pill glides to the pick, with an action button that pops.",
+  "category": "input",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["segment-bar.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The pill moves with one UI-thread spring per change; at rest nothing animates.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 21,
+        "p90Ms": 23,
+        "baselineMs": 17,
+        "jankyPercent": 0.24,
+        "atRest": "idle",
+        "memoryMb": 150
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The pill jumps to the selection and the action button does not pop.",
+    "screenReader": "A radio group with a name; each option is a radio with its checked state; the action button has its own name.",
+    "touchTarget": "Options and the action button are at least 44 pt."
+  }
+}

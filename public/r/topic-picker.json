@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "topic-picker",
+  "type": "registry:item",
+  "title": "Topic Picker",
+  "description": "Topic chips drifting in rows that run opposite ways; picking one pops it in a soft colour.",
+  "categories": [
+    "input"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/topic-picker.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/topic-picker.tsx",
+      "content": "import { useEffect, useState } from 'react';\nimport {\n  Pressable,\n  ScrollView,\n  StyleSheet,\n  Text,\n  View,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  Easing,\n  useAnimatedStyle,\n  useSharedValue,\n  withRepeat,\n  withSequence,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring, timing } from '../../lib/kinetik/motion/motion';\nimport { gradient } from '../../lib/kinetik/tokens/gradient';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { glow, minTouchTarget, withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type Topic = {\n  id: string;\n  label: string;\n  /** An emoji or short glyph before the label. */\n  emoji?: string;\n};\n\nexport type TopicPickerProps = {\n  topics: readonly Topic[];\n  /** Ids of the picked topics. */\n  selected: readonly string[];\n  onChange: (selected: string[]) => void;\n  title?: string;\n  subtitle?: string;\n  /** Rows of drifting chips. Topics are dealt across them in turn. Defaults to 3. */\n  rows?: number;\n  /** Drift speed in pt per second. Defaults to 22. */\n  speed?: number;\n  /** The button under the rows. Disabled until `minimum` topics are picked. */\n  submit?: { label: string; onPress: (selected: string[]) => void };\n  /** Defaults to 1. */\n  minimum?: number;\n  /** A tick on each pick. Defaults to true. */\n  haptics?: boolean;\n  style?: StyleProp<ViewStyle>;\n};\n\n/**\n * Topic chips drifting past in rows that run in opposite directions, fading\n * out at the edges. Picking one pops it and washes it in a soft colour; the\n * button underneath wakes up once enough are picked.\n */\nexport function TopicPicker({\n  topics,\n  selected,\n  onChange,\n  title = 'Select your topics',\n  subtitle = 'Choose topics that you are interested in',\n  rows = 3,\n  speed = 22,\n  submit,\n  minimum = 1,\n  haptics = true,\n  style,\n}: TopicPickerProps) {\n  const { colors, radius, space, font, shadow } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const lines = Array.from({ length: rows }, (_, r) => topics.filter((_, i) => i % rows === r));\n  const tints = [colors.azure, colors.warning, colors.danger, colors.success, colors.sky];\n  const ready = selected.length >= minimum;\n\n  const toggle = (id: string) => {\n    haptic('tick');\n    onChange(selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id]);\n  };\n\n  const fade = withAlpha(colors.surfaceRaised, 0);\n\n  return (\n    <View\n      style={[\n        styles.panel,\n        {\n          backgroundColor: colors.surfaceRaised,\n          borderRadius: radius.xl + 8,\n          paddingVertical: space[6],\n          gap: space[6],\n          boxShadow: shadow.lg,\n        },\n        style,\n      ]}\n    >\n      <View style={{ alignItems: 'center', gap: space[1], paddingHorizontal: space[5] }}>\n        <Text\n          accessibilityRole=\"header\"\n          style={{\n            color: colors.text,\n            fontSize: font.size['2xl'],\n            fontWeight: font.weight.bold,\n            textAlign: 'center',\n          }}\n        >\n          {title}\n        </Text>\n        <Text style={{ color: colors.textMuted, fontSize: font.size.md, textAlign: 'center' }}>\n          {subtitle}\n        </Text>\n      </View>\n\n      <View style={{ gap: space[3] }}>\n        {lines.map((line, r) => (\n          <Row\n            key={r}\n            topics={line}\n            direction={r % 2 === 0 ? 'left' : 'right'}\n            speed={speed * (1 + r * 0.18)}\n            still={reduced}\n            selected={selected}\n            tintFor={(id) => tints[topics.findIndex((t) => t.id === id) % tints.length]!}\n            onToggle={toggle}\n          />\n        ))}\n        <View\n          pointerEvents=\"none\"\n          style={[\n            styles.edge,\n            styles.edgeLeft,\n            gradient(`linear-gradient(90deg, ${colors.surfaceRaised} 0%, ${fade} 100%)`),\n          ]}\n        />\n        <View\n          pointerEvents=\"none\"\n          style={[\n            styles.edge,\n            styles.edgeRight,\n            gradient(`linear-gradient(270deg, ${colors.surfaceRaised} 0%, ${fade} 100%)`),\n          ]}\n        />\n      </View>\n\n      {submit ? (\n        <Pressable\n          accessibilityRole=\"button\"\n          accessibilityState={{ disabled: !ready }}\n          accessibilityHint={`${selected.length} selected`}\n          disabled={!ready}\n          onPress={() => submit.onPress([...selected])}\n          style={({ pressed }) => [\n            styles.submit,\n            {\n              marginHorizontal: space[5],\n              borderRadius: radius.pill,\n              backgroundColor: ready ? colors.azureSoft : colors.surfaceSunken,\n              boxShadow: ready ? glow(colors.azure) : undefined,\n              transform: [{ scale: pressed ? 0.98 : 1 }],\n            },\n          ]}\n        >\n          <Text\n            style={{\n              color: ready ? colors.text : colors.textSubtle,\n              fontSize: font.size.md,\n              fontWeight: font.weight.bold,\n              letterSpacing: font.tracking.wide,\n            }}\n          >\n            {submit.label.toUpperCase()}\n          </Text>\n        </Pressable>\n      ) : null}\n    </View>\n  );\n}\n\nfunction Row({\n  topics,\n  direction,\n  speed,\n  still,\n  selected,\n  tintFor,\n  onToggle,\n}: {\n  topics: readonly Topic[];\n  direction: 'left' | 'right';\n  speed: number;\n  still: boolean;\n  selected: readonly string[];\n  tintFor: (id: string) => string;\n  onToggle: (id: string) => void;\n}) {\n  const [span, setSpan] = useState(0);\n  const x = useSharedValue(0);\n\n  useEffect(() => {\n    if (still || span <= 0) return;\n    const from = direction === 'left' ? 0 : -span;\n    const to = direction === 'left' ? -span : 0;\n    x.set(from);\n    x.set(\n      withRepeat(withTiming(to, { duration: (span / speed) * 1000, easing: Easing.linear }), -1),\n    );\n  }, [span, speed, direction, still, x]);\n\n  const drift = useAnimatedStyle(() => ({ transform: [{ translateX: x.get() }] }));\n\n  const chips = (copy: number) => (\n    <View\n      style={styles.copy}\n      onLayout={copy === 0 ? (e) => setSpan(e.nativeEvent.layout.width) : undefined}\n      accessibilityElementsHidden={copy === 1}\n      importantForAccessibility={copy === 1 ? 'no-hide-descendants' : 'auto'}\n    >\n      {topics.map((t) => (\n        <Chip\n          key={t.id}\n          topic={t}\n          on={selected.includes(t.id)}\n          tint={tintFor(t.id)}\n          onPress={() => onToggle(t.id)}\n        />\n      ))}\n    </View>\n  );\n\n  // With reduced motion the row holds still and scrolls by hand instead.\n  if (still) {\n    return (\n      <ScrollView\n        horizontal\n        showsHorizontalScrollIndicator={false}\n        contentContainerStyle={styles.scroll}\n      >\n        {chips(0)}\n      </ScrollView>\n    );\n  }\n  return (\n    <View style={styles.rowClip}>\n      <Animated.View style={[styles.track, drift]}>\n        {chips(0)}\n        {chips(1)}\n      </Animated.View>\n    </View>\n  );\n}\n\nfunction Chip({\n  topic,\n  on,\n  tint,\n  onPress,\n}: {\n  topic: Topic;\n  on: boolean;\n  tint: string;\n  onPress: () => void;\n}) {\n  const { colors, radius, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const pop = useSharedValue(0);\n  const style = useAnimatedStyle(() => ({ transform: [{ scale: 1 + pop.get() * 0.1 }] }));\n\n  return (\n    <Pressable\n      accessibilityRole=\"checkbox\"\n      accessibilityLabel={topic.label}\n      accessibilityState={{ checked: on }}\n      onPress={() => {\n        if (!reduced) {\n          pop.set(withSequence(withTiming(1, timing('quick')), withSpring(0, spring('bouncy'))));\n        }\n        onPress();\n      }}\n    >\n      <Animated.View\n        style={[\n          styles.chip,\n          {\n            borderRadius: radius.pill,\n            backgroundColor: on ? withAlpha(tint, 0.28) : colors.surface,\n            // No shadow: dozens of chips move every frame, and a border is far cheaper.\n            borderColor: on ? withAlpha(tint, 0.6) : colors.borderStrong,\n          },\n          style,\n        ]}\n      >\n        {topic.emoji ? <Text style={{ fontSize: font.size.lg }}>{topic.emoji}</Text> : null}\n        <Text\n          style={{ color: colors.text, fontSize: font.size.md + 1, fontWeight: font.weight.medium }}\n        >\n          {topic.label}\n        </Text>\n      </Animated.View>\n    </Pressable>\n  );\n}\n\nconst styles = StyleSheet.create({\n  panel: { overflow: 'hidden' },\n  rowClip: { overflow: 'hidden', paddingVertical: 4 },\n  track: { flexDirection: 'row', alignSelf: 'flex-start' },\n  copy: { flexDirection: 'row', gap: 10, paddingRight: 10 },\n  scroll: { paddingHorizontal: 16, paddingVertical: 4 },\n  chip: {\n    flexDirection: 'row',\n    alignItems: 'center',\n    gap: 8,\n    minHeight: minTouchTarget + 4,\n    paddingHorizontal: 18,\n    borderWidth: 1,\n  },\n  edge: { position: 'absolute', top: 0, bottom: 0, width: 40 },\n  edgeLeft: { left: 0 },\n  edgeRight: { right: 0 },\n  submit: { minHeight: 60, alignItems: 'center', justifyContent: 'center' },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "input",
+    "web": "live",
+    "perf": {
+      "budget": "Each row is one looping UI-thread transform; chips only re-render when picked.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-14",
+          "build": "release",
+          "frameMs": 22,
+          "p90Ms": 25,
+          "baselineMs": 17,
+          "jankyPercent": 0,
+          "atRest": "animating",
+          "memoryMb": 159,
+          "notes": "Animating at rest: the rows drift continuously. Chips carry no shadow, which took frames from 28 to 22 ms here."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Rows hold still and scroll by hand instead of drifting; chips do not pop.",
+      "screenReader": "Each topic is a checkbox with its checked state; copies used for the loop are hidden. The submit button is disabled until enough are picked.",
+      "touchTarget": "Chips are 48 pt tall; the submit button is 60 pt."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { TopicPicker } from '@/components/kinetik/topic-picker';\n\n<TopicPicker\n  topics={[\n    { id: 'basketball', label: 'Basketball', emoji: '🏀' },\n    { id: 'fruits', label: 'Fruits', emoji: '🍋' },\n    { id: 'weather', label: 'Weather', emoji: '☔' },\n  ]}\n  selected={interests}\n  onChange={setInterests}\n  minimum={3}\n  submit={{ label: 'Submit', onPress: saveInterests }}\n/>;\n```\n\n## When to use\n\n- Picking interests during onboarding, from roughly nine to thirty short topics.\n\n## When not to use\n\n- Choices people must read carefully: moving targets are harder to read. Use a static grid.\n- A single choice: use radios or Choice Cards.\n\n## Notes\n\n- Topics are dealt across `rows` in turn; rows drift in opposite directions at slightly different speeds.\n- With reduced motion the rows stop drifting and scroll by hand instead.\n- Picked chips take a soft colour from the theme accents, so the set stays on palette.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add topic-picker`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

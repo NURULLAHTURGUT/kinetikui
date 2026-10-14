@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "boarding-pass",
+  "title": "Boarding Pass",
+  "description": "A paper boarding pass with real notches: tap the barcode to scan it and the stub tears off with a stamp.",
+  "category": "card",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated", "react-native-svg"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["boarding-pass.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The ticket shape is built once per size; the band slides in on arrival and the scan runs one UI-thread timing and spring. Nothing animates at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 23,
+        "p90Ms": 30,
+        "baselineMs": 17,
+        "jankyPercent": 3.14,
+        "atRest": "idle",
+        "memoryMb": 158,
+        "notes": "Measured during scans (scanner line with a blurred glow, then the stub tearing). Frame stats put app work at about 2 ms and render-thread work at 1 ms a frame; the rest is the emulator waiting on its virtual GPU."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The pass appears in place and a scan tears and stamps the stub at once, with no scanner line.",
+    "screenReader": "The pass reads as one summary (route, times, passenger, gate and seat); the barcode is a button that becomes \"Boarded\".",
+    "touchTarget": "The whole stub, 112 pt tall, is the scan button."
+  }
+}

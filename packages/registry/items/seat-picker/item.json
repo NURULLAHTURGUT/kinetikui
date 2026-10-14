@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "seat-picker",
+  "title": "Seat Picker",
+  "description": "A seat counter: armchairs that fill as you add seats, a rolling stepper and a badge of seats left.",
+  "category": "input",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["seat-picker.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Seat pops and the number roll run once per change on the UI thread; at rest nothing animates. All seats share one Skia canvas.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 27,
+        "p90Ms": 30,
+        "baselineMs": 17,
+        "jankyPercent": 0.22,
+        "atRest": "idle",
+        "memoryMb": 162,
+        "notes": "Frame times are mostly the emulator GPU swap: framestats show about 6 ms of app work per frame (input, animation and drawing) and ~17 ms waiting for the swap."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Seats fill and empty without popping, the number changes in place and the stepper does not shake.",
+    "screenReader": "The count is an adjustable control (\"2 seats\"); the buttons are named Add a seat and Remove a seat; the badge reads \"3 seats left\" and is announced as it changes.",
+    "touchTarget": "Stepper buttons and the action are 52 pt tall; the info button is 44 pt."
+  }
+}

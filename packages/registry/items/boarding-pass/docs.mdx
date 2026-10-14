@@ -1,0 +1,36 @@
+## Usage
+
+```tsx
+import { BoardingPass } from '@/components/kinetik/boarding-pass';
+
+<BoardingPass
+  airline="Northwind"
+  flight="KN 1321"
+  cabin="Premium"
+  booking="AG7890"
+  from={{ code: 'CDG', city: 'Paris', time: '14:30' }}
+  to={{ code: 'JFK', city: 'New York', time: '17:45' }}
+  duration="8h 15m"
+  passenger="Olivia Bennett"
+  details={[
+    { label: 'Gate', value: 'B12' },
+    { label: 'Seat', value: '12A' },
+  ]}
+  onScan={checkIn}
+/>;
+```
+
+## When to use
+
+- Showing a ticket, pass or booking that the user presents or checks in with.
+
+## When not to use
+
+- As a real scannable code: the barcode is a decorative pattern. Render a real barcode or QR code for gates.
+
+## Notes
+
+- The notches are cut out of the ticket shape, so the pass sits on any background.
+- The pass is paper-white on both themes. `accent` colours the striped band.
+- Without `onScan` the stub is not a button. `boarded` starts the pass already torn and stamped.
+- `barcodeBars(code)` is exported: the same code always draws the same pattern.

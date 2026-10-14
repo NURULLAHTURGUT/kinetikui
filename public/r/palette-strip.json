@@ -1,0 +1,62 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "palette-strip",
+  "type": "registry:item",
+  "title": "Palette Strip",
+  "description": "Colour swatches joined into one bar that wipe to new colours in turn, with a spinning shuffle button.",
+  "categories": [
+    "input"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/palette-strip.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/palette-strip.tsx",
+      "content": "import { useEffect, useState, type ReactNode } from 'react';\nimport { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withDelay,\n  withSequence,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring, timing } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget, withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type PaletteStripAction = {\n  icon: ReactNode;\n  /** Accessible name, e.g. \"Shuffle palette\". */\n  label: string;\n  onPress: () => void;\n};\n\nexport type PaletteStripProps = {\n  /** The colours, left to right. Change them and each swatch wipes to its new colour in turn. */\n  colors: readonly string[];\n  /** Names read by screen readers instead of the colour values, e.g. [\"Snow\", \"Slate\", \"Lagoon\"]. */\n  names?: readonly string[];\n  /** Makes each swatch a button, e.g. to copy or edit that colour. */\n  onSwatchPress?: (index: number, color: string) => void;\n  /** A round button at the end, e.g. shuffle. It spins on each press. */\n  action?: PaletteStripAction;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst HEIGHT = 44;\n\n/**\n * A row of colour swatches joined into one rounded bar. When the colours\n * change, each swatch wipes up to its new colour a beat after its neighbour,\n * and the shuffle button turns a full circle.\n */\nexport function PaletteStrip({\n  colors: palette,\n  names,\n  onSwatchPress,\n  action,\n  style,\n}: PaletteStripProps) {\n  const { colors, radius, space } = useKinetikTheme();\n  return (\n    <View\n      style={[\n        styles.panel,\n        {\n          backgroundColor: colors.surfaceRaised,\n          borderRadius: radius.lg,\n          paddingLeft: space[2],\n          paddingRight: action ? space[1] : space[2],\n          gap: space[2],\n        },\n        style,\n      ]}\n    >\n      <View\n        accessibilityRole={onSwatchPress ? undefined : 'image'}\n        accessibilityLabel={\n          onSwatchPress\n            ? undefined\n            : `Palette: ${palette.map((c, i) => names?.[i] ?? c).join(', ')}`\n        }\n        accessible={!onSwatchPress}\n        style={[styles.bar, { borderRadius: radius.md }]}\n      >\n        {palette.map((color, i) => (\n          <Swatch\n            key={i}\n            index={i}\n            color={color}\n            name={names?.[i] ?? color}\n            onPress={onSwatchPress ? () => onSwatchPress(i, color) : undefined}\n          />\n        ))}\n      </View>\n      {action ? <SpinButton action={action} /> : null}\n    </View>\n  );\n}\n\nfunction Swatch({\n  index,\n  color,\n  name,\n  onPress,\n}: {\n  index: number;\n  color: string;\n  name: string;\n  onPress?: () => void;\n}) {\n  const reduced = useReduceMotion();\n  // The colour on show underneath while the new one wipes in over it.\n  const [seen, setSeen] = useState(color);\n  const [under, setUnder] = useState(color);\n  if (color !== seen) {\n    setUnder(seen);\n    setSeen(color);\n  }\n  const wipe = useSharedValue(1);\n  const bump = useSharedValue(0);\n\n  useEffect(() => {\n    if (reduced) {\n      wipe.set(1);\n      return;\n    }\n    wipe.set(0);\n    wipe.set(withDelay(index * 70, withTiming(1, { ...timing('slow'), duration: 420 })));\n  }, [color, index, reduced, wipe]);\n\n  const top = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - wipe.get()) * HEIGHT }] }));\n  const press = useAnimatedStyle(() => ({ transform: [{ scaleY: 1 - bump.get() * 0.08 }] }));\n\n  const body = (\n    <Animated.View style={[styles.fill, press]}>\n      <View style={[StyleSheet.absoluteFill, { backgroundColor: under }]} />\n      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: color }, top]} />\n    </Animated.View>\n  );\n\n  if (!onPress) return <View style={styles.swatch}>{body}</View>;\n  return (\n    <Pressable\n      accessibilityRole=\"button\"\n      accessibilityLabel={name}\n      onPress={() => {\n        if (!reduced) {\n          bump.set(withSequence(withTiming(1, timing('quick')), withSpring(0, spring('bouncy'))));\n        }\n        onPress();\n      }}\n      style={styles.swatch}\n    >\n      {body}\n    </Pressable>\n  );\n}\n\nfunction SpinButton({ action }: { action: PaletteStripAction }) {\n  const { colors } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const turn = useSharedValue(0);\n  const press = useSharedValue(0);\n  const style = useAnimatedStyle(() => ({\n    transform: [{ rotate: `${turn.get() * 360}deg` }, { scale: 1 - press.get() * 0.12 }],\n  }));\n  return (\n    <Pressable\n      accessibilityRole=\"button\"\n      accessibilityLabel={action.label}\n      onPress={() => {\n        if (!reduced) {\n          turn.set(withTiming(Math.round(turn.get()) + 1, { ...timing('slow'), duration: 600 }));\n        }\n        action.onPress();\n      }}\n      onPressIn={() => press.set(withSpring(1, spring('snappy', reduced)))}\n      onPressOut={() => press.set(withSpring(0, spring('bouncy', reduced)))}\n      style={({ pressed }) => [\n        styles.action,\n        { backgroundColor: pressed ? withAlpha(colors.text, 0.06) : 'transparent' },\n      ]}\n    >\n      <Animated.View style={style}>{action.icon}</Animated.View>\n    </Pressable>\n  );\n}\n\nconst styles = StyleSheet.create({\n  panel: { minHeight: 56, flexDirection: 'row', alignItems: 'center' },\n  bar: { flex: 1, height: HEIGHT, flexDirection: 'row', overflow: 'hidden' },\n  swatch: { flex: 1 },\n  fill: { flex: 1, overflow: 'hidden' },\n  action: {\n    width: minTouchTarget,\n    height: minTouchTarget,\n    borderRadius: minTouchTarget / 2,\n    alignItems: 'center',\n    justifyContent: 'center',\n  },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "input",
+    "web": "live",
+    "perf": {
+      "budget": "Each swatch wipe is one UI-thread transform for about half a second after the colours change; at rest nothing animates.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-14",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 18,
+          "baselineMs": 17,
+          "jankyPercent": 0.38,
+          "atRest": "idle",
+          "memoryMb": 146
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Swatches change colour in place and the shuffle icon does not spin.",
+      "screenReader": "Without onSwatchPress the bar is one image named after its colours; with it, each swatch is a button named after its colour.",
+      "touchTarget": "Swatches are 44 pt tall; the action button is 44 pt."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { PaletteStrip } from '@/components/kinetik/palette-strip';\n\n<PaletteStrip\n  colors={palette}\n  names={['Snow', 'Slate', 'Lagoon']}\n  onSwatchPress={(i, color) => copy(color)}\n  action={{\n    icon: <ShuffleIcon />,\n    label: 'Shuffle palette',\n    onPress: () => setPalette(generate()),\n  }}\n/>;\n```\n\n## When to use\n\n- Showing and regenerating a small set of colours: a theme, a palette generator, extracted image colours.\n- Two to six colours.\n\n## When not to use\n\n- Picking one colour from many: use a grid of swatches.\n- More than six colours: the swatches get too narrow to tap.\n\n## Notes\n\n- The component does not create colours; change `colors` and each swatch wipes to its new colour a beat after its neighbour.\n- Without `onSwatchPress` the bar is one image for screen readers; with it each swatch is a button.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add palette-strip`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

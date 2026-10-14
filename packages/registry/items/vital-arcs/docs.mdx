@@ -1,0 +1,35 @@
+## Usage
+
+```tsx
+import { VitalArcs } from '@/components/kinetik/vital-arcs';
+
+<VitalArcs
+  title="Today · 21 Feb"
+  metrics={[
+    { icon: <MoonIcon />, value: '7h 2m', label: 'Sleep time', change: { text: '12%', up: true } },
+    { icon: <HeartIcon />, value: '56 bpm', label: 'Avg. heart rate' },
+  ]}
+  rings={[
+    { value: 31, label: 'Activity' },
+    { value: 84, label: 'Workouts' },
+    { value: 53, label: 'Rest' },
+  ]}
+  score={16}
+  scoreLabel="PAI"
+/>;
+```
+
+## When to use
+
+- A home-screen style summary: two or three figures and up to three goals with a headline score.
+
+## When not to use
+
+- Exact comparisons between rings: the arcs read as progress, not precise values.
+- More than three goals: use Activity Rings or a chart.
+
+## Notes
+
+- Ring values run 0–100. They sweep in outside first and re-sweep whenever a value changes.
+- Default arc colours are sky, green and red, outside in; pass `color` per ring to change them.
+- The card is 204 pt tall and shrinks the arcs on narrow widths so they stay clear of the text.

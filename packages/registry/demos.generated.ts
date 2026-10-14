@@ -4,12 +4,16 @@ import type { ComponentType } from 'react';
 import type { Controls } from './demo-kit/types';
 import * as actionSheet from './items/action-sheet/demo';
 import * as activityRings from './items/activity-rings/demo';
+import * as agendaCard from './items/agenda-card/demo';
 import * as apertureCard from './items/aperture-card/demo';
+import * as aspectPicker from './items/aspect-picker/demo';
 import * as auroraVeil from './items/aurora-veil/demo';
 import * as avatarStack from './items/avatar-stack/demo';
 import * as barChart from './items/bar-chart/demo';
 import * as beamButton from './items/beam-button/demo';
 import * as bloomMenu from './items/bloom-menu/demo';
+import * as boardingPass from './items/boarding-pass/demo';
+import * as bookPocket from './items/book-pocket/demo';
 import * as brushChart from './items/brush-chart/demo';
 import * as chatThread from './items/chat-thread/demo';
 import * as choiceCards from './items/choice-cards/demo';
@@ -19,6 +23,7 @@ import * as confettiBurst from './items/confetti-burst/demo';
 import * as copyChip from './items/copy-chip/demo';
 import * as countBadge from './items/count-badge/demo';
 import * as countdown from './items/countdown/demo';
+import * as creditScore from './items/credit-score/demo';
 import * as deckfall from './items/deckfall/demo';
 import * as dockBar from './items/dock-bar/demo';
 import * as donutChart from './items/donut-chart/demo';
@@ -28,21 +33,25 @@ import * as elasticSlider from './items/elastic-slider/demo';
 import * as emptyState from './items/empty-state/demo';
 import * as expandCard from './items/expand-card/demo';
 import * as expandToolbar from './items/expand-toolbar/demo';
+import * as expenseCard from './items/expense-card/demo';
 import * as fadeScroll from './items/fade-scroll/demo';
 import * as fanStack from './items/fan-stack/demo';
 import * as filterChips from './items/filter-chips/demo';
+import * as flightTrack from './items/flight-track/demo';
 import * as flipLedger from './items/flip-ledger/demo';
 import * as floatField from './items/float-field/demo';
 import * as foldPanel from './items/fold-panel/demo';
 import * as gaugeMeter from './items/gauge-meter/demo';
 import * as glideRadio from './items/glide-radio/demo';
 import * as glintCard from './items/glint-card/demo';
+import * as gradientSlider from './items/gradient-slider/demo';
 import * as grainDrift from './items/grain-drift/demo';
 import * as growArea from './items/grow-area/demo';
 import * as heatGrid from './items/heat-grid/demo';
 import * as holdToConfirm from './items/hold-to-confirm/demo';
 import * as inkCheck from './items/ink-check/demo';
 import * as inlineEdit from './items/inline-edit/demo';
+import * as intensitySlider from './items/intensity-slider/demo';
 import * as letterMorph from './items/letter-morph/demo';
 import * as liftMenu from './items/lift-menu/demo';
 import * as likeBurst from './items/like-burst/demo';
@@ -56,18 +65,23 @@ import * as morphIcon from './items/morph-icon/demo';
 import * as morphSelect from './items/morph-select/demo';
 import * as morphSheet from './items/morph-sheet/demo';
 import * as noticeBar from './items/notice-bar/demo';
+import * as nowPlaying from './items/now-playing/demo';
 import * as odometer from './items/odometer/demo';
 import * as pageDots from './items/page-dots/demo';
 import * as pager from './items/pager/demo';
+import * as paletteStrip from './items/palette-strip/demo';
 import * as parallaxCarousel from './items/parallax-carousel/demo';
 import * as parallaxHeader from './items/parallax-header/demo';
 import * as passwordMeter from './items/password-meter/demo';
+import * as peekFolder from './items/peek-folder/demo';
+import * as planPicker from './items/plan-picker/demo';
 import * as planToggle from './items/plan-toggle/demo';
 import * as popDialog from './items/pop-dialog/demo';
 import * as popMenu from './items/pop-menu/demo';
 import * as pressJelly from './items/press-jelly/demo';
 import * as progressBar from './items/progress-bar/demo';
 import * as pulseToggle from './items/pulse-toggle/demo';
+import * as questionDeck from './items/question-deck/demo';
 import * as radarChart from './items/radar-chart/demo';
 import * as rangeSlider from './items/range-slider/demo';
 import * as readMore from './items/read-more/demo';
@@ -76,10 +90,15 @@ import * as ridgeline from './items/ridgeline/demo';
 import * as ringSpinner from './items/ring-spinner/demo';
 import * as rippleField from './items/ripple-field/demo';
 import * as rollStepper from './items/roll-stepper/demo';
+import * as rotationRuler from './items/rotation-ruler/demo';
+import * as scanProgress from './items/scan-progress/demo';
+import * as scoreMatrix from './items/score-matrix/demo';
 import * as scrambleText from './items/scramble-text/demo';
 import * as scrollStack from './items/scroll-stack/demo';
 import * as scrollTabs from './items/scroll-tabs/demo';
 import * as searchMorph from './items/search-morph/demo';
+import * as seatPicker from './items/seat-picker/demo';
+import * as segmentBar from './items/segment-bar/demo';
 import * as shineText from './items/shine-text/demo';
 import * as sideDrawer from './items/side-drawer/demo';
 import * as signaturePad from './items/signature-pad/demo';
@@ -93,8 +112,10 @@ import * as splitPane from './items/split-pane/demo';
 import * as starRating from './items/star-rating/demo';
 import * as statCard from './items/stat-card/demo';
 import * as statusButton from './items/status-button/demo';
+import * as stepSlider from './items/step-slider/demo';
 import * as stepTracker from './items/step-tracker/demo';
 import * as storyCard from './items/story-card/demo';
+import * as streakCard from './items/streak-card/demo';
 import * as streamGraph from './items/stream-graph/demo';
 import * as swatchPicker from './items/swatch-picker/demo';
 import * as swipeRow from './items/swipe-row/demo';
@@ -105,12 +126,16 @@ import * as timeWheel from './items/time-wheel/demo';
 import * as timeline from './items/timeline/demo';
 import * as tipBubble from './items/tip-bubble/demo';
 import * as toastStack from './items/toast-stack/demo';
+import * as topicPicker from './items/topic-picker/demo';
 import * as treeView from './items/tree-view/demo';
 import * as treemap from './items/treemap/demo';
 import * as twoStepButton from './items/two-step-button/demo';
 import * as typewriter from './items/typewriter/demo';
 import * as usageMeter from './items/usage-meter/demo';
+import * as vinylPlayer from './items/vinyl-player/demo';
+import * as vitalArcs from './items/vital-arcs/demo';
 import * as waffleChart from './items/waffle-chart/demo';
+import * as walletStack from './items/wallet-stack/demo';
 import * as wordCascade from './items/word-cascade/demo';
 import * as wordRotator from './items/word-rotator/demo';
 import * as auth from './templates/auth/demo';
@@ -149,12 +174,16 @@ export type DemoEntry = {
 export const demos: DemoEntry[] = [
   { name: "action-sheet", title: "Action Sheet", description: "Actions from the bottom edge with Cancel apart: it springs up, follows a downward drag and drops away.", category: "overlay", phase: 2, web: "live", version: "1.0.0", controls: actionSheet.controls, Demo: actionSheet.default },
   { name: "activity-rings", title: "Activity Rings", description: "Concentric progress rings that wind up one after another; a ring past its goal laps itself.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: activityRings.controls, Demo: activityRings.default },
+  { name: "agenda-card", title: "Agenda Card", description: "A day-at-a-glance widget: the date lit by a blue glow, events sliding in, and a bar that fills for the one under way.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: agendaCard.controls, Demo: agendaCard.default },
   { name: "aperture-card", title: "Aperture Card", description: "A card closed by a camera-like iris whose blades turn open to reveal the content.", category: "card", phase: 2, web: "live", version: "1.0.0", controls: apertureCard.controls, Demo: apertureCard.default },
+  { name: "aspect-picker", title: "Aspect Picker", description: "Aspect-ratio frames drawn to scale; a soft square slides to the pick and its frame grows a touch.", category: "input", phase: 1, web: "live", version: "1.0.0", controls: aspectPicker.controls, Demo: aspectPicker.default },
   { name: "aurora-veil", title: "Aurora Veil", description: "A slow, flowing aurora drawn by a fragment shader, for screen and hero backgrounds.", category: "background", phase: 2, web: "live", version: "1.0.0", controls: auroraVeil.controls, Demo: auroraVeil.default },
   { name: "avatar-stack", title: "Avatar Stack", description: "Overlapping avatars that fan out one after another with names beneath, then tuck back in behind the first.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: avatarStack.controls, Demo: avatarStack.default },
   { name: "bar-chart", title: "Bar Chart", description: "Bars that spring up in a wave; drag across them and the one under the finger stays bright with its value.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: barChart.controls, Demo: barChart.default },
   { name: "beam-button", title: "Beam Button", description: "A button with a beam of light running around its edge, leaving a soft glow that brightens on press.", category: "interaction", phase: 1, web: "live", version: "1.0.0", controls: beamButton.controls, Demo: beamButton.default },
   { name: "bloom-menu", title: "Bloom Menu", description: "A floating action button that blooms: the plus turns, a halo opens and actions spring out one by one.", category: "interaction", phase: 2, web: "live", version: "1.0.0", controls: bloomMenu.controls, Demo: bloomMenu.default },
+  { name: "boarding-pass", title: "Boarding Pass", description: "A paper boarding pass with real notches: tap the barcode to scan it and the stub tears off with a stamp.", category: "card", phase: 1, web: "live", version: "1.0.0", controls: boardingPass.controls, Demo: boardingPass.default },
+  { name: "book-pocket", title: "Book Pocket", description: "Book covers tucked in a frosted acrylic pocket: they drop in, and rise and fan out while pressed or hovered.", category: "card", phase: 1, web: "live", version: "1.0.0", controls: bookPocket.controls, Demo: bookPocket.default },
   { name: "brush-chart", title: "Brush Chart", description: "A long series with an overview strip: drag the window or its handles and the chart above zooms to it.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: brushChart.controls, Demo: brushChart.default },
   { name: "chat-thread", title: "Chat Thread", description: "Grouped chat bubbles: new messages rise in from their side, typing dots wave and Seen fades in.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: chatThread.controls, Demo: chatThread.default },
   { name: "choice-cards", title: "Choice Cards", description: "Option cards for a single choice: one selection ring glides between cards, stretching to fit each one.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: choiceCards.controls, Demo: choiceCards.default },
@@ -164,6 +193,7 @@ export const demos: DemoEntry[] = [
   { name: "copy-chip", title: "Copy Chip", description: "A value with a copy button whose two pages fold into a check while a ring spreads and the outline turns green.", category: "interaction", phase: 2, web: "live", version: "1.0.0", controls: copyChip.controls, Demo: copyChip.default },
   { name: "count-badge", title: "Count Badge", description: "A count on the corner of an icon that springs in, jumps as it rises, rolls its number and shrinks away at zero.", category: "feedback", phase: 2, web: "live", version: "1.0.0", controls: countBadge.controls, Demo: countBadge.default },
   { name: "countdown", title: "Countdown", description: "A countdown whose digits drop in as they change; at zero the tiles step back for a Live pill with a beating dot.", category: "feedback", phase: 2, web: "live", version: "1.0.0", controls: countdown.controls, Demo: countdown.default },
+  { name: "credit-score", title: "Credit Score", description: "A credit score card whose number counts up while a bar meter lights from red through amber to green.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: creditScore.controls, Demo: creditScore.default },
   { name: "deckfall", title: "Deckfall", description: "A stack of cards swiped away one at a time, with the cards behind rising into place.", category: "card", phase: 2, web: "live", version: "1.0.0", controls: deckfall.controls, Demo: deckfall.default },
   { name: "dock-bar", title: "Dock Bar", description: "A floating bottom navigation bar whose items swell under the finger like a dock.", category: "navigation", phase: 2, web: "live", version: "1.0.0", controls: dockBar.controls, Demo: dockBar.default },
   { name: "donut-chart", title: "Donut Chart", description: "A ring of rounded slices that sweeps in; tap a slice to bring it forward and read its share in the middle.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: donutChart.controls, Demo: donutChart.default },
@@ -173,21 +203,25 @@ export const demos: DemoEntry[] = [
   { name: "empty-state", title: "Empty State", description: "A calm empty screen: three cards rise and fan out, a blue dot lands, and the next step settles in beneath.", category: "feedback", phase: 2, web: "live", version: "1.0.0", controls: emptyState.controls, Demo: emptyState.default },
   { name: "expand-card", title: "Expand Card", description: "A row that opens into a card: the thumbnail grows into a wide picture and the details rise in beneath it.", category: "card", phase: 2, web: "live", version: "1.0.0", controls: expandCard.controls, Demo: expandCard.default },
   { name: "expand-toolbar", title: "Expand Toolbar", description: "Icon buttons where the picked one grows to show its name while its neighbours slide aside to make room.", category: "interaction", phase: 2, web: "live", version: "1.0.0", controls: expandToolbar.controls, Demo: expandToolbar.default },
+  { name: "expense-card", title: "Expense Card", description: "A spending card with a period menu and horizontal bars on a dashed grid that grow in one by one.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: expenseCard.controls, Demo: expenseCard.default },
   { name: "fade-scroll", title: "Fade Scroll", description: "A scroll view whose edges fade only where there is more to see, with a slim indicator that slips away.", category: "disclosure", phase: 2, web: "live", version: "1.0.0", controls: fadeScroll.controls, Demo: fadeScroll.default },
   { name: "fan-stack", title: "Fan Stack", description: "A loose pile of pictures that fans out like a hand of cards; tap one to lift it out of the fan.", category: "card", phase: 2, web: "live", version: "1.0.0", controls: fanStack.controls, Demo: fanStack.default },
   { name: "filter-chips", title: "Filter Chips", description: "Chips that change shape when picked: a check slides in, the chip grows to fit and its outline turns to a tint.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: filterChips.controls, Demo: filterChips.default },
+  { name: "flight-track", title: "Flight Track", description: "A flight card whose route fills with a glowing line behind a small plane with blinking wing lights.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: flightTrack.controls, Demo: flightTrack.default },
   { name: "flip-ledger", title: "Flip Ledger", description: "A two-sided card that turns over in 3D, sized to the taller of its faces.", category: "card", phase: 1, web: "live", version: "1.0.0", controls: flipLedger.controls, Demo: flipLedger.default },
   { name: "float-field", title: "Float Field", description: "A text field whose label rises to the top edge on focus, with a ring that fades in and a shake for errors.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: floatField.controls, Demo: floatField.default },
   { name: "fold-panel", title: "Fold Panel", description: "A panel that unfolds in place: the body springs to its measured height and drifts in behind it.", category: "card", phase: 2, web: "live", version: "1.0.0", controls: foldPanel.controls, Demo: foldPanel.default },
   { name: "gauge-meter", title: "Gauge Meter", description: "A dial that swings to its value on a spring while the figure counts up beneath it.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: gaugeMeter.controls, Demo: gaugeMeter.default },
   { name: "glide-radio", title: "Glide Radio", description: "A radio group with one dot that travels between the rings like a drop of ink, stretching as it goes.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: glideRadio.controls, Demo: glideRadio.default },
   { name: "glint-card", title: "Glint Card", description: "A card with a specular glint that slides with the finger or the tilt of the device.", category: "card", phase: 1, web: "live", version: "1.0.0", controls: glintCard.controls, Demo: glintCard.default },
+  { name: "gradient-slider", title: "Gradient Slider", description: "A colour slider on a hue or white-balance gradient with a ring knob, a live swatch and an action button.", category: "input", phase: 1, web: "live", version: "1.0.0", controls: gradientSlider.controls, Demo: gradientSlider.default },
   { name: "grain-drift", title: "Grain Drift", description: "A drifting four-colour mesh gradient under moving film grain, drawn by a shader.", category: "background", phase: 2, web: "live", version: "1.0.0", controls: grainDrift.controls, Demo: grainDrift.default },
   { name: "grow-area", title: "Grow Area", description: "A multi-line field that springs taller a line at a time, with a ring that fills towards the character limit.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: growArea.controls, Demo: growArea.default },
   { name: "heat-grid", title: "Heat Grid", description: "A calendar grid of days shaded by activity; the cells pop in as a wave and a drag reads any day.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: heatGrid.controls, Demo: heatGrid.default },
   { name: "hold-to-confirm", title: "Hold to Confirm", description: "Press and hold to confirm: a ring fills around the icon and turns into a check mark.", category: "interaction", phase: 1, web: "live", version: "1.0.0", controls: holdToConfirm.controls, Demo: holdToConfirm.default },
   { name: "ink-check", title: "Ink Check", description: "A checkbox whose tick is inked in one stroke while the box fills, with an optional strike-through label.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: inkCheck.controls, Demo: inkCheck.default },
   { name: "inline-edit", title: "Inline Edit", description: "Text you rename in place: it becomes a field without moving, an underline draws in, and a check confirms the save.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: inlineEdit.controls, Demo: inlineEdit.default },
+  { name: "intensity-slider", title: "Intensity Slider", description: "A soft gradient slider in a card with a slim handle and a Low-to-High ruler that lights up to the value.", category: "input", phase: 1, web: "live", version: "1.0.0", controls: intensitySlider.controls, Demo: intensitySlider.default },
   { name: "letter-morph", title: "Letter Morph", description: "A label that morphs letter by letter: shared letters slide to new places as others float away or rise in.", category: "text", phase: 2, web: "live", version: "1.0.0", controls: letterMorph.controls, Demo: letterMorph.default },
   { name: "lift-menu", title: "Lift Menu", description: "Press and hold: the content sinks, then lifts above a dimmed screen while its actions unfold beneath it.", category: "disclosure", phase: 2, web: "live", version: "1.0.0", controls: liftMenu.controls, Demo: liftMenu.default },
   { name: "like-burst", title: "Like Burst", description: "A like button whose heart pops with a ring of light and a spray of sparks while the count rolls over.", category: "interaction", phase: 2, web: "live", version: "1.0.0", controls: likeBurst.controls, Demo: likeBurst.default },
@@ -201,18 +235,23 @@ export const demos: DemoEntry[] = [
   { name: "morph-select", title: "Morph Select", description: "A select whose field stretches open into its list; a highlight glides to your pick as it folds back.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: morphSelect.controls, Demo: morphSelect.default },
   { name: "morph-sheet", title: "Morph Sheet", description: "A bottom sheet with snap points that morphs from a floating card into a full sheet and blurs the screen behind.", category: "navigation", phase: 2, web: "live", version: "1.0.0", controls: morphSheet.controls, Demo: morphSheet.default },
   { name: "notice-bar", title: "Notice Bar", description: "A slim announcement bar whose messages take turns rolling in; closing it folds the bar shut.", category: "feedback", phase: 2, web: "live", version: "1.0.0", controls: noticeBar.controls, Demo: noticeBar.default },
+  { name: "now-playing", title: "Now Playing", description: "A dark music widget: the cover springs forward on play, the icon morphs and progress runs on the UI thread.", category: "card", phase: 1, web: "live", version: "1.0.0", controls: nowPlaying.controls, Demo: nowPlaying.default },
   { name: "odometer", title: "Odometer", description: "A number whose digits roll like a mechanical counter, forward or back, the long way round.", category: "text", phase: 1, web: "live", version: "1.0.0", controls: odometer.controls, Demo: odometer.default },
   { name: "page-dots", title: "Page Dots", description: "Page dots that follow the scroll: a worm that stretches to the next page, or a dot that widens into a pill.", category: "navigation", phase: 2, web: "live", version: "1.0.0", controls: pageDots.controls, Demo: pageDots.default },
   { name: "pager", title: "Pager", description: "Pagination with a pill that glides to the page; the row keeps its width while the numbers roll in place.", category: "navigation", phase: 2, web: "live", version: "1.0.0", controls: pager.controls, Demo: pager.default },
+  { name: "palette-strip", title: "Palette Strip", description: "Colour swatches joined into one bar that wipe to new colours in turn, with a spinning shuffle button.", category: "input", phase: 1, web: "live", version: "1.0.0", controls: paletteStrip.controls, Demo: paletteStrip.default },
   { name: "parallax-carousel", title: "Parallax Carousel", description: "A paging carousel whose pictures drift inside their cards as they slide, with the centre card brought forward.", category: "card", phase: 2, web: "live", version: "1.0.0", controls: parallaxCarousel.controls, Demo: parallaxCarousel.default },
   { name: "parallax-header", title: "Parallax Header", description: "A scroll view whose header artwork scrolls at half speed, stretches on pull and hands off to a compact bar.", category: "navigation", phase: 2, web: "live", version: "1.0.0", controls: parallaxHeader.controls, Demo: parallaxHeader.default },
   { name: "password-meter", title: "Password Meter", description: "A new-password field whose strength meter fills segment by segment while each rule below ticks off.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: passwordMeter.controls, Demo: passwordMeter.default },
+  { name: "peek-folder", title: "Peek Folder", description: "Tiles tucked in a frosted-glass folder pocket, glowing through it; tap or hover and they spring up and fan out.", category: "interaction", phase: 1, web: "live", version: "1.0.0", controls: peekFolder.controls, Demo: peekFolder.default },
+  { name: "plan-picker", title: "Plan Picker", description: "Plan cards in a tray: the pick lifts with a popping check, over a button with streaming chevrons.", category: "input", phase: 1, web: "live", version: "1.0.0", controls: planPicker.controls, Demo: planPicker.default },
   { name: "plan-toggle", title: "Plan Toggle", description: "A billing-period toggle whose thumb slides and resizes, with a savings badge that pops and a price that rolls.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: planToggle.controls, Demo: planToggle.default },
   { name: "pop-dialog", title: "Pop Dialog", description: "A dialog that rises and settles on a soft spring over a dimmed screen, and sinks back before it unmounts.", category: "overlay", phase: 2, web: "live", version: "1.0.0", controls: popDialog.controls, Demo: popDialog.default },
   { name: "pop-menu", title: "Pop Menu", description: "A menu that unfolds from its trigger's corner, rows sliding in one by one, with a highlight under the finger.", category: "disclosure", phase: 2, web: "live", version: "1.0.0", controls: popMenu.controls, Demo: popMenu.default },
   { name: "press-jelly", title: "Press Jelly", description: "A primary button that squashes like jelly under the finger and wobbles back on release.", category: "interaction", phase: 1, web: "live", version: "1.0.0", controls: pressJelly.controls, Demo: pressJelly.default },
   { name: "progress-bar", title: "Progress Bar", description: "A bar that springs to each new amount with a sheen along the fill, a counting percentage and a green finish.", category: "feedback", phase: 2, web: "live", version: "1.0.0", controls: progressBar.controls, Demo: progressBar.default },
   { name: "pulse-toggle", title: "Pulse Toggle", description: "A switch whose thumb stretches mid-flight, lands as a rounded square and pulses when it turns on.", category: "interaction", phase: 1, web: "live", version: "1.0.0", controls: pulseToggle.controls, Demo: pulseToggle.default },
+  { name: "question-deck", title: "Question Deck", description: "A questionnaire card on a loose stack: answers spring in, questions slide and the cards behind shuffle.", category: "card", phase: 1, web: "live", version: "1.0.0", controls: questionDeck.controls, Demo: questionDeck.default },
   { name: "radar-chart", title: "Radar Chart", description: "A radar chart whose shapes grow from the centre and morph to new values; tap the legend to compare.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: radarChart.controls, Demo: radarChart.default },
   { name: "range-slider", title: "Range Slider", description: "A two-ended slider for a range: the nearer end follows the finger with a value bubble, over an optional histogram.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: rangeSlider.controls, Demo: rangeSlider.default },
   { name: "read-more", title: "Read More", description: "Long text folded to a few lines that fade out; Read more lets it out to full height as the fade dissolves.", category: "disclosure", phase: 2, web: "live", version: "1.0.0", controls: readMore.controls, Demo: readMore.default },
@@ -221,10 +260,15 @@ export const demos: DemoEntry[] = [
   { name: "ring-spinner", title: "Ring Spinner", description: "A spinner whose arc stretches as it turns, fills to a known amount, and closes into a check or a cross.", category: "feedback", phase: 2, web: "live", version: "1.0.0", controls: ringSpinner.controls, Demo: ringSpinner.default },
   { name: "ripple-field", title: "Ripple Field", description: "A dot-grid surface that ripples outward from every touch, drawn by a shader.", category: "background", phase: 2, web: "live", version: "1.0.0", controls: rippleField.controls, Demo: rippleField.default },
   { name: "roll-stepper", title: "Roll Stepper", description: "A number stepper whose figure rolls up or down with each step, speeds up while held and bumps at its limits.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: rollStepper.controls, Demo: rollStepper.default },
+  { name: "rotation-ruler", title: "Rotation Ruler", description: "A straighten dial: a ruler of degree ticks slides under a fixed marker and snaps to level.", category: "input", phase: 1, web: "live", version: "1.0.0", controls: rotationRuler.controls, Demo: rotationRuler.default },
+  { name: "scan-progress", title: "Scan Progress", description: "An analysing state for media: a scan band lights pixel squares over the image while a ring fills a pill.", category: "feedback", phase: 1, web: "live", version: "1.0.0", controls: scanProgress.controls, Demo: scanProgress.default },
+  { name: "score-matrix", title: "Score Matrix", description: "A dark score card: the figure counts up as a dot grid lights to its share, beside rows of counting metrics.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: scoreMatrix.controls, Demo: scoreMatrix.default },
   { name: "scramble-text", title: "Scramble Text", description: "Characters cycle through random glyphs and lock into place from left to right.", category: "text", phase: 1, web: "live", version: "1.0.0", controls: scrambleText.controls, Demo: scrambleText.default },
   { name: "scroll-stack", title: "Scroll Stack", description: "A scroll view whose cards pin to the top and pile up, the ones beneath shrinking and dimming as more land.", category: "card", phase: 2, web: "live", version: "1.0.0", controls: scrollStack.controls, Demo: scrollStack.default },
   { name: "scroll-tabs", title: "Scroll Tabs", description: "Tabs over swipeable pages: the underline follows the swipe and stretches between tabs as labels brighten.", category: "navigation", phase: 2, web: "live", version: "1.0.0", controls: scrollTabs.controls, Demo: scrollTabs.default },
   { name: "search-morph", title: "Search Morph", description: "A search button that stretches into a search field, with Cancel sliding in and results rising beneath.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: searchMorph.controls, Demo: searchMorph.default },
+  { name: "seat-picker", title: "Seat Picker", description: "A seat counter: armchairs that fill as you add seats, a rolling stepper and a badge of seats left.", category: "input", phase: 1, web: "live", version: "1.0.0", controls: seatPicker.controls, Demo: seatPicker.default },
+  { name: "segment-bar", title: "Segment Bar", description: "A segmented control in a rounded panel whose pill glides to the pick, with an action button that pops.", category: "input", phase: 1, web: "live", version: "1.0.0", controls: segmentBar.controls, Demo: segmentBar.default },
   { name: "shine-text", title: "Shine Text", description: "A line of text with a band of light sweeping across the glyphs.", category: "text", phase: 2, web: "live", version: "1.0.0", controls: shineText.controls, Demo: shineText.default },
   { name: "side-drawer", title: "Side Drawer", description: "A navigation drawer that springs in from the side as its rows follow one by one; drag it back to close.", category: "overlay", phase: 2, web: "live", version: "1.0.0", controls: sideDrawer.controls, Demo: sideDrawer.default },
   { name: "signature-pad", title: "Signature Pad", description: "Sign with a finger: the ink is full when slow and thins with speed, with Undo and a Clear that fades it away.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: signaturePad.controls, Demo: signaturePad.default },
@@ -238,8 +282,10 @@ export const demos: DemoEntry[] = [
   { name: "star-rating", title: "Star Rating", description: "Stars you tap or drag across; the fill sweeps from star to star and each one swells as it fills.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: starRating.controls, Demo: starRating.default },
   { name: "stat-card", title: "Stat Card", description: "A key figure that counts up, with a change pill and a sparkline that draws itself in.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: statCard.controls, Demo: statCard.default },
   { name: "status-button", title: "Status Button", description: "A button that folds into a spinner while it works, then opens in green with a traced check, or shakes in red.", category: "interaction", phase: 1, web: "live", version: "1.0.0", controls: statusButton.controls, Demo: statusButton.default },
+  { name: "step-slider", title: "Step Slider", description: "A slider with a few fixed stops marked as dots, a snapping knob and a spinning action button.", category: "input", phase: 1, web: "live", version: "1.0.0", controls: stepSlider.controls, Demo: stepSlider.default },
   { name: "step-tracker", title: "Step Tracker", description: "Progress through a multi-step flow: the line fills on a spring, steps take a check and the new one sends a ring.", category: "feedback", phase: 2, web: "live", version: "1.0.0", controls: stepTracker.controls, Demo: stepTracker.default },
   { name: "story-card", title: "Story Card", description: "Full-bleed stories with progress bars: tap to step, hold to pause, each picture drifting closer as it plays.", category: "card", phase: 2, web: "live", version: "1.0.0", controls: storyCard.controls, Demo: storyCard.default },
+  { name: "streak-card", title: "Streak Card", description: "A streak card: the day count pops into a disc as confetti bursts around it, and the week's marks tick in.", category: "card", phase: 1, web: "live", version: "1.0.0", controls: streakCard.controls, Demo: streakCard.default },
   { name: "stream-graph", title: "Stream Graph", description: "Layered streams on a centred baseline that morph between datasets; tap a layer to lift it and read its share.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: streamGraph.controls, Demo: streamGraph.default },
   { name: "swatch-picker", title: "Swatch Picker", description: "Colour swatches with a ring that glides to your pick, a small squeeze and a check in readable ink.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: swatchPicker.controls, Demo: swatchPicker.default },
   { name: "swipe-row", title: "Swipe Row", description: "A list row with actions behind it; swipe far enough and the edge action takes over the row and runs.", category: "interaction", phase: 2, web: "live", version: "1.0.0", controls: swipeRow.controls, Demo: swipeRow.default },
@@ -250,12 +296,16 @@ export const demos: DemoEntry[] = [
   { name: "timeline", title: "Timeline", description: "Events along a rail: each node pops in turn, the line draws down to the next, and the text rises in beside it.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: timeline.controls, Demo: timeline.default },
   { name: "tip-bubble", title: "Tip Bubble", description: "A short tip that grows out of its anchor from the arrow's point and closes by itself after a few seconds.", category: "disclosure", phase: 2, web: "live", version: "1.0.0", controls: tipBubble.controls, Demo: tipBubble.default },
   { name: "toast-stack", title: "Toast Stack", description: "Notifications that stack like cards, fan out on tap and swipe away sideways.", category: "feedback", phase: 1, web: "live", version: "1.0.0", controls: toastStack.controls, Demo: toastStack.default },
+  { name: "topic-picker", title: "Topic Picker", description: "Topic chips drifting in rows that run opposite ways; picking one pops it in a soft colour.", category: "input", phase: 1, web: "live", version: "1.0.0", controls: topicPicker.controls, Demo: topicPicker.default },
   { name: "tree-view", title: "Tree View", description: "Nested folders whose branches grow open to their measured height as the chevron turns and rows drift in.", category: "disclosure", phase: 2, web: "live", version: "1.0.0", controls: treeView.controls, Demo: treeView.default },
   { name: "treemap", title: "Treemap", description: "Sizes as nested, near-square tiles; tap a group and the map zooms into it as its parts open out inside.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: treemap.controls, Demo: treemap.default },
   { name: "two-step-button", title: "Two-Step Button", description: "A button that asks before it acts: it splits into Cancel and Confirm, and the question closes by itself.", category: "interaction", phase: 2, web: "live", version: "1.0.0", controls: twoStepButton.controls, Demo: twoStepButton.default },
   { name: "typewriter", title: "Typewriter", description: "Text typed out with a human rhythm; several phrases are typed, held, erased and replaced in turn.", category: "text", phase: 2, web: "live", version: "1.0.0", controls: typewriter.controls, Demo: typewriter.default },
   { name: "usage-meter", title: "Usage Meter", description: "What fills an allowance: segments grow into the bar in turn as the figure counts up, and the rest warns near the limit.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: usageMeter.controls, Demo: usageMeter.default },
+  { name: "vinyl-player", title: "Vinyl Player", description: "A music card whose cover is a record half out of its sleeve, spinning while it plays and coasting to a stop.", category: "card", phase: 1, web: "live", version: "1.0.0", controls: vinylPlayer.controls, Demo: vinylPlayer.default },
+  { name: "vital-arcs", title: "Vital Arcs", description: "A daily summary widget: concentric arcs sweep from the corner with values at their tips, round a score disc.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: vitalArcs.controls, Demo: vitalArcs.default },
   { name: "waffle-chart", title: "Waffle Chart", description: "A ten-by-ten grid where each cell is one percent; cells fill in a wave and new data washes across the grid.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: waffleChart.controls, Demo: waffleChart.default },
+  { name: "wallet-stack", title: "Wallet Stack", description: "Glint Cards tucked in a stitched leather pocket: tap to fan them out, with the balance counting up.", category: "card", phase: 1, web: "live", version: "1.0.0", controls: walletStack.controls, Demo: walletStack.default },
   { name: "word-cascade", title: "Word Cascade", description: "A paragraph that arrives word by word, each word rising into place after the last.", category: "text", phase: 1, web: "live", version: "1.0.0", controls: wordCascade.controls, Demo: wordCascade.default },
   { name: "word-rotator", title: "Word Rotator", description: "A line with one word that keeps changing, rolling out and in letter by letter while its gap springs to fit.", category: "text", phase: 2, web: "live", version: "1.0.0", controls: wordRotator.controls, Demo: wordRotator.default },
   { name: "auth", title: "Auth", description: "Passwordless sign-in: an email, a one-time code with a resend timer, and a check once you are in.", category: "screen", phase: 3, web: "live", version: "1.0.0", controls: auth.controls, Demo: auth.default },

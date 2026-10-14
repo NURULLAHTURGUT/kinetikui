@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "segment-bar",
+  "type": "registry:item",
+  "title": "Segment Bar",
+  "description": "A segmented control in a rounded panel whose pill glides to the pick, with an action button that pops.",
+  "categories": [
+    "input"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/segment-bar.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/segment-bar.tsx",
+      "content": "import { useEffect, useRef, useState, type ReactNode } from 'react';\nimport {\n  Pressable,\n  StyleSheet,\n  Text,\n  View,\n  type LayoutChangeEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withSequence,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring, timing } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget, withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type SegmentOption<T extends string> = {\n  value: T;\n  label: string;\n};\n\nexport type SegmentBarAction = {\n  icon: ReactNode;\n  /** Accessible name, e.g. \"Save image\". */\n  label: string;\n  onPress: () => void;\n};\n\nexport type SegmentBarProps<T extends string> = {\n  options: readonly SegmentOption<T>[];\n  value: T;\n  onChange: (value: T) => void;\n  /** Names the group for screen readers, e.g. \"File format\". */\n  label: string;\n  /** A round button after the segments, e.g. save or erase. It pops when pressed. */\n  action?: SegmentBarAction;\n  disabled?: boolean;\n  /** A tick when the selection changes. Defaults to true. */\n  haptics?: boolean;\n  style?: StyleProp<ViewStyle>;\n};\n\ntype Slot = { x: number; width: number };\n\n/**\n * A segmented control in a rounded panel: a soft pill glides to the option\n * you pick and settles with a little give, labels brighten as it arrives, and\n * an optional button at the end pops when pressed.\n */\nexport function SegmentBar<T extends string>({\n  options,\n  value,\n  onChange,\n  label,\n  action,\n  disabled = false,\n  haptics = true,\n  style,\n}: SegmentBarProps<T>) {\n  const { colors, radius, space, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const slots = useRef<Record<string, Slot>>({});\n  const [measured, setMeasured] = useState(0);\n  const x = useSharedValue(0);\n  const w = useSharedValue(0);\n  const placed = useRef(false);\n\n  useEffect(() => {\n    const slot = slots.current[value];\n    if (!slot) return;\n    // The first placement jumps; later ones glide.\n    if (!placed.current || reduced) {\n      x.set(slot.x);\n      w.set(slot.width);\n      placed.current = true;\n      return;\n    }\n    x.set(withSpring(slot.x, spring('smooth')));\n    w.set(withSpring(slot.width, spring('smooth')));\n  }, [value, measured, reduced, x, w]);\n\n  const onSlotLayout = (key: string) => (e: LayoutChangeEvent) => {\n    const { x: sx, width } = e.nativeEvent.layout;\n    slots.current[key] = { x: sx, width };\n    setMeasured((m) => m + 1);\n  };\n\n  const pill = useAnimatedStyle(() => ({\n    width: w.get(),\n    transform: [{ translateX: x.get() }],\n    opacity: w.get() > 0 ? 1 : 0,\n  }));\n\n  return (\n    <View\n      style={[\n        styles.panel,\n        {\n          backgroundColor: colors.surfaceRaised,\n          borderRadius: radius.lg,\n          paddingLeft: space[2],\n          paddingRight: action ? space[1] : space[2],\n          gap: space[2],\n          opacity: disabled ? 0.45 : 1,\n        },\n        style,\n      ]}\n    >\n      <View\n        accessibilityRole=\"radiogroup\"\n        accessibilityLabel={label}\n        style={[styles.group, { backgroundColor: colors.surface, borderRadius: radius.md }]}\n      >\n        <Animated.View\n          pointerEvents=\"none\"\n          style={[\n            styles.pill,\n            { backgroundColor: withAlpha(colors.text, 0.14), borderRadius: radius.sm },\n            pill,\n          ]}\n        />\n        {options.map((o) => {\n          const on = o.value === value;\n          return (\n            <Pressable\n              key={o.value}\n              accessibilityRole=\"radio\"\n              accessibilityLabel={o.label}\n              accessibilityState={{ checked: on, disabled }}\n              disabled={disabled}\n              onLayout={onSlotLayout(o.value)}\n              onPress={() => {\n                if (on) return;\n                haptic('tick');\n                onChange(o.value);\n              }}\n              style={styles.option}\n            >\n              <Text\n                numberOfLines={1}\n                style={{\n                  color: on ? colors.text : colors.textMuted,\n                  fontSize: font.size.sm,\n                  fontWeight: on ? font.weight.semibold : font.weight.medium,\n                }}\n              >\n                {o.label}\n              </Text>\n            </Pressable>\n          );\n        })}\n      </View>\n      {action ? <PopButton action={action} disabled={disabled} /> : null}\n    </View>\n  );\n}\n\nfunction PopButton({ action, disabled }: { action: SegmentBarAction; disabled: boolean }) {\n  const { colors } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const pop = useSharedValue(0);\n  const style = useAnimatedStyle(() => ({\n    transform: [{ translateY: pop.get() * 3 }, { scale: 1 - pop.get() * 0.14 }],\n  }));\n  return (\n    <Pressable\n      accessibilityRole=\"button\"\n      accessibilityLabel={action.label}\n      disabled={disabled}\n      onPress={() => {\n        if (!reduced) {\n          pop.set(withSequence(withTiming(1, timing('quick')), withSpring(0, spring('bouncy'))));\n        }\n        action.onPress();\n      }}\n      style={({ pressed }) => [\n        styles.action,\n        { backgroundColor: pressed ? withAlpha(colors.text, 0.06) : 'transparent' },\n      ]}\n    >\n      <Animated.View style={style}>{action.icon}</Animated.View>\n    </Pressable>\n  );\n}\n\nconst styles = StyleSheet.create({\n  panel: { minHeight: 56, flexDirection: 'row', alignItems: 'center' },\n  group: { flex: 1, flexDirection: 'row', padding: 3 },\n  pill: { position: 'absolute', top: 3, bottom: 3, left: 0 },\n  option: {\n    flex: 1,\n    minHeight: minTouchTarget,\n    alignItems: 'center',\n    justifyContent: 'center',\n    paddingHorizontal: 8,\n  },\n  action: {\n    width: minTouchTarget,\n    height: minTouchTarget,\n    borderRadius: minTouchTarget / 2,\n    alignItems: 'center',\n    justifyContent: 'center',\n  },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "input",
+    "web": "live",
+    "perf": {
+      "budget": "The pill moves with one UI-thread spring per change; at rest nothing animates.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-14",
+          "build": "release",
+          "frameMs": 21,
+          "p90Ms": 23,
+          "baselineMs": 17,
+          "jankyPercent": 0.24,
+          "atRest": "idle",
+          "memoryMb": 150
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The pill jumps to the selection and the action button does not pop.",
+      "screenReader": "A radio group with a name; each option is a radio with its checked state; the action button has its own name.",
+      "touchTarget": "Options and the action button are at least 44 pt."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { SegmentBar } from '@/components/kinetik/segment-bar';\n\n<SegmentBar\n  label=\"File format\"\n  options={[\n    { value: 'png', label: 'png' },\n    { value: 'jpg', label: 'jpg' },\n    { value: 'heic', label: 'heic' },\n  ]}\n  value={format}\n  onChange={setFormat}\n  action={{ icon: <DownloadIcon />, label: 'Save image', onPress: save }}\n/>;\n```\n\n## When to use\n\n- Two to four short options that change how the next action behaves, like a format before saving.\n- Mode switches in an editor panel.\n\n## When not to use\n\n- Navigation between screens: use tabs.\n- Long labels or more than four options: use a select.\n\n## Notes\n\n- `value` is typed from your options, so `onChange` hands back the same union.\n- The action button is optional and pops when pressed.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add segment-bar`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

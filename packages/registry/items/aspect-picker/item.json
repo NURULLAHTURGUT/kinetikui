@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "aspect-picker",
+  "title": "Aspect Picker",
+  "description": "Aspect-ratio frames drawn to scale; a soft square slides to the pick and its frame grows a touch.",
+  "category": "input",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["aspect-picker.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The highlight and the picked frame move with UI-thread springs on change; at rest nothing animates.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "baselineMs": 17,
+        "jankyPercent": 0.21,
+        "atRest": "idle",
+        "memoryMb": 147
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The highlight jumps and the frame changes without growing.",
+    "screenReader": "A radio group named \"Aspect ratio\"; each frame is a radio named by its label, e.g. \"Portrait 2 by 3\".",
+    "touchTarget": "Each ratio and the action button are 44 pt square."
+  }
+}

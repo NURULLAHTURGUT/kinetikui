@@ -1,0 +1,42 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "wallet-stack",
+  "title": "Wallet Stack",
+  "description": "Glint Cards tucked in a stitched leather pocket: tap to fan them out, with the balance counting up.",
+  "category": "card",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": [
+    "kinetik-tokens",
+    "kinetik-motion",
+    "kinetik-haptics",
+    "kinetik-count",
+    "glint-card"
+  ],
+  "files": ["wallet-stack.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Opening and closing is one UI-thread spring shared by every card. The Glint Cards follow the finger (no motion sensors) while the wallet is open; closed, nothing animates.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 34,
+        "p90Ms": 38,
+        "baselineMs": 17,
+        "jankyPercent": 3.59,
+        "atRest": "idle",
+        "memoryMb": 173,
+        "notes": "Frames are measured while opening and closing: the wallet grows in height (a layout pass per frame) for about 0.6 s per toggle; framestats show ~6 ms of app work, the rest the emulator GPU. Closed or open at rest, nothing animates."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The wallet opens and closes without springing, the balance shows at once and the cards hold a still reflection (Glint Card).",
+    "screenReader": "The pocket is a button reading the title and balance, with a hint to show or tuck the cards; cards are buttons only while the wallet is open.",
+    "touchTarget": "The pocket is about 190 pt tall; open cards are full width and 150 pt tall."
+  }
+}

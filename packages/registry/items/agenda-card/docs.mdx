@@ -1,0 +1,32 @@
+## Usage
+
+```tsx
+import { AgendaCard } from '@/components/kinetik/agenda-card';
+
+<AgendaCard
+  date="Oct 30"
+  weekday="Thursday"
+  events={[
+    { id: '1', title: 'Team standup', start: '09:30', end: '09:45' },
+    { id: '2', title: 'Deep work', start: '10:00', end: '12:00', progress: 0.4 },
+    { id: '3', title: 'Design review', start: '13:30', end: '14:30' },
+  ]}
+  onAdd={openNewEvent}
+  onEventPress={(e) => router.push(`/events/${e.id}`)}
+/>;
+```
+
+## When to use
+
+- A home-screen style glance at today: the date, a count and the next few events.
+
+## When not to use
+
+- Full calendars or long agendas: use Month Calendar or Timeline.
+
+## Notes
+
+- The first `limit` events are listed (3 by default). `total` sets the count on the date panel when the day has more.
+- Give the event under way a `progress` (0–1): its bar dims and fills to match, and screen readers hear "now".
+- Events added later slide in at once; the ones there from the start stagger in.
+- The card is night-blue on both themes so the glow reads. The add button only shows with `onAdd`.

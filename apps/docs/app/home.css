@@ -377,7 +377,9 @@
 .bento-wide {
   grid-column: span 2;
 }
-/* The wide tile lets its demo use the full width (a marquee runs edge to edge). */
+/* The wide and hero tiles let their demos use the full width (a marquee runs edge to edge,
+   a widget lays out as wide as the tile). */
+.bento-hero .preview-stage > div:not(.preview-toolbar),
 .bento-wide .preview-stage > div:not(.preview-toolbar) {
   max-width: none;
 }

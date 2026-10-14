@@ -1,0 +1,30 @@
+## Usage
+
+```tsx
+import { PeekFolder } from '@/components/kinetik/peek-folder';
+
+<PeekFolder
+  label="Design assets"
+  items={[
+    { glyph: typeIconPath, color: '#FF6A00' },
+    { glyph: shapesIconPath, color: '#111' },
+    { glyph: sparkIconPath, color: '#0A84FF' },
+  ]}
+  onOpen={() => router.push('/assets')}
+/>;
+```
+
+## When to use
+
+- A playful entry point to a collection: a folder, an album, a kit.
+
+## When not to use
+
+- File browsers with many folders: the blur and the motion are for a few hero items.
+
+## Notes
+
+- `glyph` is an SVG path on a 24 pt grid, drawn as a bold stroke. Join an icon's paths with spaces.
+- Uncontrolled by default; pass `open` and `onOpenChange` to drive it yourself.
+- `hover` lifts the tiles while a pointer is over the folder on the web.
+- The glass is a Skia backdrop blur clipped to the pocket, so the tiles' colours glow through it.

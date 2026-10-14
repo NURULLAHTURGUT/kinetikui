@@ -60,12 +60,15 @@
 
 /* ---------- Filters ---------- */
 
+/* The filters wrap onto a second line rather than scroll: a mouse has no
+   sideways scroll, so tags hidden behind the search box could not be reached. */
+
 .gallery-bar {
   position: sticky;
   top: 60px;
   z-index: 5;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   margin: 0 calc(var(--gutter) * -1) 28px;
   padding: 12px var(--gutter);
@@ -77,11 +80,10 @@
 }
 .gallery-filters {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   flex: 1;
   min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
 }
 .gallery-filters::-webkit-scrollbar {
   display: none;
@@ -337,6 +339,13 @@
   }
   .gallery-bar {
     flex-wrap: wrap;
+  }
+  /* On phones one swipeable row keeps the sticky bar short. */
+  .gallery-filters {
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
   .gallery-search {
     width: 100%;

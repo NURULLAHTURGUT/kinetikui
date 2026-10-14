@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "score-matrix",
+  "type": "registry:item",
+  "title": "Score Matrix",
+  "description": "A dark score card: the figure counts up as a dot grid lights to its share, beside rows of counting metrics.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-count.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/score-matrix.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/score-matrix.tsx",
+      "content": "import { BlurMask, Canvas, Group, Path, Skia } from '@shopify/react-native-skia';\nimport { useEffect, useMemo, useState, type ReactNode } from 'react';\nimport {\n  Platform,\n  StyleSheet,\n  Text,\n  View,\n  type StyleProp,\n  type ViewStyle,\n  type TextProps,\n} from 'react-native';\nimport Animated, {\n  Easing,\n  useAnimatedStyle,\n  useDerivedValue,\n  useSharedValue,\n  withDelay,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useCountUp } from '../../lib/kinetik/hooks/use-count-up';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { palettes, withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type MatrixMetric = {\n  label: string;\n  value: number;\n  /** Small text after the value, e.g. \"lbs\". */\n  unit?: string;\n  /** Drawn inside the coloured disc. */\n  icon?: ReactNode;\n  /** Colour of the disc behind the icon. */\n  tone: string;\n};\n\nexport type ScoreMatrixProps = {\n  /** Small caps label above the score. */\n  label: string;\n  score: number;\n  /** Top of the scale. Defaults to 100. */\n  max?: number;\n  metrics: readonly MatrixMetric[];\n  /** Colour of the lit dots. Defaults to a signal yellow. */\n  accent?: string;\n  /** Dot grid size. Defaults to 12 × 8. */\n  columns?: number;\n  rows?: number;\n  style?: StyleProp<ViewStyle>;\n};\n\n/** Largest gap between dot centres; narrower cards shrink the grid to fit. */\nconst STEP = 13;\nconst DOT = 2.7;\n\n/** Dot centres: the bottom row first, left to right, then upwards. */\nfunction dotAt(i: number, columns: number, rows: number, step: number) {\n  const col = i % columns;\n  const row = rows - 1 - Math.floor(i / columns);\n  return { x: col * step + step / 2, y: row * step + step / 2 };\n}\n\nconst DISPLAY = Platform.select({\n  ios: 'Avenir Next',\n  android: 'sans-serif-light',\n  default: 'system-ui, sans-serif',\n});\n\n/**\n * A dark score card: the big figure counts up while a grid of dots lights\n * from the bottom-left, one dot at a time, up to the score's share of the\n * scale. Beside it, rows of metrics slide in with their values counting.\n */\nexport function ScoreMatrix({\n  label,\n  score,\n  max = 100,\n  metrics,\n  accent = 'hsl(62, 96%, 58%)',\n  columns = 12,\n  rows = 8,\n  style,\n}: ScoreMatrixProps) {\n  const { radius, space, font, shadow } = useKinetikTheme();\n  // A dark slab on either theme, so the lit dots glow.\n  const colors = palettes.dark;\n  const reduced = useReduceMotion();\n  // The score column's width sets the dot grid's size.\n  const [side, setSide] = useState(0);\n  const step = side > 0 ? Math.min(STEP, side / columns) : 0;\n  const dot = DOT * (step / STEP);\n  const total = columns * rows;\n  const lit = Math.round(Math.max(0, Math.min(1, score / max)) * total);\n\n  const progress = useSharedValue(reduced ? 1 : 0);\n  useEffect(() => {\n    if (reduced) {\n      progress.set(1);\n      return;\n    }\n    progress.set(0);\n    progress.set(withTiming(1, { duration: 1100, easing: Easing.out(Easing.cubic) }));\n  }, [lit, reduced, progress]);\n\n  const dim = useMemo(() => {\n    const b = Skia.PathBuilder.Make();\n    for (let i = 0; i < columns * rows; i++) {\n      const p = dotAt(i, columns, rows, step);\n      b.addCircle(p.x, p.y, dot);\n    }\n    return b.detach();\n  }, [columns, rows, step, dot]);\n  const points = useMemo(\n    () => Array.from({ length: lit }, (_, i) => dotAt(i, columns, rows, step)),\n    [lit, columns, rows, step],\n  );\n  const bright = useDerivedValue(() => {\n    const b = Skia.PathBuilder.Make();\n    const n = Math.round(progress.get() * points.length);\n    for (let i = 0; i < n; i++) b.addCircle(points[i]!.x, points[i]!.y, dot + 0.3);\n    return b.detach();\n  });\n  // The glow is blurred from the finished dots and fades in as they light: blurring a\n  // path that changes every frame would cache a new blurred mask per frame.\n  const halo = useMemo(() => {\n    const b = Skia.PathBuilder.Make();\n    for (const p of points) b.addCircle(p.x, p.y, dot + 0.3);\n    return b.detach();\n  }, [points, dot]);\n  const haloOn = useDerivedValue(() => progress.get() * 0.85);\n\n  const grid = step > 0 && (\n    <Canvas\n      style={{ width: columns * step, height: rows * step, marginTop: space[4] }}\n      pointerEvents=\"none\"\n    >\n      <Path path={dim} color={withAlpha(colors.text, 0.1)} />\n      <Group opacity={haloOn}>\n        <Path path={halo} color={accent}>\n          <BlurMask blur={4} style=\"normal\" />\n        </Path>\n      </Group>\n      <Path path={bright} color={accent} />\n    </Canvas>\n  );\n\n  return (\n    <View\n      style={[\n        styles.card,\n        {\n          backgroundColor: colors.surface,\n          borderColor: colors.border,\n          borderRadius: radius.xl + 4,\n          padding: space[5],\n          gap: space[5],\n          boxShadow: shadow.lg,\n        },\n        style,\n      ]}\n    >\n      <View\n        accessible\n        accessibilityLabel={`${label}: ${score} out of ${max}`}\n        onLayout={(e) => setSide(e.nativeEvent.layout.width)}\n        style={styles.side}\n      >\n        <Text\n          style={{\n            color: colors.textSubtle,\n            fontSize: font.size.xs + 1,\n            fontWeight: font.weight.semibold,\n            letterSpacing: 1.6,\n          }}\n        >\n          {label.toUpperCase()}\n        </Text>\n        <Counted\n          value={score}\n          duration={1100}\n          format={(n) => String(Math.round(n))}\n          style={{\n            color: colors.text,\n            fontFamily: DISPLAY,\n            fontSize: side > 0 ? Math.min(76, side * 0.55) : 76,\n            lineHeight: side > 0 ? Math.min(84, side * 0.62) : 84,\n            fontWeight: '300',\n            letterSpacing: -3,\n            fontVariant: ['tabular-nums'],\n          }}\n        />\n        {grid}\n      </View>\n      <View style={styles.list}>\n        {metrics.map((m, i) => (\n          <Row key={m.label} metric={m} order={i} last={i === metrics.length - 1} />\n        ))}\n      </View>\n    </View>\n  );\n}\n\nfunction Row({ metric, order, last }: { metric: MatrixMetric; order: number; last: boolean }) {\n  const { font } = useKinetikTheme();\n  const colors = palettes.dark;\n  const reduced = useReduceMotion();\n  const shown = useCountUp(metric.value, { instant: reduced, duration: 900 + order * 120 });\n  const enter = useSharedValue(reduced ? 1 : 0);\n  useEffect(() => {\n    if (!reduced) enter.set(withDelay(150 + order * 90, withSpring(1, spring('smooth'))));\n  }, [order, reduced, enter]);\n  const style = useAnimatedStyle(() => ({\n    opacity: enter.get(),\n    transform: [{ translateX: (1 - enter.get()) * 18 }],\n  }));\n  const whole = Number.isInteger(metric.value);\n  return (\n    <Animated.View\n      accessible\n      accessibilityLabel={`${metric.label}: ${metric.value}${metric.unit ? ` ${metric.unit}` : ''}`}\n      style={[\n        styles.row,\n        !last && { borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.borderStrong },\n        style,\n      ]}\n    >\n      <View style={[styles.disc, { backgroundColor: metric.tone }]}>{metric.icon}</View>\n      <Text\n        numberOfLines={1}\n        style={[\n          styles.grow,\n          {\n            color: colors.text,\n            fontSize: font.size.sm,\n            fontWeight: font.weight.semibold,\n            letterSpacing: 1.4,\n          },\n        ]}\n      >\n        {metric.label.toUpperCase()}\n      </Text>\n      <Text\n        style={{\n          color: colors.text,\n          fontFamily: DISPLAY,\n          fontSize: font.size.xl + 2,\n          fontWeight: '300',\n          fontVariant: ['tabular-nums'],\n        }}\n      >\n        {whole ? Math.round(shown) : shown.toFixed(1)}\n        {metric.unit ? (\n          <Text style={{ fontSize: font.size.sm, color: colors.textMuted }}> {metric.unit}</Text>\n        ) : null}\n      </Text>\n    </Animated.View>\n  );\n}\n\n/** A figure counting up, in its own component so each count re-renders only this text. */\nfunction Counted({\n  value,\n  duration,\n  format,\n  ...text\n}: TextProps & { value: number; duration: number; format: (n: number) => string }) {\n  const reduced = useReduceMotion();\n  const shown = useCountUp(value, { instant: reduced, duration });\n  return <Text {...text}>{format(shown)}</Text>;\n}\n\nconst styles = StyleSheet.create({\n  card: { flexDirection: 'row', borderWidth: StyleSheet.hairlineWidth },\n  side: { width: '38%' },\n  list: { flex: 1 },\n  row: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 60 },\n  disc: {\n    width: 34,\n    height: 34,\n    borderRadius: 17,\n    alignItems: 'center',\n    justifyContent: 'center',\n  },\n  grow: { flex: 1 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "The dot grid is two Skia paths, the lit one rebuilt on the UI thread for about a second; figures count up by re-rendering their text. Nothing animates at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-14",
+          "build": "release",
+          "frameMs": 18,
+          "p90Ms": 30,
+          "baselineMs": 17,
+          "jankyPercent": 3.72,
+          "atRest": "idle",
+          "memoryMb": 166
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The score, dots and metric values appear at once.",
+      "screenReader": "The score reads as one line (\"Athletic score: 13 out of 100\") and each metric as one line (\"Strength: 170 lbs\").",
+      "touchTarget": "Nothing is interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { ScoreMatrix } from '@/components/kinetik/score-matrix';\n\n<ScoreMatrix\n  label=\"Athletic score\"\n  score={13}\n  metrics={[\n    { label: 'Sleep', value: 88, tone: '#E2622B', icon: <MoonIcon /> },\n    { label: 'Strength', value: 170, unit: 'lbs', tone: '#6E7A44', icon: <DumbbellIcon /> },\n    { label: 'Steps', value: 1982, tone: '#9C82D6', icon: <FootprintsIcon /> },\n  ]}\n/>;\n```\n\n## When to use\n\n- One headline score with the handful of figures that feed it, on a dashboard or a weekly recap.\n\n## When not to use\n\n- Comparing scores over time: use a chart.\n\n## Notes\n\n- The dot grid lights `score / max` of its dots, bottom row first. `columns` and `rows` set its size (12 × 8 by default).\n- The card is dark on both themes so the lit dots glow; `accent` changes their colour.\n- The score always sits beside the metrics; on narrow cards the score and its dot grid shrink to fit their column.\n- Whole numbers count up as whole numbers; fractional values keep one decimal.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add score-matrix`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

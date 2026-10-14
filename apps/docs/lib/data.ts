@@ -39,12 +39,58 @@ export function navOrder() {
   return byCategory().flatMap((g) => g.items);
 }
 
+/** Shown first in the gallery: the newest and most eye-catching pieces. */
+const FEATURED = [
+  'now-playing',
+  'vinyl-player',
+  'agenda-card',
+  'boarding-pass',
+  'peek-folder',
+  'vital-arcs',
+  'book-pocket',
+  'score-matrix',
+  'streak-card',
+  'wallet-stack',
+  'scan-progress',
+  'plan-picker',
+  'flight-track',
+  'credit-score',
+  'seat-picker',
+  'question-deck',
+  'topic-picker',
+  'expense-card',
+  'intensity-slider',
+  'rotation-ruler',
+  'gradient-slider',
+  'glint-card',
+  'aurora-veil',
+  'liquid-tabs',
+  'tilt-deck',
+  'aperture-card',
+  'bloom-menu',
+  'deckfall',
+  'parallax-carousel',
+  'letter-morph',
+  'activity-rings',
+  'stream-graph',
+  'confetti-burst',
+];
+
+/** Gallery order: the featured pieces, then everything else as the sidebar lists it. */
+export function galleryOrder() {
+  const rank = (name: string) => {
+    const i = FEATURED.indexOf(name);
+    return i < 0 ? FEATURED.length : i;
+  };
+  // Array.prototype.sort is stable, so the rest keep their navigation order.
+  return navOrder().sort((a, b) => rank(a.name) - rank(b.name));
+}
+
 export const SITE = {
   name: 'Kinetik UI',
   tagline: 'Motion parts for Expo.',
   description:
     'Animation and effect components for Expo and React Native, built on Reanimated, Gesture Handler and Skia. Copy them into your app with one command.',
-  playgroundScheme: 'kinetik-playground',
 };
 
 type Measurement = ComponentDoc['perf']['measurements'][number];

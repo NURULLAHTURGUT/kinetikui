@@ -1,0 +1,33 @@
+## Usage
+
+```tsx
+import { NowPlaying } from '@/components/kinetik/now-playing';
+
+<NowPlaying
+  tracks={queue.map((t) => ({
+    id: t.id,
+    title: t.title,
+    subtitle: t.artist,
+    cover: { uri: t.artwork },
+    duration: t.seconds,
+  }))}
+  onTrackChange={(t) => player.load(t.id)}
+  onPlayingChange={(on) => (on ? player.play() : player.pause())}
+/>;
+```
+
+## When to use
+
+- A compact player for a queue: a widget, a mini player or a now-playing sheet header.
+
+## When not to use
+
+- As the source of truth for real audio: it keeps its own clock. Wire `onPlayingChange` and `onTrackChange` to your player, and keep the two in step.
+
+## Notes
+
+- Previous restarts the track if more than three seconds have played, as most players do; otherwise it goes back a track.
+- Tap the progress bar to seek. Screen readers adjust it in ten-second steps.
+- When a track ends, the next one starts. The queue wraps around.
+- `clock(seconds)` is exported for the same `1:09` format elsewhere.
+- The widget is dark on both themes. `accent` colours the progress and the play button.

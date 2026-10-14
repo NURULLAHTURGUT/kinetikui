@@ -1,6 +1,6 @@
 # Third-party notices
 
-Kinetik UI is MIT licensed (see [LICENSE](LICENSE)). It contains no third-party source code: every component, shader and effect was written for this project.
+Kinetik UI is MIT licensed (see [LICENSE](LICENSE)). Every component, shader and effect was written for this project. The only third-party material inside components is a handful of MIT-licensed icon paths, listed under [Icon paths](#icon-paths).
 
 Kinetik code **depends on** the packages below. They are not copied into your app by the CLI. You install them yourself (`npx expo install`), and they arrive under their own licenses.
 
@@ -8,16 +8,32 @@ Kinetik code **depends on** the packages below. They are not copied into your ap
 
 These are installed into your app when you add a component that uses them.
 
-| Package                                                                                                                                    | License | Used by                                                                     |
-| ------------------------------------------------------------------------------------------------------------------------------------------ | ------- | --------------------------------------------------------------------------- |
-| [react-native-reanimated](https://github.com/software-mansion/react-native-reanimated)                                                     | MIT     | Every animated component                                                    |
-| [react-native-worklets](https://github.com/software-mansion/react-native-reanimated)                                                       | MIT     | Peer of Reanimated 4                                                        |
-| [react-native-gesture-handler](https://github.com/software-mansion/react-native-gesture-handler)                                           | MIT     | Gesture-driven components                                                   |
-| [@shopify/react-native-skia](https://github.com/Shopify/react-native-skia)                                                                 | MIT     | Shaders, Glint Card, Aperture Card, Liquid Tabs, Shine Text, Confetti Burst |
-| [expo-haptics](https://github.com/expo/expo/tree/main/packages/expo-haptics)                                                               | MIT     | `useHaptic`                                                                 |
-| [expo-blur](https://github.com/expo/expo/tree/main/packages/expo-blur)                                                                     | MIT     | Morph Sheet                                                                 |
-| [react-native-safe-area-context](https://github.com/AppAndFlow/react-native-safe-area-context)                                             | MIT     | Toast Stack, Parallax Header, screen templates                              |
-| [react](https://github.com/facebook/react), [react-native](https://github.com/facebook/react-native), [expo](https://github.com/expo/expo) | MIT     | Platform                                                                    |
+| Package                                                                                                                                    | License | Used by                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ------- | ------------------------------------------------------------------------------------ |
+| [react-native-reanimated](https://github.com/software-mansion/react-native-reanimated)                                                     | MIT     | Every animated component                                                             |
+| [react-native-worklets](https://github.com/software-mansion/react-native-reanimated)                                                       | MIT     | Peer of Reanimated 4                                                                 |
+| [react-native-gesture-handler](https://github.com/software-mansion/react-native-gesture-handler)                                           | MIT     | Gesture-driven components                                                            |
+| [@shopify/react-native-skia](https://github.com/Shopify/react-native-skia)                                                                 | MIT     | Shaders, Glint Card, Aperture Card, Liquid Tabs, Shine Text, Confetti Burst          |
+| [react-native-svg](https://github.com/software-mansion/react-native-svg)                                                                   | MIT     | Small icons in Boarding Pass, Peek Folder, Now Playing, Vinyl Player and Agenda Card |
+| [react-native-svg](https://github.com/software-mansion/react-native-svg)                                                                   | MIT     | Small icons in Boarding Pass, Peek Folder, Now Playing, Vinyl Player and Agenda Card |
+| [expo-haptics](https://github.com/expo/expo/tree/main/packages/expo-haptics)                                                               | MIT     | `useHaptic`                                                                          |
+| [expo-blur](https://github.com/expo/expo/tree/main/packages/expo-blur)                                                                     | MIT     | Morph Sheet, Book Pocket                                                             |
+| [react-native-safe-area-context](https://github.com/AppAndFlow/react-native-safe-area-context)                                             | MIT     | Toast Stack, Parallax Header, screen templates                                       |
+| [react](https://github.com/facebook/react), [react-native](https://github.com/facebook/react-native), [expo](https://github.com/expo/expo) | MIT     | Platform                                                                             |
+
+## Icon paths
+
+A few components draw small icons from [Tabler Icons](https://github.com/tabler/tabler-icons) (MIT, Copyright (c) 2020-2024 Paweł Kuna), found through [iconstack.io](https://iconstack.io). The SVG path data is embedded in the component source with a comment that names Tabler:
+
+| Component     | Icons                                                                             |
+| ------------- | --------------------------------------------------------------------------------- |
+| Flight Track  | plane                                                                             |
+| Seat Picker   | armchair                                                                          |
+| Boarding Pass | plane                                                                             |
+| Peek Folder   | arrow-up-right                                                                    |
+| Now Playing   | player-play, player-pause, player-track-prev, player-track-next                   |
+| Vinyl Player  | player-play, player-pause, player-track-prev, player-track-next, volume, volume-3 |
+| Agenda Card   | plus                                                                              |
 
 ## CLI and MCP server (`kinetik-ui`)
 
@@ -38,7 +54,6 @@ These are installed into your app when you add a component that uses them.
 | [react-native-svg](https://github.com/software-mansion/react-native-svg) (draws the demo icons)                                                                       | MIT          |
 | [Geist and Geist Mono](https://github.com/vercel/geist-font) (via `@fontsource-variable`), served as web fonts                                                        | OFL-1.1      |
 | [marked](https://github.com/markedjs/marked)                                                                                                                          | MIT          |
-| [qrcode](https://github.com/soldair/node-qrcode)                                                                                                                      | MIT          |
 | [expo-router](https://github.com/expo/expo/tree/main/packages/expo-router)                                                                                            | MIT          |
 
 The CanvasKit BSD-3-Clause license requires its copyright notice to accompany redistributed binaries. The docs site serves the unmodified `canvaskit.wasm` together with its license at `/canvaskit-LICENSE.txt` (copied by `scripts/build-docs.ts`) and credits it in the site footer. The CDN copy at `cdn.kinetik-ui.dev` sits next to its `LICENSE` (copied by `scripts/build-cdn.ts`).

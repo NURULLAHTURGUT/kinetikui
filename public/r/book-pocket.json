@@ -1,0 +1,65 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "book-pocket",
+  "type": "registry:item",
+  "title": "Book Pocket",
+  "description": "Book covers tucked in a frosted acrylic pocket: they drop in, and rise and fan out while pressed or hovered.",
+  "categories": [
+    "card"
+  ],
+  "dependencies": [
+    "expo-blur",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/book-pocket.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/book-pocket.tsx",
+      "content": "import { BlurTargetView, BlurView } from 'expo-blur';\nimport { useEffect, useRef, useState } from 'react';\nimport {\n  Image,\n  Platform,\n  Pressable,\n  StyleSheet,\n  Text,\n  View,\n  type ImageSourcePropType,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withDelay,\n  withSpring,\n  type SharedValue,\n} from 'react-native-reanimated';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { gradient } from '../../lib/kinetik/tokens/gradient';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type PocketBook = {\n  id: string;\n  title: string;\n  author?: string;\n  /** A cover image. Without one, a typographic cover is drawn from `tones`. */\n  cover?: ImageSourcePropType;\n  /** Two colours for a drawn cover's gradient. */\n  tones?: readonly [string, string];\n};\n\nexport type BookPocketProps = {\n  /** Shelf name under the pocket, e.g. \"Fantasy\". */\n  title: string;\n  /** Up to four books, back to front. */\n  books: readonly PocketBook[];\n  /** Number shown after the title. Defaults to the number of books. */\n  count?: number;\n  /** Word after the count. Defaults to \"books\". */\n  unit?: string;\n  onPress?: () => void;\n  /** A tick as the covers lift. Defaults to true. */\n  haptics?: boolean;\n  style?: StyleProp<ViewStyle>;\n};\n\n/** Cover poses as shares of the width: centre x, centre y and turn, at rest and lifted. */\nconst POSES = [\n  { x: 0.36, y: 0.42, turn: -7, lx: 0.3, ly: 0.2, lturn: -13 },\n  { x: 0.56, y: 0.36, turn: 4, lx: 0.58, ly: 0.12, lturn: 6 },\n  { x: 0.66, y: 0.44, turn: 9, lx: 0.72, ly: 0.24, lturn: 15 },\n  { x: 0.46, y: 0.46, turn: -2, lx: 0.44, ly: 0.26, lturn: -4 },\n] as const;\n\nconst SERIF = Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia, serif' });\n\nconst TONES: readonly (readonly [string, string])[] = [\n  ['hsl(158, 38%, 26%)', 'hsl(170, 30%, 12%)'],\n  ['hsl(8, 62%, 44%)', 'hsl(350, 50%, 18%)'],\n  ['hsl(222, 40%, 30%)', 'hsl(230, 40%, 12%)'],\n  ['hsl(38, 70%, 52%)', 'hsl(20, 60%, 26%)'],\n];\n\n/**\n * A shelf of books tucked into a frosted acrylic pocket held by four pins.\n * The covers drop in one by one when it appears; press it (or hover on the\n * web) and they rise out of the pocket and fan apart, then slide back.\n */\nexport function BookPocket({\n  title,\n  books,\n  count,\n  unit = 'books',\n  onPress,\n  haptics = true,\n  style,\n}: BookPocketProps) {\n  const { colors, font, radius, scheme } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const target = useRef<View>(null);\n  const [width, setWidth] = useState(0);\n  const [up, setUp] = useState(false);\n  const lift = useSharedValue(0);\n  const shelf = books.slice(0, 4);\n  const total = count ?? books.length;\n\n  useEffect(() => {\n    lift.set(reduced ? (up ? 1 : 0) : withSpring(up ? 1 : 0, spring(up ? 'bouncy' : 'smooth')));\n  }, [up, reduced, lift]);\n\n  const raise = (next: boolean) => {\n    if (next && !up) haptic('tick');\n    setUp(next);\n  };\n\n  const height = width * 0.98;\n  const pocketTop = height * 0.5;\n\n  return (\n    <View style={style}>\n      <Pressable\n        accessibilityRole={onPress ? 'button' : undefined}\n        accessibilityLabel={`${title}, ${total} ${unit}`}\n        onPress={onPress}\n        onPressIn={() => raise(true)}\n        onPressOut={() => raise(false)}\n        onHoverIn={() => raise(true)}\n        onHoverOut={() => raise(false)}\n        onLayout={(e) => setWidth(e.nativeEvent.layout.width)}\n        style={[styles.stage, { height: height || 180 }]}\n      >\n        {width > 0 ? (\n          <>\n            <BlurTargetView ref={target} style={StyleSheet.absoluteFill} pointerEvents=\"none\">\n              {shelf.map((book, i) => (\n                <Cover\n                  key={book.id}\n                  book={book}\n                  index={i}\n                  width={width}\n                  lift={lift}\n                  tones={book.tones ?? TONES[i % TONES.length]!}\n                />\n              ))}\n            </BlurTargetView>\n            <View\n              pointerEvents=\"none\"\n              style={[\n                styles.pocket,\n                {\n                  top: pocketTop,\n                  borderRadius: radius.xs,\n                  borderColor: withAlpha(colors.highlight, scheme === 'dark' ? 0.16 : 0.7),\n                },\n              ]}\n            >\n              <BlurView\n                style={StyleSheet.absoluteFill}\n                blurTarget={target}\n                blurMethod=\"dimezisBlurViewSdk31Plus\"\n                intensity={28}\n                tint={scheme === 'dark' ? 'dark' : 'light'}\n              />\n              <View\n                style={[\n                  StyleSheet.absoluteFill,\n                  gradient(\n                    `linear-gradient(180deg, ${withAlpha(colors.highlight, scheme === 'dark' ? 0.1 : 0.4)} 0%, ${withAlpha(colors.surface, 0.18)} 100%)`,\n                  ),\n                ]}\n              />\n              {(['tl', 'tr', 'bl', 'br'] as const).map((at) => (\n                <View\n                  key={at}\n                  style={[\n                    styles.pin,\n                    at[0] === 't' ? { top: 7 } : { bottom: 7 },\n                    at[1] === 'l' ? { left: 7 } : { right: 7 },\n                    {\n                      backgroundColor: withAlpha(colors.highlight, 0.75),\n                      borderColor: withAlpha(colors.text, 0.25),\n                    },\n                  ]}\n                />\n              ))}\n            </View>\n          </>\n        ) : null}\n      </Pressable>\n      <Text\n        style={{\n          color: colors.text,\n          fontSize: font.size.sm + 1,\n          fontWeight: font.weight.medium,\n          textAlign: 'center',\n          marginTop: 10,\n        }}\n      >\n        {title}\n        <Text style={{ color: colors.textSubtle, fontWeight: font.weight.regular }}>\n          {'  ·  '}\n          {total} {unit}\n        </Text>\n      </Text>\n    </View>\n  );\n}\n\n/** One cover: drops into the pocket on arrival and rises out with the lift. */\nfunction Cover({\n  book,\n  index,\n  width,\n  lift,\n  tones,\n}: {\n  book: PocketBook;\n  index: number;\n  width: number;\n  lift: SharedValue<number>;\n  tones: readonly [string, string];\n}) {\n  const { font, shadow } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const drop = useSharedValue(reduced ? 1 : 0);\n  useEffect(() => {\n    if (!reduced) drop.set(withDelay(120 + index * 120, withSpring(1, spring('smooth'))));\n  }, [index, reduced, drop]);\n\n  const pose = POSES[index]!;\n  const w = width * 0.5;\n  const h = w * 1.45;\n  const style = useAnimatedStyle(() => {\n    const o = lift.get();\n    // Each cover rises a beat behind the one in front of it.\n    const lag = Math.max(0, Math.min(1, o * 1.25 - index * 0.08));\n    const x = (pose.x + (pose.lx - pose.x) * lag) * width - w / 2;\n    const y = (pose.y + (pose.ly - pose.y) * lag) * width - h / 2 - (1 - drop.get()) * width * 0.5;\n    return {\n      opacity: Math.min(1, drop.get() * 2),\n      transform: [\n        { translateX: x },\n        { translateY: y },\n        { rotate: `${pose.turn + (pose.lturn - pose.turn) * lag}deg` },\n      ],\n    };\n  });\n\n  return (\n    <Animated.View style={[styles.cover, { width: w, height: h, boxShadow: shadow.md }, style]}>\n      {book.cover ? (\n        <Image source={book.cover} style={StyleSheet.absoluteFill} resizeMode=\"cover\" />\n      ) : (\n        <View\n          style={[\n            StyleSheet.absoluteFill,\n            styles.drawn,\n            gradient(`linear-gradient(160deg, ${tones[0]} 0%, ${tones[1]} 100%)`),\n          ]}\n        >\n          <View style={[styles.frame, { borderColor: 'hsla(40, 60%, 92%, 0.3)' }]} />\n          <Text\n            numberOfLines={3}\n            style={{\n              color: 'hsl(40, 60%, 92%)',\n              fontFamily: SERIF,\n              fontSize: w * 0.15,\n              lineHeight: w * 0.17,\n              fontWeight: font.weight.bold,\n              textAlign: 'center',\n            }}\n          >\n            {book.title}\n          </Text>\n          {book.author ? (\n            <Text\n              numberOfLines={1}\n              style={{\n                color: 'hsl(40, 40%, 80%)',\n                fontSize: Math.max(8, w * 0.07),\n                letterSpacing: 1.2,\n                textAlign: 'center',\n                marginTop: w * 0.08,\n              }}\n            >\n              {book.author.toUpperCase()}\n            </Text>\n          ) : null}\n        </View>\n      )}\n    </Animated.View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  stage: { width: '100%' },\n  pocket: {\n    position: 'absolute',\n    left: '3%',\n    right: '3%',\n    bottom: 0,\n    overflow: 'hidden',\n    borderWidth: 1,\n  },\n  pin: { position: 'absolute', width: 7, height: 7, borderRadius: 3.5, borderWidth: 1 },\n  cover: {\n    position: 'absolute',\n    left: 0,\n    top: 0,\n    borderRadius: 3,\n    overflow: 'hidden',\n  },\n  drawn: { alignItems: 'center', justifyContent: 'center', padding: 10 },\n  frame: { position: 'absolute', top: 6, left: 6, right: 6, bottom: 6, borderWidth: 1 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "card",
+    "web": "live",
+    "perf": {
+      "budget": "Covers move by transforms from one UI-thread spring; the pocket is one blur view over them. Nothing animates at rest.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-14",
+          "build": "release",
+          "frameMs": 25,
+          "p90Ms": 31,
+          "baselineMs": 17,
+          "jankyPercent": 6.56,
+          "atRest": "idle",
+          "memoryMb": 172,
+          "notes": "Measured with four pockets, each a blur view over its covers. Frame stats put app work at about 2 ms and render-thread work at 7 ms a frame; the rest is the emulator waiting on its virtual GPU."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Covers appear in place and jump between tucked and lifted without the spring.",
+      "screenReader": "The pocket reads as one button with the shelf and count (\"Fantasy, 8 books\").",
+      "touchTarget": "The whole pocket and its covers are the button."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { BookPocket } from '@/components/kinetik/book-pocket';\n\n<BookPocket\n  title=\"Fantasy\"\n  count={8}\n  books={shelf.slice(0, 3).map((b) => ({ id: b.id, title: b.title, cover: { uri: b.coverUrl } }))}\n  onPress={() => router.push('/shelf/fantasy')}\n/>;\n```\n\n## When to use\n\n- Grouping a collection (books, albums, decks) into tappable shelves where the covers do the talking.\n\n## When not to use\n\n- Long lists of single items: use a list or a grid of covers.\n\n## Notes\n\n- Up to four covers show, back to front. Pass `cover` for an image; without one a typographic cover is drawn from `tones`.\n- Covers rise while the pocket is pressed (and while a pointer hovers on the web), then slide back on release.\n- The pocket blurs only the covers behind it (`BlurTargetView`), so it works the same on Android, iOS and the web.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add book-pocket`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

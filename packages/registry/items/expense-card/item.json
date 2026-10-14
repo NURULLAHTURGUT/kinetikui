@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "expense-card",
+  "title": "Expense Card",
+  "description": "A spending card with a period menu and horizontal bars on a dashed grid that grow in one by one.",
+  "category": "data",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["expense-card.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Each bar grows once per change with a UI-thread spring; the grid and labels are static views.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "baselineMs": 17,
+        "jankyPercent": 6.25,
+        "atRest": "idle",
+        "memoryMb": 154
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Bars appear at their length and the menu opens without zooming.",
+    "screenReader": "The chart reads as one summary (\"Housing 6.2K, Utilities 1.4K, Food 2.1K\"); the period button reports whether its menu is open; options are menu items.",
+    "touchTarget": "The period button and menu options are at least 44 pt."
+  }
+}

@@ -1,0 +1,32 @@
+## Usage
+
+```tsx
+import { SeatPicker } from '@/components/kinetik/seat-picker';
+
+const [seats, setSeats] = useState(1);
+
+<SeatPicker
+  value={seats}
+  onChange={setSeats}
+  max={plan.seatLimit}
+  caption="Add seats now and upgrade later if you need more."
+  action={{ label: 'Upgrade', onPress: () => router.push('/upgrade') }}
+  onInfo={() => openSheet('seats')}
+/>;
+```
+
+## When to use
+
+- Choosing a small number of seats, licences, tickets or guests, up to about eight.
+- When seeing what is left matters, such as a plan limit or a nearly full table.
+
+## When not to use
+
+- Large counts: eight chairs is the most that reads at a glance. Use a stepper or a number field.
+- Picking specific seats on a map: this counts seats, it does not place them.
+
+## Notes
+
+- Adding past `max` or removing below `min` shakes the stepper and plays a warning haptic instead of changing the value.
+- The badge counts `max - value` and turns red with "Full" when none are left.
+- The armchair is the Tabler Icons armchair (MIT licence, via iconstack.io).

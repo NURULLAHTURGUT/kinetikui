@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "rotation-ruler",
+  "type": "registry:item",
+  "title": "Rotation Ruler",
+  "description": "A straighten dial: a ruler of degree ticks slides under a fixed marker and snaps to level.",
+  "categories": [
+    "input"
+  ],
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/rotation-ruler.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/rotation-ruler.tsx",
+      "content": "import { useEffect, useState } from 'react';\nimport {\n  StyleSheet,\n  View,\n  type AccessibilityActionEvent,\n  type StyleProp,\n  type ViewStyle,\n} from 'react-native';\nimport { Gesture, GestureDetector } from 'react-native-gesture-handler';\nimport Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';\nimport { scheduleOnRN } from 'react-native-worklets';\n\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { gradient } from '../../lib/kinetik/tokens/gradient';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget, withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type RotationRulerProps = {\n  /** Angle in degrees. */\n  value: number;\n  /** Called on each whole degree while dragging and as it settles. */\n  onValueChange?: (value: number) => void;\n  /** Called once the ruler comes to rest. */\n  onSlidingComplete?: (value: number) => void;\n  /** Defaults to -45. */\n  min?: number;\n  /** Defaults to 45. */\n  max?: number;\n  /** Space between degree ticks, in pt. Defaults to 8. */\n  spacing?: number;\n  /** Accessible name. Defaults to \"Rotation\". */\n  label?: string;\n  disabled?: boolean;\n  /** A tick on every degree and a firmer one at zero. Defaults to true. */\n  haptics?: boolean;\n  style?: StyleProp<ViewStyle>;\n};\n\n/**\n * A straighten dial like a photo editor's: a ruler of degree ticks that\n * slides under a fixed marker. Flick it and it glides to a stop, snapping to\n * zero when it comes to rest close by. Double-tap to level it.\n */\nexport function RotationRuler({\n  value,\n  onValueChange,\n  onSlidingComplete,\n  min = -45,\n  max = 45,\n  spacing = 8,\n  label = 'Rotation',\n  disabled = false,\n  haptics = true,\n  style,\n}: RotationRulerProps) {\n  const { colors, radius } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const count = Math.round(max - min) + 1;\n\n  const width = useSharedValue(0);\n  const angle = useSharedValue(value);\n  const start = useSharedValue(value);\n  const committed = useSharedValue(Math.round(value));\n  const dragging = useSharedValue(false);\n  const [shown, setShown] = useState<number | null>(null);\n  const now = shown ?? value;\n\n  useEffect(() => {\n    if (dragging.get()) return;\n    const v = Math.min(max, Math.max(min, value));\n    angle.set(reduced ? v : withSpring(v, spring('smooth')));\n    committed.set(Math.round(v));\n  }, [value, min, max, reduced, angle, committed, dragging]);\n\n  const emit = (v: number) => {\n    setShown(v);\n    onValueChange?.(v);\n    haptic(v === 0 ? 'tap' : 'tick');\n  };\n  const complete = (v: number) => {\n    setShown(null);\n    onSlidingComplete?.(v);\n  };\n\n  const track = (a: number) => {\n    'worklet';\n    const v = Math.round(a);\n    if (v !== committed.get()) {\n      committed.set(v);\n      scheduleOnRN(emit, v);\n    }\n  };\n\n  const settle = (target: number) => {\n    'worklet';\n    // Rest on a whole degree; within two degrees of level, rest on zero.\n    let to = Math.round(Math.max(min, Math.min(max, target)));\n    if (Math.abs(to) <= 2 && min <= 0 && max >= 0) to = 0;\n    angle.set(withSpring(to, spring('smooth', reduced)));\n    track(to);\n    scheduleOnRN(complete, to);\n  };\n\n  const pan = Gesture.Pan()\n    .withTestId('rotation-ruler')\n    .enabled(!disabled)\n    .activeOffsetX([-3, 3])\n    .failOffsetY([-14, 14])\n    .onBegin(() => {\n      dragging.set(true);\n      start.set(angle.get());\n    })\n    .onUpdate((e) => {\n      const a = Math.max(min, Math.min(max, start.get() - e.translationX / spacing));\n      angle.set(a);\n      track(a);\n    })\n    .onEnd((e) => {\n      dragging.set(false);\n      // Carry a little of the flick before settling.\n      settle(angle.get() - (reduced ? 0 : (e.velocityX / spacing) * 0.12));\n    });\n\n  const level = Gesture.Tap()\n    .withTestId('rotation-ruler-reset')\n    .numberOfTaps(2)\n    // A finger that moves is dragging, not tapping: fail at once so the pan takes over.\n    .maxDistance(10)\n    .enabled(!disabled)\n    .onEnd(() => settle(0));\n\n  const strip = useAnimatedStyle(() => ({\n    transform: [{ translateX: width.get() / 2 - (angle.get() - min + 0.5) * spacing }],\n  }));\n\n  const onAccessibilityAction = (e: AccessibilityActionEvent) => {\n    if (disabled) return;\n    const next = committed.get() + (e.nativeEvent.actionName === 'increment' ? 1 : -1);\n    const v = Math.max(min, Math.min(max, next));\n    committed.set(v);\n    angle.set(withSpring(v, spring('snappy', reduced)));\n    onValueChange?.(v);\n    onSlidingComplete?.(v);\n  };\n\n  const fade = withAlpha(colors.surfaceRaised, 0);\n\n  return (\n    <View\n      style={[\n        styles.panel,\n        {\n          backgroundColor: colors.surfaceRaised,\n          borderRadius: radius.lg,\n          opacity: disabled ? 0.45 : 1,\n        },\n        style,\n      ]}\n    >\n      <GestureDetector gesture={Gesture.Race(pan, level)}>\n        <View\n          collapsable={false}\n          accessible\n          accessibilityRole=\"adjustable\"\n          accessibilityLabel={label}\n          accessibilityHint=\"Drag to straighten\"\n          accessibilityValue={{ min, max, now, text: `${now} degrees` }}\n          accessibilityState={{ disabled }}\n          accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}\n          onAccessibilityAction={onAccessibilityAction}\n          onLayout={(e) => width.set(e.nativeEvent.layout.width)}\n          style={[styles.hit, { borderRadius: radius.lg }]}\n        >\n          <Animated.View style={[styles.strip, strip]} pointerEvents=\"none\">\n            {Array.from({ length: count }, (_, i) => (\n              <Tick key={i} degree={min + i} spacing={spacing} />\n            ))}\n          </Animated.View>\n          <View\n            pointerEvents=\"none\"\n            style={[\n              StyleSheet.absoluteFill,\n              gradient(\n                `linear-gradient(90deg, ${colors.surfaceRaised} 0%, ${fade} 30%, ${fade} 70%, ${colors.surfaceRaised} 100%)`,\n              ),\n            ]}\n          />\n          <View pointerEvents=\"none\" style={styles.marker}>\n            <View style={[styles.dot, { backgroundColor: colors.azure }]} />\n            <View style={[styles.needle, { backgroundColor: colors.text }]} />\n          </View>\n        </View>\n      </GestureDetector>\n    </View>\n  );\n}\n\n/** One degree mark; every fifth is taller. The fade at the edges does the rest. */\nfunction Tick({ degree, spacing }: { degree: number; spacing: number }) {\n  const { colors } = useKinetikTheme();\n  const major = degree % 5 === 0;\n  return (\n    <View style={[styles.tickSlot, { width: spacing }]}>\n      <View\n        style={[\n          styles.tick,\n          {\n            height: major ? 16 : 9,\n            backgroundColor: major ? colors.text : colors.textSubtle,\n          },\n        ]}\n      />\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  panel: { minHeight: 56, justifyContent: 'center', overflow: 'hidden' },\n  hit: { height: 56, justifyContent: 'center', overflow: 'hidden', minHeight: minTouchTarget },\n  strip: { position: 'absolute', left: 0, flexDirection: 'row', alignItems: 'center', height: 56 },\n  tickSlot: { alignItems: 'center', justifyContent: 'center' },\n  tick: { width: 1.5, borderRadius: 1 },\n  marker: {\n    position: 'absolute',\n    left: '50%',\n    top: 8,\n    bottom: 8,\n    width: 6,\n    marginLeft: -3,\n    alignItems: 'center',\n  },\n  dot: { width: 4, height: 4, borderRadius: 2, marginBottom: 3 },\n  needle: { width: 2, flex: 1, borderRadius: 1 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "input",
+    "web": "live",
+    "perf": {
+      "budget": "The tick strip is static views moved by one UI-thread transform; React re-renders once per whole degree.",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-14",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 27,
+          "baselineMs": 17,
+          "jankyPercent": 2.85,
+          "atRest": "idle",
+          "memoryMb": 156
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The ruler follows the finger but does not glide after a flick and settles without a spring.",
+      "screenReader": "Adjustable role reading \"12 degrees\"; increment and decrement move by one degree.",
+      "touchTarget": "The whole 56 pt panel is the touch area."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { RotationRuler } from '@/components/kinetik/rotation-ruler';\n\nconst [angle, setAngle] = useState(0);\n\n<RotationRuler value={angle} onValueChange={setAngle} />;\n<Image source={photo} style={{ transform: [{ rotate: `${angle}deg` }] }} />;\n```\n\n## When to use\n\n- Straightening a photo or rotating a layer by small angles.\n- Any bounded angle where feel matters more than typing a number.\n\n## When not to use\n\n- Full turns: a ruler of 360 ticks is slow to sweep. Use a dial or 90° buttons.\n- Values that are not angles.\n\n## Notes\n\n- A flick glides a little before it settles on a whole degree; resting within two degrees of zero snaps to level.\n- Double-tap the ruler to level it. Haptics tick on every degree and land firmer on zero.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add rotation-ruler`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

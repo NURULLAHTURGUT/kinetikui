@@ -1,0 +1,25 @@
+## Usage
+
+```tsx
+import { CreditScore } from '@/components/kinetik/credit-score';
+
+<CreditScore
+  score={report?.score ?? 0}
+  icon={<GaugeIcon />}
+  action={{ label: 'Apply', icon: <PlusIcon />, onPress: startApplication }}
+/>;
+```
+
+## When to use
+
+- Showing one score on a known scale, with room to say what to do when there is none.
+
+## When not to use
+
+- Scores without bands or a scale: the colours imply good and bad.
+- Several scores side by side: use a chart.
+
+## Notes
+
+- `min` and `max` default to 300 and 850. A score below `min` (such as 0) shows the empty state and `emptyHint`.
+- Bands are Poor, Fair, Good, Very good and Excellent by share of the scale; `scoreBand` is exported if you need the same words elsewhere.

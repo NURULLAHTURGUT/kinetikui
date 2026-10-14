@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "palette-strip",
+  "title": "Palette Strip",
+  "description": "Colour swatches joined into one bar that wipe to new colours in turn, with a spinning shuffle button.",
+  "category": "input",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["palette-strip.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Each swatch wipe is one UI-thread transform for about half a second after the colours change; at rest nothing animates.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "baselineMs": 17,
+        "jankyPercent": 0.38,
+        "atRest": "idle",
+        "memoryMb": 146
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Swatches change colour in place and the shuffle icon does not spin.",
+    "screenReader": "Without onSwatchPress the bar is one image named after its colours; with it, each swatch is a button named after its colour.",
+    "touchTarget": "Swatches are 44 pt tall; the action button is 44 pt."
+  }
+}

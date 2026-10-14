@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "credit-score",
+  "title": "Credit Score",
+  "description": "A credit score card whose number counts up while a bar meter lights from red through amber to green.",
+  "category": "data",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-count"],
+  "files": ["credit-score.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The meter lights bar by bar with UI-thread timings; the number counts up for about a second (re-rendering on animation frames).",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "baselineMs": 17,
+        "jankyPercent": 17.14,
+        "atRest": "idle",
+        "memoryMb": 229,
+        "notes": "Janky frames come from the number counting up (a React re-render per frame for about a second)."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The score shows at once and the bars light without the left-to-right sweep.",
+    "screenReader": "The score reads as one line with its band and scale (\"Your credit score is 712, Good, on a scale of 300 to 850\").",
+    "touchTarget": "The header button is at least 44 pt."
+  }
+}

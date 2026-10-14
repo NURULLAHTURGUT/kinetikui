@@ -1,0 +1,44 @@
+## Usage
+
+```tsx
+import { GradientSlider } from '@/components/kinetik/gradient-slider';
+
+<GradientSlider
+  label="Hue"
+  stops="hue"
+  min={0}
+  max={360}
+  step={1}
+  value={hue}
+  onValueChange={(value, color) => {
+    setHue(value);
+    setTint(color);
+  }}
+/>;
+
+<GradientSlider
+  label="Temperature"
+  stops="temperature"
+  min={2000}
+  max={10000}
+  step={100}
+  value={kelvin}
+  onValueChange={setKelvin}
+  action={{ icon: <TargetIcon />, label: 'Reset white balance', onPress: () => setKelvin(5500) }}
+/>;
+```
+
+## When to use
+
+- Picking a hue, a white balance or any value that is easiest to read as colour.
+- Photo and design editors where the result changes live.
+
+## When not to use
+
+- Exact colours: give people a hex field or a full colour picker as well.
+- Values that are not colours: a coloured track suggests the colour matters.
+
+## Notes
+
+- `stops` takes `hue`, `temperature` or your own `[hue, saturation, lightness]` stops. `colorAt(stops, t)` returns the colour at any point as `hsl()`.
+- The swatch shows when there is no `action`; set `swatch` to show both.

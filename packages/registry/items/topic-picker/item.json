@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "topic-picker",
+  "title": "Topic Picker",
+  "description": "Topic chips drifting in rows that run opposite ways; picking one pops it in a soft colour.",
+  "category": "input",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["topic-picker.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Each row is one looping UI-thread transform; chips only re-render when picked.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 22,
+        "p90Ms": 25,
+        "baselineMs": 17,
+        "jankyPercent": 0,
+        "atRest": "animating",
+        "memoryMb": 159,
+        "notes": "Animating at rest: the rows drift continuously. Chips carry no shadow, which took frames from 28 to 22 ms here."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Rows hold still and scroll by hand instead of drifting; chips do not pop.",
+    "screenReader": "Each topic is a checkbox with its checked state; copies used for the loop are hidden. The submit button is disabled until enough are picked.",
+    "touchTarget": "Chips are 48 pt tall; the submit button is 60 pt."
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "scan-progress",
+  "title": "Scan Progress",
+  "description": "An analysing state for media: a scan band lights pixel squares over the image while a ring fills a pill.",
+  "category": "feedback",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-clock"],
+  "files": ["scan-progress.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The pixel field is three Skia paths rebuilt 30 times a second by one worklet while scanning; it stops completely when done. The ring is one trimmed path.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 24,
+        "p90Ms": 27,
+        "baselineMs": 17,
+        "jankyPercent": 0.17,
+        "atRest": "animating",
+        "memoryMb": 195,
+        "notes": "Animating while scanning: the pixel field redraws 30 times a second and the spinner turns; both stop when done. Most of each frame is the emulator GPU swap."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "No pixel field or spinner rotation; the wash, the ring and the labels still show progress.",
+    "screenReader": "The pill is a progress bar named by the current step, with its percentage when known; changes are announced. Pass imageLabel to describe the image.",
+    "touchTarget": "Not interactive."
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "streak-card",
+  "title": "Streak Card",
+  "description": "A streak card: the day count pops into a disc as confetti bursts around it, and the week's marks tick in.",
+  "category": "card",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["streak-card.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The confetti is one Skia canvas driven by a single UI-thread timing; it settles after about a second and nothing animates at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 27,
+        "baselineMs": 17,
+        "jankyPercent": 3.25,
+        "atRest": "idle",
+        "memoryMb": 168
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The number, confetti and day marks appear in place without the burst or the pulse.",
+    "screenReader": "The count reads as one label (\"2 day streak\"), the title as a header and the week as one line (\"This week: We done, Th today, Fr upcoming\").",
+    "touchTarget": "The button is 52 pt tall and full width."
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "credit-score",
+  "type": "registry:item",
+  "title": "Credit Score",
+  "description": "A credit score card whose number counts up while a bar meter lights from red through amber to green.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-count.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/credit-score.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/credit-score.tsx",
+      "content": "import { useEffect, type ReactNode } from 'react';\nimport { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  interpolateColor,\n  useAnimatedStyle,\n  useSharedValue,\n  withDelay,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useCountUp } from '../../lib/kinetik/hooks/use-count-up';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { timing } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { minTouchTarget, withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type CreditScoreProps = {\n  /** The score. 0 or below `min` means there is none yet. */\n  score: number;\n  /** Bottom of the scale. Defaults to 300. */\n  min?: number;\n  /** Top of the scale. Defaults to 850. */\n  max?: number;\n  title?: string;\n  /** Icon before the title. */\n  icon?: ReactNode;\n  /** A button in the header, e.g. Apply. */\n  action?: { label: string; icon?: ReactNode; onPress: () => void };\n  /** Shown under the score while there is none. */\n  emptyHint?: string;\n  /** Number of bars in the meter. Defaults to 32. */\n  bars?: number;\n  style?: StyleProp<ViewStyle>;\n};\n\n/** Band names for a 300–850 style score, by share of the scale. */\nexport function scoreBand(share: number): string {\n  if (share < 0.45) return 'Poor';\n  if (share < 0.62) return 'Fair';\n  if (share < 0.78) return 'Good';\n  if (share < 0.9) return 'Very good';\n  return 'Excellent';\n}\n\n/**\n * A credit score card: the number counts up in the sentence, and a meter of\n * thin bars lights from left to right in colours that warm from red through\n * amber to green, stopping at the score. With no score yet the bars rest\n * empty under a nudge to build history.\n */\nexport function CreditScore({\n  score,\n  min = 300,\n  max = 850,\n  title = 'Credit Score',\n  icon,\n  action,\n  emptyHint = 'Feel free to build your credit history to see your score.',\n  bars = 32,\n  style,\n}: CreditScoreProps) {\n  const { colors, radius, space, font, shadow } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const has = score >= min;\n  const share = has ? Math.min(1, (score - min) / (max - min)) : 0;\n  const shown = useCountUp(has ? score : 0, { instant: reduced, duration: 1200 });\n  const lit = Math.round(share * bars);\n\n  return (\n    <View\n      style={[\n        styles.card,\n        {\n          backgroundColor: colors.surfaceRaised,\n          borderColor: colors.border,\n          borderRadius: radius.xl,\n          boxShadow: shadow.md,\n        },\n        style,\n      ]}\n    >\n      <View style={[styles.head, { padding: space[5], paddingBottom: space[4], gap: space[3] }]}>\n        {icon}\n        <Text\n          accessibilityRole=\"header\"\n          style={[\n            styles.grow,\n            { color: colors.text, fontSize: font.size.lg, fontWeight: font.weight.medium },\n          ]}\n        >\n          {title}\n        </Text>\n        {action ? (\n          <Pressable\n            accessibilityRole=\"button\"\n            onPress={action.onPress}\n            style={({ pressed }) => [\n              styles.button,\n              {\n                borderColor: colors.borderStrong,\n                borderRadius: radius.md,\n                gap: 6,\n                backgroundColor: pressed ? colors.surfaceSunken : 'transparent',\n              },\n            ]}\n          >\n            {action.icon}\n            <Text style={{ color: colors.text, fontSize: font.size.md }}>{action.label}</Text>\n          </Pressable>\n        ) : null}\n      </View>\n      <View style={[styles.rule, { backgroundColor: colors.border, marginHorizontal: space[5] }]} />\n      <View\n        accessible\n        accessibilityLabel={\n          has\n            ? `Your credit score is ${score}, ${scoreBand(share)}, on a scale of ${min} to ${max}`\n            : `No credit score yet. ${emptyHint}`\n        }\n        style={{ padding: space[5], paddingTop: space[4], gap: space[1] }}\n      >\n        <Text style={{ fontSize: font.size.xl + 2, color: colors.textSubtle }}>\n          Your{' '}\n          <Text style={{ color: colors.text, fontWeight: font.weight.medium }}>credit score</Text>{' '}\n          is{' '}\n          <Text\n            style={{\n              color: colors.text,\n              fontWeight: font.weight.semibold,\n              fontVariant: ['tabular-nums'],\n            }}\n          >\n            {Math.round(shown)}\n          </Text>\n          {has ? (\n            <Text style={{ color: colors.textMuted, fontSize: font.size.md }}>\n              {'  '}\n              {scoreBand(share)}\n            </Text>\n          ) : null}\n        </Text>\n        <Text style={{ color: colors.textSubtle, fontSize: font.size.md }}>\n          {has ? `On a scale of ${min} to ${max}.` : emptyHint}\n        </Text>\n        <View style={[styles.meter, { marginTop: space[4] }]}>\n          {Array.from({ length: bars }, (_, i) => (\n            <MeterBar key={i} index={i} count={bars} on={i < lit} />\n          ))}\n        </View>\n      </View>\n    </View>\n  );\n}\n\n/** One bar of the meter, lighting a beat after its left neighbour. */\nfunction MeterBar({ index, count, on }: { index: number; count: number; on: boolean }) {\n  const { colors } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const light = useSharedValue(on && reduced ? 1 : 0);\n\n  useEffect(() => {\n    if (reduced) {\n      light.set(on ? 1 : 0);\n      return;\n    }\n    light.set(\n      withDelay(on ? index * 28 : (count - index) * 10, withTiming(on ? 1 : 0, timing('base'))),\n    );\n  }, [on, index, count, reduced, light]);\n\n  // Red at the start of the scale, amber in the middle, green at the end.\n  const t = count <= 1 ? 1 : index / (count - 1);\n  const hue = t < 0.5 ? [colors.danger, colors.warning] : [colors.warning, colors.success];\n  const local = t < 0.5 ? t * 2 : (t - 0.5) * 2;\n  const empty = withAlpha(colors.text, 0.08);\n\n  const style = useAnimatedStyle(() => {\n    const tone = interpolateColor(local, [0, 1], hue as [string, string]);\n    return {\n      backgroundColor: interpolateColor(light.get(), [0, 1], [empty, tone]),\n      transform: [{ scaleY: 0.82 + light.get() * 0.18 }],\n    };\n  });\n  return <Animated.View style={[styles.bar, style]} />;\n}\n\nconst styles = StyleSheet.create({\n  card: { borderWidth: StyleSheet.hairlineWidth },\n  head: { flexDirection: 'row', alignItems: 'center' },\n  grow: { flex: 1 },\n  button: {\n    flexDirection: 'row',\n    alignItems: 'center',\n    minHeight: minTouchTarget,\n    paddingHorizontal: 14,\n    borderWidth: 1,\n  },\n  rule: { height: StyleSheet.hairlineWidth },\n  meter: { flexDirection: 'row', justifyContent: 'space-between', height: 30 },\n  bar: { width: 7, height: 30, borderRadius: 2 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "The meter lights bar by bar with UI-thread timings; the number counts up for about a second (re-rendering on animation frames).",
+      "measurements": [
+        {
+          "device": "Pixel 9 emulator, API 35",
+          "kind": "emulator",
+          "date": "2026-10-14",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 18,
+          "baselineMs": 17,
+          "jankyPercent": 17.14,
+          "atRest": "idle",
+          "memoryMb": 229,
+          "notes": "Janky frames come from the number counting up (a React re-render per frame for about a second)."
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The score shows at once and the bars light without the left-to-right sweep.",
+      "screenReader": "The score reads as one line with its band and scale (\"Your credit score is 712, Good, on a scale of 300 to 850\").",
+      "touchTarget": "The header button is at least 44 pt."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { CreditScore } from '@/components/kinetik/credit-score';\n\n<CreditScore\n  score={report?.score ?? 0}\n  icon={<GaugeIcon />}\n  action={{ label: 'Apply', icon: <PlusIcon />, onPress: startApplication }}\n/>;\n```\n\n## When to use\n\n- Showing one score on a known scale, with room to say what to do when there is none.\n\n## When not to use\n\n- Scores without bands or a scale: the colours imply good and bad.\n- Several scores side by side: use a chart.\n\n## Notes\n\n- `min` and `max` default to 300 and 850. A score below `min` (such as 0) shows the empty state and `emptyHint`.\n- Bands are Poor, Fair, Good, Very good and Excellent by share of the scale; `scoreBand` is exported if you need the same words elsewhere.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add credit-score`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

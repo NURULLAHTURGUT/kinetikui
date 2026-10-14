@@ -1,0 +1,31 @@
+## Usage
+
+```tsx
+import { PaletteStrip } from '@/components/kinetik/palette-strip';
+
+<PaletteStrip
+  colors={palette}
+  names={['Snow', 'Slate', 'Lagoon']}
+  onSwatchPress={(i, color) => copy(color)}
+  action={{
+    icon: <ShuffleIcon />,
+    label: 'Shuffle palette',
+    onPress: () => setPalette(generate()),
+  }}
+/>;
+```
+
+## When to use
+
+- Showing and regenerating a small set of colours: a theme, a palette generator, extracted image colours.
+- Two to six colours.
+
+## When not to use
+
+- Picking one colour from many: use a grid of swatches.
+- More than six colours: the swatches get too narrow to tap.
+
+## Notes
+
+- The component does not create colours; change `colors` and each swatch wipes to its new colour a beat after its neighbour.
+- Without `onSwatchPress` the bar is one image for screen readers; with it each swatch is a button.

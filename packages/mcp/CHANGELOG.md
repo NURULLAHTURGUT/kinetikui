@@ -1,5 +1,19 @@
 # @kinetik/mcp
 
+## 1.4.0
+
+### Minor Changes
+
+- 25 new components.
+
+  **Card.** Boarding Pass, Book Pocket, Now Playing, Question Deck, Streak Card, Vinyl Player, Wallet Stack.
+
+  **Inputs.** Aspect Picker, Gradient Slider, Intensity Slider, Palette Strip, Plan Picker, Rotation Ruler, Seat Picker, Segment Bar, Step Slider, Topic Picker.
+
+  **Data.** Agenda Card, Credit Score, Expense Card, Flight Track, Score Matrix, Vital Arcs. **Feedback.** Scan Progress. **Interaction.** Peek Folder.
+
+  Boarding Pass, Peek Folder, Now Playing, Vinyl Player and Agenda Card draw their small icons with `react-native-svg`, installed with them through `npx expo install`.
+
 ## 1.3.0
 
 ### Minor Changes

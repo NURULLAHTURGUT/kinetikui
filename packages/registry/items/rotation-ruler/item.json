@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "rotation-ruler",
+  "title": "Rotation Ruler",
+  "description": "A straighten dial: a ruler of degree ticks slides under a fixed marker and snaps to level.",
+  "category": "input",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["rotation-ruler.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The tick strip is static views moved by one UI-thread transform; React re-renders once per whole degree.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 27,
+        "baselineMs": 17,
+        "jankyPercent": 2.85,
+        "atRest": "idle",
+        "memoryMb": 156
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The ruler follows the finger but does not glide after a flick and settles without a spring.",
+    "screenReader": "Adjustable role reading \"12 degrees\"; increment and decrement move by one degree.",
+    "touchTarget": "The whole 56 pt panel is the touch area."
+  }
+}

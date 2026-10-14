@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "now-playing",
+  "title": "Now Playing",
+  "description": "A dark music widget: the cover springs forward on play, the icon morphs and progress runs on the UI thread.",
+  "category": "card",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-svg"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["now-playing.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Progress is one UI-thread timing per track; the time labels re-render four times a second while playing. Paused, nothing animates.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 21,
+        "baselineMs": 17,
+        "jankyPercent": 0.75,
+        "atRest": "idle",
+        "memoryMb": 174
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Play, pause and skipping change state without the cover spring, slide or icon turn.",
+    "screenReader": "Title and subtitle read as one line; the progress is adjustable (\"1:09 of 3:43\", ten-second steps); Previous, Play/Pause and Next are buttons.",
+    "touchTarget": "Buttons are 44 pt tall; the progress bar's touch area is 44 pt tall."
+  }
+}

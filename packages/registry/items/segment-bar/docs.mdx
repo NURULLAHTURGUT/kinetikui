@@ -1,0 +1,32 @@
+## Usage
+
+```tsx
+import { SegmentBar } from '@/components/kinetik/segment-bar';
+
+<SegmentBar
+  label="File format"
+  options={[
+    { value: 'png', label: 'png' },
+    { value: 'jpg', label: 'jpg' },
+    { value: 'heic', label: 'heic' },
+  ]}
+  value={format}
+  onChange={setFormat}
+  action={{ icon: <DownloadIcon />, label: 'Save image', onPress: save }}
+/>;
+```
+
+## When to use
+
+- Two to four short options that change how the next action behaves, like a format before saving.
+- Mode switches in an editor panel.
+
+## When not to use
+
+- Navigation between screens: use tabs.
+- Long labels or more than four options: use a select.
+
+## Notes
+
+- `value` is typed from your options, so `onChange` hands back the same union.
+- The action button is optional and pops when pressed.

@@ -1,0 +1,36 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "flight-track",
+  "title": "Flight Track",
+  "description": "A flight card whose route fills with a glowing line behind a small plane with blinking wing lights.",
+  "category": "data",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["flight-track.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The plane rocks and its lights blink on the UI thread; the route only animates when progress changes. One small Skia canvas for the plane.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 21,
+        "p90Ms": 24,
+        "baselineMs": 17,
+        "jankyPercent": 0.1,
+        "atRest": "animating",
+        "memoryMb": 162,
+        "notes": "Animating at rest: the plane rocks and its wing lights blink while it is in the air; both stop once landed."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The plane jumps to its place, does not rock and its lights stay on.",
+    "screenReader": "One progress bar reading the route and times (\"LHR, London, UK, to OPO, Porto, PT. Departs 20:50 GMT+1, arrives 22:40 GMT+1.\") with \"55% of the way\".",
+    "touchTarget": "Not interactive."
+  }
+}

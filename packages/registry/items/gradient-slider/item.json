@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "gradient-slider",
+  "title": "Gradient Slider",
+  "description": "A colour slider on a hue or white-balance gradient with a ring knob, a live swatch and an action button.",
+  "category": "input",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": [
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["gradient-slider.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The gradient is a static background; the knob moves on the UI thread and its colour updates once per step.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 22,
+        "baselineMs": 17,
+        "jankyPercent": 1.99,
+        "atRest": "idle",
+        "memoryMb": 158
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The knob follows the finger without growing and the swatch changes without popping.",
+    "screenReader": "Adjustable role with min, max, current value and formatted text. The swatch is decorative; the action button has its own name.",
+    "touchTarget": "The track is 44 pt tall; the swatch area and action button are at least 44 pt."
+  }
+}

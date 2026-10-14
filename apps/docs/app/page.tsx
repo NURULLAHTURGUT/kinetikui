@@ -29,11 +29,11 @@ const CATEGORY_TITLE: Record<string, string> = {
 
 /** Landing showcase: a large tile, two beside it, then a small and a wide one. */
 const FEATURED = [
-  'glint-card',
-  'beam-button',
-  'slide-confirm',
-  'expand-card',
-  'drift-marquee',
+  'book-pocket',
+  'peek-folder',
+  'vital-arcs',
+  'wallet-stack',
+  'topic-picker',
 ] as const;
 
 const INSTALL = 'npx kinetik-ui add glint-card';

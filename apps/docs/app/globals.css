@@ -1201,25 +1201,6 @@ pre.shiki {
   color: var(--k-text-muted);
 }
 
-.device {
-  display: grid;
-  grid-template-columns: 132px 1fr;
-  gap: 20px;
-  align-items: center;
-}
-.qr {
-  width: 132px;
-  height: 132px;
-  padding: 10px;
-  border-radius: var(--radius-md);
-  background: #fff;
-}
-.qr svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
 details.source {
   border: 1px solid var(--k-border);
   border-radius: var(--radius-md);
@@ -1316,9 +1297,6 @@ details.source .shiki {
   }
   .topbar-inner {
     justify-content: space-between;
-  }
-  .device {
-    grid-template-columns: 1fr;
   }
   .preview-stage {
     min-height: 380px;

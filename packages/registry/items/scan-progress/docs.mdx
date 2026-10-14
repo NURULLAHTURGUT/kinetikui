@@ -1,0 +1,31 @@
+## Usage
+
+```tsx
+import { ScanProgress } from '@/components/kinetik/scan-progress';
+
+<ScanProgress
+  source={{ uri: video.thumbnail }}
+  imageLabel="Your swing, frame 1"
+  progress={job.progress}
+  done={job.status === 'complete'}
+  label={job.stepLabel}
+/>;
+```
+
+Leave out `progress` when the work has no measurable progress: the ring creeps towards 90% and slows down, and closes when `done` turns true.
+
+## When to use
+
+- Processing a photo or video the person just gave you: AI analysis, enhancement, background removal, upload checks.
+- Waits of a few seconds to a minute, where seeing the image being worked on reassures.
+
+## When not to use
+
+- Instant results under a second: the effect would only flash.
+- Waits without an image: use a progress bar or Ring Spinner.
+
+## Notes
+
+- `label` changes cross-fade, so you can name each step as it happens.
+- The pixel field draws white squares over the image; pick a `tint` that suits your photos (it defaults to the theme success green).
+- With reduced motion the pixel field and spinner rotation are left out; the ring and labels still report progress.

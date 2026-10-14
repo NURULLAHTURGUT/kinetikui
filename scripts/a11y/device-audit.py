@@ -114,10 +114,28 @@ def audit(name, route, dp, size, title):
     chrome = []
     nodes = 0
     width, height = size
+    parents = {child: parent for parent in tree.iter() for child in parent}
+
+    def clipped(node, x1, y1, x2, y2):
+        # A full-height sliver flush with an ancestor's side edge is a button
+        # that runs out of a clipping row (a marquee, a carousel): its visible
+        # bounds are not its size.
+        if (y2 - y1) / dp < MIN_DP - 0.5 or (x2 - x1) > (y2 - y1) * 0.6:
+            return False
+        up = parents.get(node)
+        while up is not None:
+            ax1, _, ax2, _ = bounds(up)
+            if ax2 - ax1 > x2 - x1 and (abs(ax1 - x1) <= 1 or abs(ax2 - x2) <= 1):
+                return True
+            up = parents.get(up)
+        return False
+
     for node in tree.iter('node'):
         if node.get('package') != PKG:
             continue
         x1, y1, x2, y2 = bounds(node)
+        if clipped(node, x1, y1, x2, y2):
+            continue
         # Playground chrome (header bar, controls) sits outside the demo; skip
         # the top bar so only the component and its demo are judged.
         if y2 <= int(260):

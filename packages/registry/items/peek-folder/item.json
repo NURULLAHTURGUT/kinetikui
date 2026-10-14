@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "peek-folder",
+  "title": "Peek Folder",
+  "description": "Tiles tucked in a frosted-glass folder pocket, glowing through it; tap or hover and they spring up and fan out.",
+  "category": "interaction",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated", "react-native-svg"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
+  "files": ["peek-folder.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One Skia canvas: the tiles move by transforms from one UI-thread spring and the glass is a single backdrop blur. Nothing animates at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 25,
+        "baselineMs": 17,
+        "jankyPercent": 1.71,
+        "atRest": "idle",
+        "memoryMb": 153
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The tiles jump between tucked and lifted without the spring or the drop-in.",
+    "screenReader": "The folder is a button named by `label` with its expanded state; the arrow is a separate \"Open …\" button.",
+    "touchTarget": "The whole folder is the toggle; the arrow button is 44 pt."
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "score-matrix",
+  "title": "Score Matrix",
+  "description": "A dark score card: the figure counts up as a dot grid lights to its share, beside rows of counting metrics.",
+  "category": "data",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-count"],
+  "files": ["score-matrix.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The dot grid is two Skia paths, the lit one rebuilt on the UI thread for about a second; figures count up by re-rendering their text. Nothing animates at rest.",
+    "measurements": [
+      {
+        "device": "Pixel 9 emulator, API 35",
+        "kind": "emulator",
+        "date": "2026-10-14",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 30,
+        "baselineMs": 17,
+        "jankyPercent": 3.72,
+        "atRest": "idle",
+        "memoryMb": 166
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The score, dots and metric values appear at once.",
+    "screenReader": "The score reads as one line (\"Athletic score: 13 out of 100\") and each metric as one line (\"Strength: 170 lbs\").",
+    "touchTarget": "Nothing is interactive."
+  }
+}
