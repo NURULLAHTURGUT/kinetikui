@@ -176,6 +176,21 @@ a {
   transform: scaleX(1);
   transform-origin: left;
 }
+.topnav-sponsor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.topnav-sponsor svg {
+  transition: transform 300ms var(--ease-out);
+}
+.topnav-sponsor:hover svg {
+  color: var(--k-danger);
+  transform: scale(1.15);
+}
+.topnav .topnav-sponsor::after {
+  left: 32px;
+}
 .topbar-end {
   display: flex;
   align-items: center;

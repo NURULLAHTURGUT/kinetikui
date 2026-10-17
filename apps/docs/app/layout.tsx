@@ -9,6 +9,7 @@ import './globals.css';
 import { BrandLink } from '../components/brand-link';
 import { Effects } from '../components/effects';
 import { GitHubLink } from '../components/github-link';
+import { HeartIcon } from '../components/icons';
 import { LogoMark } from '../components/logo';
 import { ThemeSync, ThemeToggle, themeBootScript } from '../components/theme';
 import { SITE } from '../lib/data';
@@ -61,6 +62,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <Link href={componentsHref}>Components</Link>
               <Link href="/docs/getting-started">Docs</Link>
               <Link href="/#mcp">MCP</Link>
+              <Link href="/sponsors" className="topnav-sponsor">
+                <HeartIcon size={14} />
+                Sponsor
+              </Link>
             </nav>
             <div className="topbar-end">
               <GitHubLink />
@@ -96,6 +101,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 <a href="https://www.npmjs.com/package/kinetik-ui">npm</a>
                 <a href="/llms.txt">llms.txt</a>
                 <Link href="/registry">Registry</Link>
+                <Link href="/sponsors">Sponsors</Link>
               </div>
             </nav>
           </div>

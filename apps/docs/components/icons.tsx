@@ -114,3 +114,45 @@ export function StarIcon({ size = 16, ...rest }: IconProps) {
     </svg>
   );
 }
+
+export function HeartIcon(props: IconProps) {
+  return (
+    <Outline {...props}>
+      <path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572" />
+    </Outline>
+  );
+}
+
+export function ArrowUpRightIcon(props: IconProps) {
+  return (
+    <Outline {...props}>
+      <path d="M17 7l-10 10" />
+      <path d="M8 7l9 0l0 9" />
+    </Outline>
+  );
+}
+
+export function ShareIcon(props: IconProps) {
+  return (
+    <Outline {...props}>
+      <path d="M3 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+      <path d="M15 6a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+      <path d="M15 18a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" />
+      <path d="M8.7 10.7l6.6 -3.4" />
+      <path d="M8.7 13.3l6.6 3.4" />
+    </Outline>
+  );
+}
+
+export function PullRequestIcon(props: IconProps) {
+  return (
+    <Outline {...props}>
+      <path d="M4 18a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+      <path d="M4 6a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+      <path d="M16 18a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+      <path d="M6 8l0 8" />
+      <path d="M11 6h5a2 2 0 0 1 2 2v8" />
+      <path d="M14 9l-3 -3l3 -3" />
+    </Outline>
+  );
+}

@@ -243,6 +243,10 @@ pnpm verify           # registry freshness, format, lint, typecheck, tests, inte
 
 Contributing: [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Sponsors
+
+Kinetik UI is free and open source. If it saves you time, you can [sponsor it on GitHub](https://github.com/sponsors/NURULLAHTURGUT). Every public sponsor is listed on [kinetik-ui.dev/sponsors](https://kinetik-ui.dev/sponsors).
+
 ## License
 
 [MIT](LICENSE). Dependencies keep their own licenses: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

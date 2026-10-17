@@ -20,14 +20,15 @@ const acceptsMarkdown = [{ type: 'header', key: 'accept', value: '(.*)text/markd
  * Security headers. The site is static, so the policy only allows what it
  * uses: its own scripts (Next.js inlines a few, plus the theme boot script),
  * WebAssembly for the Skia previews, inline styles from react-native-web, the
- * GitHub API for the star count and the CanvasKit CDN. Development needs eval
- * for hot reload, so the policy is production-only.
+ * GitHub API for the star count, GitHub avatars on the sponsors page and the
+ * CanvasKit CDN. Development needs eval for hot reload, so the policy is
+ * production-only.
  */
 const contentSecurityPolicy = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  "img-src 'self' data: blob: https://avatars.githubusercontent.com",
   "font-src 'self' data:",
   `connect-src 'self' https://api.github.com${canvasKitUrl ? ` ${new URL(canvasKitUrl).origin}` : ''}`,
   "worker-src 'self' blob:",

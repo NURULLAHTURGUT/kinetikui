@@ -1,0 +1,264 @@
+/* Sponsors page. Shares the landing page's motion and section styles (home.css). */
+
+.sponsor-hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  min-height: min(calc(100svh - 60px), 760px);
+  justify-content: center;
+  padding: 72px var(--gutter) 96px;
+  text-align: center;
+  overflow: hidden;
+  isolation: isolate;
+}
+.sponsor-hero h1 {
+  margin: 0;
+  font-size: clamp(44px, 8vw, 96px);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+.sponsor-glow {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(40% 34% at 50% 42%, var(--site-glow), transparent 70%),
+    linear-gradient(to bottom, transparent 70%, var(--k-background));
+}
+/* The logo, huge and faint, sinking into the bottom of the hero. */
+.sponsor-mark {
+  position: absolute;
+  left: 50%;
+  bottom: -18%;
+  z-index: -1;
+  width: min(120vw, 1300px);
+  transform: translateX(-50%);
+  color: var(--k-text-subtle);
+  opacity: 0.22;
+  mask-image: linear-gradient(to bottom, #000 10%, transparent 75%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 10%, transparent 75%);
+  pointer-events: none;
+}
+.sponsor-mark svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ---------- At a glance ---------- */
+
+.sponsor-stats-block {
+  padding-top: 0;
+}
+.sponsor-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--k-border);
+  border-radius: var(--radius-xl);
+  background: var(--k-surface);
+  overflow: hidden;
+}
+.sponsor-stats li {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 34px 16px;
+  text-align: center;
+}
+.sponsor-stats li + li {
+  border-left: 1px dashed var(--k-border-strong);
+}
+.sponsor-stats strong {
+  font-size: clamp(30px, 4vw, 44px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.sponsor-stats span {
+  font-size: 14px;
+  color: var(--k-text-muted);
+}
+
+/* ---------- Sponsor wall ---------- */
+
+.sponsor-head {
+  justify-items: center;
+  margin-inline: auto;
+  text-align: center;
+}
+.sponsor-head p {
+  margin: 0;
+  color: var(--k-text-muted);
+  font-size: 16px;
+}
+.sponsor-slots {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.sponsor-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 150px;
+  border: 1px dashed var(--k-border-strong);
+  border-radius: var(--radius-xl);
+  background: var(--k-surface);
+  color: var(--k-text-muted);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    color 250ms var(--ease),
+    border-color 250ms var(--ease);
+}
+.sponsor-slot:hover {
+  color: var(--k-text);
+  border-color: color-mix(in srgb, var(--k-text) 40%, transparent);
+}
+.sponsor-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 150px;
+  padding: 20px;
+  border: 1px solid var(--k-border);
+  border-radius: var(--radius-xl);
+  background: var(--k-surface);
+  color: var(--k-text);
+  text-decoration: none;
+  text-align: center;
+  transition: border-color 250ms var(--ease);
+}
+.sponsor-card:hover {
+  border-color: var(--k-border-strong);
+}
+.sponsor-card img {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--k-border-strong);
+}
+.sponsor-card-name {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.sponsor-card-login {
+  font-size: 13px;
+  color: var(--k-text-muted);
+}
+.sponsor-slot-plus {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--k-border-strong);
+  font-size: 16px;
+  line-height: 1;
+  transition: transform 300ms var(--ease-out);
+}
+.sponsor-slot:hover .sponsor-slot-plus {
+  transform: rotate(90deg);
+}
+
+/* ---------- Other ways to help ---------- */
+
+.sponsor-ways {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sponsor-way {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 26px;
+  border: 1px solid var(--k-border);
+  border-radius: var(--radius-xl);
+  background: var(--k-surface);
+  transition: border-color 300ms var(--ease);
+}
+.sponsor-way:hover {
+  border-color: var(--k-border-strong);
+}
+.sponsor-way-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--k-border-strong);
+  background: var(--k-surface-raised);
+  color: var(--k-text);
+}
+.sponsor-way h3 {
+  margin: 8px 0 0;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.sponsor-way p {
+  margin: 0;
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--k-text-muted);
+}
+.sponsor-way a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--k-text);
+  text-decoration: none;
+}
+.sponsor-way a svg {
+  transition: transform 250ms var(--ease-out);
+}
+.sponsor-way a:hover svg {
+  transform: translate(2px, -2px);
+}
+
+/* ---------- Narrow screens ---------- */
+
+@media (max-width: 860px) {
+  .sponsor-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sponsor-stats li:nth-child(3) {
+    border-left: 0;
+  }
+  .sponsor-stats li:nth-child(n + 3) {
+    border-top: 1px dashed var(--k-border-strong);
+  }
+  .sponsor-slots,
+  .sponsor-ways {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sponsor-slot-plus,
+  .sponsor-way a svg {
+    transition: none;
+  }
+}
