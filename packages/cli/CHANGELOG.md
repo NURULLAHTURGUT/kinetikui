@@ -1,5 +1,11 @@
 # kinetik-ui
 
+## 1.4.1
+
+### Patch Changes
+
+- Now Playing and Vinyl Player can follow a real audio engine. Pass `playing`, `position` and `trackId` from your player and they stop keeping their own clock; `onSeek` reports the seconds to jump to when the bar is tapped, stepped or Previous restarts the track. Without these props they work as before.
+
 ## 1.4.0
 
 ### Minor Changes

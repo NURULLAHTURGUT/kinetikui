@@ -5,7 +5,7 @@
   "description": "A dark music widget: the cover springs forward on play, the icon morphs and progress runs on the UI thread.",
   "category": "card",
   "phase": 1,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "dependencies": ["react-native-reanimated", "react-native-svg"],
   "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics"],
   "files": ["now-playing.tsx"],

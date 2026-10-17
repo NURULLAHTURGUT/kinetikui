@@ -39,10 +39,21 @@ export type VinylTrack = {
 
 export type VinylPlayerProps = {
   tracks: readonly VinylTrack[];
-  /** Start playing at once. Defaults to false. */
+  /** Start playing at once. Defaults to false. Ignored when `playing` is set. */
   autoPlay?: boolean;
+  /** Whether it plays, owned by your app. Leave unset to let the player keep its own state. */
+  playing?: boolean;
+  /**
+   * Seconds into the current track, reported by your audio engine. Setting it turns the
+   * player's own clock off: the bar and the time follow this value.
+   */
+  position?: number;
+  /** The id of the current track, owned by your app (say, after a skip from the lock screen). */
+  trackId?: string;
   onTrackChange?: (track: VinylTrack) => void;
   onPlayingChange?: (playing: boolean) => void;
+  /** Called with the seconds to jump to when the bar is tapped, stepped or Previous restarts. */
+  onSeek?: (seconds: number) => void;
   /** Called when the mute button is toggled. Without it there is no mute button. */
   onMutedChange?: (muted: boolean) => void;
   /** Colour of the progress. Defaults to the theme azure. */
@@ -71,9 +82,17 @@ const TURN = 6000;
 
 /**
  * Playback state for one track: a 0–1 progress that runs on the UI thread
- * while playing, and whole seconds for the readout.
+ * while playing, and whole seconds for the readout. Given a `position`, the
+ * own clock is off and the bar follows the reported seconds instead.
  */
-function usePlayback(duration: number, playing: boolean, track: string, onEnd: () => void) {
+function usePlayback(
+  duration: number,
+  playing: boolean,
+  track: string,
+  onEnd: () => void,
+  position?: number,
+) {
+  const controlled = position !== undefined;
   const progress = useSharedValue(0);
   const [elapsed, setElapsed] = useState(0);
   const [seeks, setSeeks] = useState(0);
@@ -94,7 +113,7 @@ function usePlayback(duration: number, playing: boolean, track: string, onEnd: (
   }, [track, progress]);
 
   useEffect(() => {
-    if (!playing || duration <= 0) {
+    if (controlled || !playing || duration <= 0) {
       cancelAnimation(progress);
       return;
     }
@@ -111,17 +130,31 @@ function usePlayback(duration: number, playing: boolean, track: string, onEnd: (
       clearInterval(id);
       cancelAnimation(progress);
     };
-  }, [playing, duration, track, seeks, progress]);
+  }, [controlled, playing, duration, track, seeks, progress]);
 
+  // Driven from outside: glide to each reported position, so sparse updates still read smoothly.
+  useEffect(() => {
+    if (position === undefined || duration <= 0) return;
+    const p = Math.max(0, Math.min(1, position / duration));
+    progress.set(withTiming(p, { duration: 250, easing: Easing.linear }));
+  }, [position, duration, track, progress]);
+
+  /** Moves the bar at once and returns the seconds to jump to. */
   const seek = (share: number) => {
     const p = Math.max(0, Math.min(1, share));
     cancelAnimation(progress);
     progress.set(p);
-    setElapsed(Math.floor(p * duration));
-    setSeeks((n) => n + 1);
+    if (!controlled) {
+      setElapsed(Math.floor(p * duration));
+      setSeeks((n) => n + 1);
+    }
+    // Whole milliseconds, so a ten-second step reports 59, not 58.99999.
+    return Math.round(p * duration * 1000) / 1000;
   };
 
-  return { progress, elapsed, seek };
+  const shown =
+    position === undefined ? elapsed : Math.floor(Math.max(0, Math.min(duration, position)));
+  return { progress, elapsed: shown, seek };
 }
 
 function mmss(seconds: number) {
@@ -138,8 +171,12 @@ function mmss(seconds: number) {
 export function VinylPlayer({
   tracks,
   autoPlay = false,
+  playing: playingProp,
+  position,
+  trackId,
   onTrackChange,
   onPlayingChange,
+  onSeek,
   onMutedChange,
   accent,
   haptics = true,
@@ -148,16 +185,20 @@ export function VinylPlayer({
   const { colors, radius, space, font, shadow } = useKinetikTheme();
   const reduced = useReduceMotion();
   const haptic = useHaptic(haptics);
-  const [index, setIndex] = useState(0);
-  const [playing, setPlaying] = useState(autoPlay);
+  const [ownIndex, setOwnIndex] = useState(0);
+  const [ownPlaying, setOwnPlaying] = useState(autoPlay);
   const [muted, setMuted] = useState(false);
   const [barWidth, setBarWidth] = useState(0);
+  // Each of these is the app's when it passes the prop, the player's own otherwise.
+  const picked = trackId === undefined ? -1 : tracks.findIndex((t) => t.id === trackId);
+  const index = picked >= 0 ? picked : ownIndex;
+  const playing = playingProp ?? ownPlaying;
   const track = tracks[index];
   const tone = accent ?? colors.azure;
 
   const go = (to: number) => {
     const next = (to + tracks.length) % tracks.length;
-    setIndex(next);
+    if (trackId === undefined) setOwnIndex(next);
     const t = tracks[next];
     if (t) onTrackChange?.(t);
   };
@@ -166,7 +207,12 @@ export function VinylPlayer({
     playing,
     track?.id ?? '',
     () => go(index + 1),
+    position,
   );
+  const seekTo = (share: number) => {
+    const seconds = seek(share);
+    onSeek?.(seconds);
+  };
 
   // The record keeps its angle between plays, so pausing never snaps it back.
   const angle = useSharedValue(0);
@@ -266,13 +312,13 @@ export function VinylPlayer({
           accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
           onAccessibilityAction={(e) => {
             const step = 10 / track.duration;
-            seek(
+            seekTo(
               elapsed / track.duration + (e.nativeEvent.actionName === 'increment' ? step : -step),
             );
           }}
           onLayout={(e) => setBarWidth(e.nativeEvent.layout.width)}
           onPress={(e: GestureResponderEvent) =>
-            barWidth > 0 && seek(e.nativeEvent.locationX / barWidth)
+            barWidth > 0 && seekTo(e.nativeEvent.locationX / barWidth)
           }
           style={[styles.barHit, { marginTop: space[3] - 14 }]}
         >
@@ -285,13 +331,13 @@ export function VinylPlayer({
           <RingButton
             label="Previous"
             icon={ICONS.prev}
-            onPress={press(() => (elapsed > 3 ? seek(0) : go(index - 1)))}
+            onPress={press(() => (elapsed > 3 ? seekTo(0) : go(index - 1)))}
           />
           <RingButton
             label={playing ? 'Pause' : 'Play'}
             icon={playing ? ICONS.pause : ICONS.play}
             onPress={press(() => {
-              setPlaying(!playing);
+              if (playingProp === undefined) setOwnPlaying(!playing);
               onPlayingChange?.(!playing);
             })}
           />

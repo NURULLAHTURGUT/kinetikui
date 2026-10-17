@@ -16,18 +16,40 @@ import { NowPlaying } from '@/components/kinetik/now-playing';
 />;
 ```
 
+### With a real audio engine
+
+Pass `playing`, `position` and `trackId` from your player, and the widget follows it instead of keeping its own clock. Buffering, a seek from the lock screen or a skip from headphones then shows up as it happens.
+
+```tsx
+const { playing, position, trackId } = usePlayerState(); // from your audio library
+
+<NowPlaying
+  tracks={tracks}
+  playing={playing}
+  position={position}
+  trackId={trackId}
+  onPlayingChange={(on) => (on ? player.play() : player.pause())}
+  onTrackChange={(t) => player.skipTo(t.id)}
+  onSeek={(seconds) => player.seekTo(seconds)}
+/>;
+```
+
 ## When to use
 
 - A compact player for a queue: a widget, a mini player or a now-playing sheet header.
 
 ## When not to use
 
-- As the source of truth for real audio: it keeps its own clock. Wire `onPlayingChange` and `onTrackChange` to your player, and keep the two in step.
+- When people need to scrub precisely, say through podcasts or audiobooks: the bar seeks on a tap, not a drag.
 
 ## Notes
 
+- Without `position` it keeps its own clock, which is fine for a preview or a demo. With real audio, pass `position` so the audio engine stays the source of truth. Updates a few times a second are enough: the bar glides between them.
+- Each of `playing`, `position` and `trackId` is optional and independent. Whatever you leave unset, the widget keeps on its own.
+- `onSeek` fires for a tap on the bar, a screen-reader step and Previous restarting the track.
+
 - Previous restarts the track if more than three seconds have played, as most players do; otherwise it goes back a track.
 - Tap the progress bar to seek. Screen readers adjust it in ten-second steps.
-- When a track ends, the next one starts. The queue wraps around.
+- On its own clock, when a track ends the next one starts. The queue wraps around.
 - `clock(seconds)` is exported for the same `1:09` format elsewhere.
 - The widget is dark on both themes. `accent` colours the progress and the play button.

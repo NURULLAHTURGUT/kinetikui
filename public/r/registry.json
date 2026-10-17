@@ -28,7 +28,7 @@
         }
       ],
       "meta": {
-        "version": "1.4.0",
+        "version": "1.4.1",
         "kind": "shared",
         "platforms": [
           "ios",
@@ -62,7 +62,7 @@
         }
       ],
       "meta": {
-        "version": "1.4.0",
+        "version": "1.4.1",
         "kind": "shared",
         "platforms": [
           "ios",
@@ -90,7 +90,7 @@
         }
       ],
       "meta": {
-        "version": "1.4.0",
+        "version": "1.4.1",
         "kind": "shared",
         "platforms": [
           "ios",
@@ -117,7 +117,7 @@
         }
       ],
       "meta": {
-        "version": "1.4.0",
+        "version": "1.4.1",
         "kind": "shared",
         "platforms": [
           "ios",
@@ -144,7 +144,7 @@
         }
       ],
       "meta": {
-        "version": "1.4.0",
+        "version": "1.4.1",
         "kind": "shared",
         "platforms": [
           "ios",
@@ -168,7 +168,7 @@
         }
       ],
       "meta": {
-        "version": "1.4.0",
+        "version": "1.4.1",
         "kind": "shared",
         "platforms": [
           "ios",
@@ -194,7 +194,7 @@
         }
       ],
       "meta": {
-        "version": "1.4.0",
+        "version": "1.4.1",
         "kind": "shared",
         "platforms": [
           "ios",
@@ -4011,7 +4011,7 @@
         }
       ],
       "meta": {
-        "version": "1.0.0",
+        "version": "1.1.0",
         "kind": "component",
         "platforms": [
           "ios",
@@ -8006,7 +8006,7 @@
         }
       ],
       "meta": {
-        "version": "1.0.0",
+        "version": "1.1.0",
         "kind": "component",
         "platforms": [
           "ios",

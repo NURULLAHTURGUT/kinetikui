@@ -49,4 +49,62 @@ describe('VinylPlayer', () => {
     expect(onMutedChange).toHaveBeenCalledWith(true);
     expect(screen.getByRole('switch', { name: 'Mute' })).toBeChecked();
   });
+
+  it('reports seeks in seconds', async () => {
+    const onSeek = jest.fn();
+    await render(<VinylPlayer tracks={TRACKS} onSeek={onSeek} />);
+    const bar = screen.getByRole('adjustable', { name: 'Playback position' });
+    await act(async () => {
+      fireEvent(bar, 'accessibilityAction', { nativeEvent: { actionName: 'increment' } });
+    });
+    expect(onSeek).toHaveBeenLastCalledWith(10);
+    expect(bar).toHaveAccessibilityValue({ text: '0:10 of 3:34' });
+  });
+
+  describe('driven by the app', () => {
+    it('follows the position it is given', async () => {
+      const onSeek = jest.fn();
+      const { rerender } = await render(
+        <VinylPlayer tracks={TRACKS} playing position={69} onSeek={onSeek} />,
+      );
+      const bar = screen.getByRole('adjustable', { name: 'Playback position' });
+      expect(bar).toHaveAccessibilityValue({ text: '1:09 of 3:34' });
+      // A seek asks the app; the readout waits for the engine to report back.
+      await act(async () => {
+        fireEvent(bar, 'accessibilityAction', { nativeEvent: { actionName: 'decrement' } });
+      });
+      expect(onSeek).toHaveBeenLastCalledWith(59);
+      expect(bar).toHaveAccessibilityValue({ text: '1:09 of 3:34' });
+      await rerender(<VinylPlayer tracks={TRACKS} playing position={59} onSeek={onSeek} />);
+      expect(bar).toHaveAccessibilityValue({ text: '0:59 of 3:34' });
+    });
+
+    it('leaves play state and the track to the app', async () => {
+      const onPlayingChange = jest.fn();
+      const onTrackChange = jest.fn();
+      const { rerender } = await render(
+        <VinylPlayer
+          tracks={TRACKS}
+          playing={false}
+          trackId="a"
+          onPlayingChange={onPlayingChange}
+          onTrackChange={onTrackChange}
+        />,
+      );
+      await act(async () => {
+        fireEvent.press(screen.getByRole('button', { name: 'Play' }));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByRole('button', { name: 'Next' }));
+      });
+      expect(onPlayingChange).toHaveBeenLastCalledWith(true);
+      expect(onTrackChange).toHaveBeenLastCalledWith(TRACKS[1]);
+      expect(screen.getByRole('button', { name: 'Play' })).toBeOnTheScreen();
+      expect(screen.getByLabelText('Blue Hour, Paper Lanterns')).toBeOnTheScreen();
+      // A skip from the lock screen arrives as a new trackId.
+      await rerender(<VinylPlayer tracks={TRACKS} playing trackId="b" />);
+      expect(screen.getByRole('button', { name: 'Pause' })).toBeOnTheScreen();
+      expect(screen.getByLabelText('Pastel Tide, Mara Ellis')).toBeOnTheScreen();
+    });
+  });
 });

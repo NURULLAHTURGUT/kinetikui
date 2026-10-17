@@ -17,15 +17,37 @@ import { VinylPlayer } from '@/components/kinetik/vinyl-player';
 />;
 ```
 
+### With a real audio engine
+
+Pass `playing`, `position` and `trackId` from your player, and the card follows it instead of keeping its own clock. Buffering, a seek from the lock screen or a skip from headphones then shows up as it happens.
+
+```tsx
+const { playing, position, trackId } = usePlayerState(); // from your audio library
+
+<VinylPlayer
+  tracks={tracks}
+  playing={playing}
+  position={position}
+  trackId={trackId}
+  onPlayingChange={(on) => (on ? player.play() : player.pause())}
+  onTrackChange={(t) => player.skipTo(t.id)}
+  onSeek={(seconds) => player.seekTo(seconds)}
+/>;
+```
+
 ## When to use
 
 - A mini player with some character: a music app's home, a playlist header, a widget.
 
 ## When not to use
 
-- As the source of truth for real audio: it keeps its own clock. Keep it in step with your player through the callbacks.
+- When people need to scrub precisely, say through podcasts or audiobooks: the bar seeks on a tap, not a drag.
 
 ## Notes
+
+- Without `position` it keeps its own clock, which is fine for a preview or a demo. With real audio, pass `position` so the audio engine stays the source of truth. Updates a few times a second are enough: the bar glides between them.
+- Each of `playing`, `position` and `trackId` is optional and independent. Whatever you leave unset, the card keeps on its own.
+- `onSeek` fires for a tap on the bar, a screen-reader step and Previous restarting the track.
 
 - The record half sits outside the card, so leave room on the left (about 66 pt).
 - It spins while playing (one turn every six seconds) and coasts a little when paused, keeping its angle.

@@ -62,4 +62,66 @@ describe('NowPlaying', () => {
     });
     expect(bar).toHaveAccessibilityValue({ text: '0:10 of 3:43' });
   });
+
+  it('reports seeks in seconds', async () => {
+    const onSeek = jest.fn();
+    await render(<NowPlaying tracks={TRACKS} onSeek={onSeek} />);
+    await act(async () => {
+      fireEvent(
+        screen.getByRole('adjustable', { name: 'Playback position' }),
+        'accessibilityAction',
+        {
+          nativeEvent: { actionName: 'increment' },
+        },
+      );
+    });
+    expect(onSeek).toHaveBeenLastCalledWith(10);
+  });
+
+  describe('driven by the app', () => {
+    it('follows the position it is given', async () => {
+      const onSeek = jest.fn();
+      const { rerender } = await render(
+        <NowPlaying tracks={TRACKS} playing position={69} onSeek={onSeek} />,
+      );
+      const bar = screen.getByRole('adjustable', { name: 'Playback position' });
+      expect(bar).toHaveAccessibilityValue({ text: '1:09 of 3:43' });
+      // A seek asks the app; the readout waits for the engine to report back.
+      await act(async () => {
+        fireEvent(bar, 'accessibilityAction', { nativeEvent: { actionName: 'increment' } });
+      });
+      expect(onSeek).toHaveBeenLastCalledWith(79);
+      expect(bar).toHaveAccessibilityValue({ text: '1:09 of 3:43' });
+      await rerender(<NowPlaying tracks={TRACKS} playing position={79} onSeek={onSeek} />);
+      expect(bar).toHaveAccessibilityValue({ text: '1:19 of 3:43' });
+    });
+
+    it('leaves play state and the track to the app', async () => {
+      const onPlayingChange = jest.fn();
+      const onTrackChange = jest.fn();
+      const { rerender } = await render(
+        <NowPlaying
+          tracks={TRACKS}
+          playing={false}
+          trackId="a"
+          onPlayingChange={onPlayingChange}
+          onTrackChange={onTrackChange}
+        />,
+      );
+      await act(async () => {
+        fireEvent.press(screen.getByRole('button', { name: 'Play' }));
+      });
+      await act(async () => {
+        fireEvent.press(screen.getByRole('button', { name: 'Next' }));
+      });
+      expect(onPlayingChange).toHaveBeenLastCalledWith(true);
+      expect(onTrackChange).toHaveBeenLastCalledWith(TRACKS[1]);
+      expect(screen.getByRole('button', { name: 'Play' })).toBeOnTheScreen();
+      expect(screen.getByLabelText('Nocturne, Sonata No. 2')).toBeOnTheScreen();
+      // A skip from the lock screen arrives as a new trackId.
+      await rerender(<NowPlaying tracks={TRACKS} playing trackId="b" />);
+      expect(screen.getByRole('button', { name: 'Pause' })).toBeOnTheScreen();
+      expect(screen.getByLabelText('Tidewater, Études, II')).toBeOnTheScreen();
+    });
+  });
 });
