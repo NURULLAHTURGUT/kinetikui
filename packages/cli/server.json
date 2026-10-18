@@ -1,0 +1,25 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.NURULLAHTURGUT/kinetik-ui",
+  "title": "Kinetik UI",
+  "description": "Search and install animated React Native and Expo components from the Kinetik UI registry.",
+  "websiteUrl": "https://kinetik-ui.dev",
+  "repository": {
+    "url": "https://github.com/NURULLAHTURGUT/kinetikui",
+    "source": "github",
+    "subfolder": "packages/cli"
+  },
+  "version": "1.4.2",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "kinetik-ui",
+      "version": "1.4.2",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [{ "type": "positional", "value": "mcp" }]
+    }
+  ]
+}

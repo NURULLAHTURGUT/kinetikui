@@ -1,5 +1,11 @@
 # kinetik-ui
 
+## 1.4.2
+
+### Patch Changes
+
+- The MCP server is listed in the official MCP Registry as `io.github.NURULLAHTURGUT/kinetik-ui`, so MCP clients and directories can find it. Nothing changes in how it runs: `npx kinetik-ui mcp`.
+
 ## 1.4.1
 
 ### Patch Changes
