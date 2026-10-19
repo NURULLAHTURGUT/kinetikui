@@ -221,7 +221,11 @@ export default function Home() {
             <ul key={copy} aria-hidden={copy === 1}>
               {allComponents.map((c) => (
                 <li key={c.name}>
-                  <Link href={`/components/${c.name}`} tabIndex={copy === 1 ? -1 : undefined}>
+                  <Link
+                    href={`/components/${c.name}`}
+                    prefetch={false}
+                    tabIndex={copy === 1 ? -1 : undefined}
+                  >
                     {c.title}
                   </Link>
                 </li>

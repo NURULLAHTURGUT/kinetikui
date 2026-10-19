@@ -154,7 +154,8 @@ function GalleryCard({ item, index, ready }: { item: GalleryItem; index: number;
       data-in={seen ? '' : undefined}
       style={{ '--i': index % 3 } as CSSProperties}
     >
-      <Link href={`/components/${item.name}`} className="gallery-card spot">
+      {/* Not prefetched: the gallery holds every component. */}
+      <Link href={`/components/${item.name}`} prefetch={false} className="gallery-card spot">
         <div className="gallery-preview">
           {near && ready ? (
             <GalleryThumb name={item.name} controls={item.controls} screen={screen} />

@@ -3,11 +3,15 @@ import Link from 'next/link';
 import { byCategory } from '../lib/data';
 import { DocsNav } from './docs-nav';
 
-/** The docs navigation: guides first, then every component by category. */
+/**
+ * The docs navigation: guides first, then every component by category.
+ * Its links load on click rather than being prefetched: prefetching ~140
+ * pages on every visit would cost far more than the click it saves.
+ */
 export function DocsSidebar({ current }: { current: string }) {
   const link = (href: string, label: string) => (
     <li key={href}>
-      <Link href={href} aria-current={href === current ? 'page' : undefined}>
+      <Link href={href} prefetch={false} aria-current={href === current ? 'page' : undefined}>
         {label}
       </Link>
     </li>
