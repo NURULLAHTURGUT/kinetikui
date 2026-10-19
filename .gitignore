@@ -19,6 +19,7 @@ out/
 next-env.d.ts
 apps/docs/generated/
 apps/docs/public/canvaskit.wasm
+apps/docs/public/canvaskit/
 apps/docs/public/canvaskit-LICENSE.txt
 apps/docs/public/r/
 cdn/dist/

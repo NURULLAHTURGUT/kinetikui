@@ -3,7 +3,7 @@
   "tasks": {
     "build": {
       "cache": false,
-      "passThroughEnv": ["ENABLE_EXPERIMENTAL_COREPACK"]
+      "passThroughEnv": ["ENABLE_EXPERIMENTAL_COREPACK", "GITHUB_SPONSORS_TOKEN"]
     }
   }
 }

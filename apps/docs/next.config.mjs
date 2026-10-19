@@ -77,7 +77,6 @@ const config = {
   async rewrites() {
     return {
       beforeFiles: [
-        { source: '/canvaskit/:version/canvaskit.wasm', destination: '/canvaskit.wasm' },
         { source: '/index.md', destination: '/md/index' },
         { source: '/docs/:slug.md', destination: '/md/docs/:slug' },
         { source: '/components/:name.md', destination: '/md/components/:name' },

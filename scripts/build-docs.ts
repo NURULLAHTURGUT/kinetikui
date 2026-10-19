@@ -4,6 +4,7 @@
  *   apps/docs/generated/components.json   per-component docs: meta, props, source, markdown
  *   apps/docs/generated/tokens.css         CSS variables for both palettes
  *   apps/docs/public/canvaskit.wasm        Skia's web runtime, copied from node_modules
+ *   apps/docs/public/canvaskit/<version>/  the same file at the versioned path the site loads
  *   apps/docs/public/canvaskit-LICENSE.txt its BSD-3-Clause notice
  *   apps/docs/public/r/                    the built registry (run build:registry first),
  *                                          served at /r for the CLI, shadcn and MCP
@@ -210,10 +211,26 @@ fs.writeFileSync(path.join(OUT, 'components.json'), `${JSON.stringify(docs, null
 fs.writeFileSync(path.join(OUT, 'tokens.css'), tokensCss());
 // Everything in public/ is generated and ignored, so a fresh clone has no folder.
 fs.mkdirSync(path.join(ROOT, 'apps', 'docs', 'public'), { recursive: true });
-fs.copyFileSync(
-  path.join(ROOT, 'node_modules', 'canvaskit-wasm', 'bin', 'full', 'canvaskit.wasm'),
-  path.join(ROOT, 'apps', 'docs', 'public', 'canvaskit.wasm'),
+const canvasKit = path.join(
+  ROOT,
+  'node_modules',
+  'canvaskit-wasm',
+  'bin',
+  'full',
+  'canvaskit.wasm',
 );
+fs.copyFileSync(canvasKit, path.join(ROOT, 'apps', 'docs', 'public', 'canvaskit.wasm'));
+// The site loads it from a versioned path (cached forever). A real file there,
+// not a rewrite, so any host serves it as a plain static file.
+const canvasKitVersion = (
+  JSON.parse(
+    fs.readFileSync(path.join(ROOT, 'node_modules', 'canvaskit-wasm', 'package.json'), 'utf8'),
+  ) as { version: string }
+).version;
+const versioned = path.join(ROOT, 'apps', 'docs', 'public', 'canvaskit', canvasKitVersion);
+fs.rmSync(path.join(ROOT, 'apps', 'docs', 'public', 'canvaskit'), { recursive: true, force: true });
+fs.mkdirSync(versioned, { recursive: true });
+fs.copyFileSync(canvasKit, path.join(versioned, 'canvaskit.wasm'));
 // CanvasKit is BSD-3-Clause: its notice travels with the binary we serve.
 fs.copyFileSync(
   path.join(ROOT, 'node_modules', 'canvaskit-wasm', 'LICENSE'),
