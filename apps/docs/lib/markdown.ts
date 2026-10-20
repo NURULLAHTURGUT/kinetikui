@@ -10,15 +10,38 @@ function getHighlighter() {
   return highlighter;
 }
 
-/** Highlights code for both themes; CSS shows the one matching the site theme. */
+/** Short, stable class name for a token style (FNV-1a). */
+function styleClass(style: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < style.length; i++) {
+    hash ^= style.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return `k${(hash >>> 0).toString(36)}`;
+}
+
+/**
+ * Highlights code for both themes; CSS shows the one matching the site theme.
+ * Shiki writes both colours inline on every token, which made a component's
+ * source the bulk of its page. Each distinct style becomes a class instead,
+ * defined once in a <style> next to the code.
+ */
 export async function highlight(code: string, lang = 'tsx'): Promise<string> {
   const h = await getHighlighter();
   const language = h.getLoadedLanguages().includes(lang) ? lang : 'tsx';
-  return h.codeToHtml(code.replace(/\n$/, ''), {
+  const html = h.codeToHtml(code.replace(/\n$/, ''), {
     lang: language,
     themes: { dark: 'github-dark-default', light: 'github-light-default' },
     defaultColor: false,
   });
+  const rules = new Map<string, string>();
+  const compact = html.replace(/<span style="([^"]*)">/g, (_, style: string) => {
+    const name = styleClass(style);
+    rules.set(name, style);
+    return `<span class="${name}">`;
+  });
+  const css = [...rules].map(([name, style]) => `.${name}{${style}}`).join('');
+  return `<style>${css}</style>${compact}`;
 }
 
 /** Renders a docs.mdx body (plain Markdown, no JSX) to HTML with highlighted code. */

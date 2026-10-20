@@ -245,10 +245,9 @@ export default async function ComponentPage({ params }: { params: Promise<Params
           <h2>Source files</h2>
           <div className="source-list">
             {main && (
-              <details className="source" open>
-                <summary>{main.path}</summary>
-                <div dangerouslySetInnerHTML={{ __html: main.html }} />
-              </details>
+              <p className="doc-hint">
+                <code>{main.path}</code> is in the Code tab of the preview above.
+              </p>
             )}
             {shared.map((f) => (
               <details className="source" key={f.path}>
