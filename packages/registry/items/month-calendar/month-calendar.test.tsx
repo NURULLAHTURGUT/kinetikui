@@ -57,10 +57,10 @@ describe('MonthCalendar', () => {
   it('picks a day and refuses days past the maximum', async () => {
     const onChange = jest.fn();
     await render(<Single onChange={onChange} />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Thursday, October 22, 2026' }));
+    await fireEvent.press(screen.getByRole('button', { name: /Thursday, October 22, 2026$/ }));
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange.mock.calls[0][0].getDate()).toBe(22);
-    await fireEvent.press(screen.getByRole('button', { name: 'Friday, October 30, 2026' }));
+    await fireEvent.press(screen.getByRole('button', { name: /Friday, October 30, 2026$/ }));
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
@@ -76,11 +76,11 @@ describe('MonthCalendar', () => {
   it('builds a range from two taps and restarts it on the third', async () => {
     const onChange = jest.fn();
     await render(<Range onChange={onChange} />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Monday, October 5, 2026' }));
-    await fireEvent.press(screen.getByRole('button', { name: 'Friday, October 9, 2026' }));
+    await fireEvent.press(screen.getByRole('button', { name: /Monday, October 5, 2026$/ }));
+    await fireEvent.press(screen.getByRole('button', { name: /Friday, October 9, 2026$/ }));
     const last = onChange.mock.calls[1][0] as DateRange;
     expect([last.start?.getDate(), last.end?.getDate()]).toEqual([5, 9]);
-    await fireEvent.press(screen.getByRole('button', { name: 'Thursday, October 1, 2026' }));
+    await fireEvent.press(screen.getByRole('button', { name: /Thursday, October 1, 2026$/ }));
     const next = onChange.mock.calls[2][0] as DateRange;
     expect([next.start?.getDate(), next.end]).toEqual([1, null]);
   });
