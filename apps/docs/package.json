@@ -7,6 +7,7 @@
     "dev": "next dev --webpack -p 3100",
     "prebuild": "tsx ../../scripts/build-docs.ts",
     "build": "next build --webpack",
+    "postbuild": "tsx ../../scripts/export-segments.ts",
     "start": "next start -p 3100",
     "typecheck": "tsx ../../scripts/build-docs.ts && next typegen --webpack && tsc --noEmit"
   },

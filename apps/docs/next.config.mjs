@@ -12,8 +12,12 @@ const canvasKitVersion = require('canvaskit-wasm/package.json').version;
 const canvasKitLocal = `/canvaskit/${canvasKitVersion}/canvaskit.wasm`;
 const canvasKitUrl = process.env.CANVASKIT_URL ?? '';
 
+// Production is a static export: every page is a plain file on the CDN, so a
+// visit costs no server or ISR reads. Headers and rewrites only run in
+// `next dev`; in production vercel.json carries the same rules.
+const isExport = process.env.NODE_ENV === 'production';
+
 // Agents get the markdown twin of a page for `*.md` or `Accept: text/markdown`.
-// Rewrites run in Vercel's routing layer, so pages stay static and cached.
 const acceptsMarkdown = [{ type: 'header', key: 'accept', value: '(.*)text/markdown(.*)' }];
 
 /*
@@ -53,39 +57,43 @@ const securityHeaders = [
   },
 ];
 
+async function headers() {
+  return [
+    { source: '/:path*', headers: securityHeaders },
+    {
+      source: '/canvaskit/:version/canvaskit.wasm',
+      headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+    },
+    // Demo photos are not content-hashed, so a week rather than forever.
+    {
+      source: '/photos/:file*',
+      headers: [
+        { key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' },
+      ],
+    },
+  ];
+}
+
+async function rewrites() {
+  return {
+    beforeFiles: [
+      { source: '/index.md', destination: '/md/index' },
+      { source: '/docs/:slug.md', destination: '/md/docs/:slug' },
+      { source: '/components/:name.md', destination: '/md/components/:name' },
+      { source: '/', has: acceptsMarkdown, destination: '/md/index' },
+      { source: '/docs/:slug', has: acceptsMarkdown, destination: '/md/docs/:slug' },
+      { source: '/components/:name', has: acceptsMarkdown, destination: '/md/components/:name' },
+    ],
+  };
+}
+
 /** @type {import('next').NextConfig} */
 const config = {
+  ...(isExport ? { output: 'export' } : null),
   reactStrictMode: true,
   env: { NEXT_PUBLIC_CANVASKIT_URL: canvasKitUrl, NEXT_PUBLIC_CANVASKIT_LOCAL: canvasKitLocal },
   poweredByHeader: false,
-  async headers() {
-    return [
-      { source: '/:path*', headers: securityHeaders },
-      {
-        source: '/canvaskit/:version/canvaskit.wasm',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
-      },
-      // Demo photos are not content-hashed, so a week rather than forever.
-      {
-        source: '/photos/:file*',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' },
-        ],
-      },
-    ];
-  },
-  async rewrites() {
-    return {
-      beforeFiles: [
-        { source: '/index.md', destination: '/md/index' },
-        { source: '/docs/:slug.md', destination: '/md/docs/:slug' },
-        { source: '/components/:name.md', destination: '/md/components/:name' },
-        { source: '/', has: acceptsMarkdown, destination: '/md/index' },
-        { source: '/docs/:slug', has: acceptsMarkdown, destination: '/md/docs/:slug' },
-        { source: '/components/:name', has: acceptsMarkdown, destination: '/md/components/:name' },
-      ],
-    };
-  },
+  ...(isExport ? null : { headers, rewrites }),
   // Registry sources and React Native libraries ship untranspiled TS/JSX/Flow.
   transpilePackages: [
     '@kinetik/registry',

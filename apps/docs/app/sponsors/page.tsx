@@ -20,9 +20,6 @@ export const metadata: Metadata = {
   description: 'Sponsor Kinetik UI and keep it free and open source for React Native developers.',
 };
 
-// New sponsors appear within the hour, without a deploy (matches SPONSORS_REFRESH).
-export const revalidate = 3600;
-
 const REPO_URL = 'https://github.com/NURULLAHTURGUT/kinetikui';
 const SHARE_URL = `https://x.com/intent/post?text=${encodeURIComponent(
   'Kinetik UI: free, open-source motion components for React Native and Expo. https://kinetik-ui.dev',

@@ -5,6 +5,7 @@ import { componentCount, SITE } from '../lib/data';
 export const alt = `${SITE.name}: ${SITE.tagline}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
+export const dynamic = 'force-static';
 
 /** The link preview: the logo's three circles over the name and tagline. */
 export default function OpenGraphImage() {
