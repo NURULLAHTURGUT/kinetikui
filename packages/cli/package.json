@@ -47,7 +47,7 @@
   },
   "devDependencies": {
     "@kinetik/mcp": "workspace:*",
-    "@types/node": "^22.15.0",
+    "@types/node": "^25.9.9",
     "esbuild": "0.28.2",
     "tsx": "^4.23.15",
     "typescript": "~6.0.3"
