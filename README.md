@@ -11,7 +11,7 @@
 
 <p align="center">
   <strong>Motion parts for Expo.</strong><br />
-  136 animated components and 5 screen templates for React Native, copied into your app as source.
+  142 animated components and 5 screen templates for React Native, copied into your app as source.
 </p>
 
 <p align="center">
@@ -49,7 +49,7 @@ npx kinetik-ui add glint-card
 
 ## What you get
 
-- **136 components and 5 screen templates**, each with a live demo, a props table and notes on when _not_ to use it.
+- **142 components and 5 screen templates**, each with a live demo, a props table and notes on when _not_ to use it.
 - **Runs on the UI thread.** Gestures, springs and shaders are worklets; a busy JavaScript thread does not drop frames.
 - **Accessible by default.** Every component has a reduced-motion version, screen-reader labels and roles, and 44 pt touch targets. See the [checklist](docs/accessibility.md).
 - **One design language.** Colours, spacing, type, shadows and three springs come from shared tokens; nothing hard-codes a colour. Brand it with `<KinetikProvider colors={{ ember: '#7C5CFF' }}>`.
@@ -82,6 +82,7 @@ npx kinetik-ui add glint-card
 |             | Book Pocket       | Book covers in a frosted acrylic pocket that rise and fan when pressed.             |
 |             | Now Playing       | A dark music widget: the cover springs forward on play and the icon morphs.         |
 |             | Vinyl Player      | A record half out of its sleeve that spins while the track plays.                   |
+|             | Balance Stack     | Payment cards stacked on a balance card; tap one forward as the figure counts.      |
 | Interaction | Beam Button       | A button with a beam of light running around its edge.                              |
 |             | Bloom Menu        | A floating button whose actions spring out one after another.                       |
 |             | Copy Chip         | A copy button whose two pages fold into a check.                                    |
@@ -195,6 +196,11 @@ npx kinetik-ui add glint-card
 |             | Vital Arcs        | Arcs that sweep from the corner around a score disc, values at their tips.          |
 |             | Score Matrix      | A score that counts up as a dot grid lights, beside metric rows.                    |
 |             | Agenda Card       | The date lit by a blue glow beside the next events sliding in.                      |
+|             | Dot Board         | A departures board of LED dots whose lines light in a sweep.                        |
+|             | Time Split        | A total time, split into coloured segments along a panel's curved edge.             |
+|             | Route Card        | A line fills behind a plane between two codes, above a turning globe of dots.       |
+|             | Arrival Card      | A drawn airliner cruises through clouds that scroll past, above the landing time.   |
+|             | Cruise Dial       | A numbered dial turns under a fixed needle while an LCD counts to the speed.        |
 | Screens     | Onboarding        | A paged welcome with animated illustration panels and word-by-word titles.          |
 |             | Paywall           | A feature carousel that advances on its own and swipeable plan cards.               |
 |             | Login             | Email and password sign-in with inline errors and provider buttons.                 |

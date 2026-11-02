@@ -6,9 +6,11 @@ import * as actionSheet from './items/action-sheet/demo';
 import * as activityRings from './items/activity-rings/demo';
 import * as agendaCard from './items/agenda-card/demo';
 import * as apertureCard from './items/aperture-card/demo';
+import * as arrivalCard from './items/arrival-card/demo';
 import * as aspectPicker from './items/aspect-picker/demo';
 import * as auroraVeil from './items/aurora-veil/demo';
 import * as avatarStack from './items/avatar-stack/demo';
+import * as balanceStack from './items/balance-stack/demo';
 import * as barChart from './items/bar-chart/demo';
 import * as beamButton from './items/beam-button/demo';
 import * as bloomMenu from './items/bloom-menu/demo';
@@ -24,9 +26,11 @@ import * as copyChip from './items/copy-chip/demo';
 import * as countBadge from './items/count-badge/demo';
 import * as countdown from './items/countdown/demo';
 import * as creditScore from './items/credit-score/demo';
+import * as cruiseDial from './items/cruise-dial/demo';
 import * as deckfall from './items/deckfall/demo';
 import * as dockBar from './items/dock-bar/demo';
 import * as donutChart from './items/donut-chart/demo';
+import * as dotBoard from './items/dot-board/demo';
 import * as dotLoader from './items/dot-loader/demo';
 import * as driftMarquee from './items/drift-marquee/demo';
 import * as elasticSlider from './items/elastic-slider/demo';
@@ -91,6 +95,7 @@ import * as ringSpinner from './items/ring-spinner/demo';
 import * as rippleField from './items/ripple-field/demo';
 import * as rollStepper from './items/roll-stepper/demo';
 import * as rotationRuler from './items/rotation-ruler/demo';
+import * as routeCard from './items/route-card/demo';
 import * as scanProgress from './items/scan-progress/demo';
 import * as scoreMatrix from './items/score-matrix/demo';
 import * as scrambleText from './items/scramble-text/demo';
@@ -122,6 +127,7 @@ import * as swipeRow from './items/swipe-row/demo';
 import * as tagField from './items/tag-field/demo';
 import * as themeSwitch from './items/theme-switch/demo';
 import * as tiltDeck from './items/tilt-deck/demo';
+import * as timeSplit from './items/time-split/demo';
 import * as timeWheel from './items/time-wheel/demo';
 import * as timeline from './items/timeline/demo';
 import * as tipBubble from './items/tip-bubble/demo';
@@ -176,9 +182,11 @@ export const demos: DemoEntry[] = [
   { name: "activity-rings", title: "Activity Rings", description: "Concentric progress rings that wind up one after another; a ring past its goal laps itself.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: activityRings.controls, Demo: activityRings.default },
   { name: "agenda-card", title: "Agenda Card", description: "A day-at-a-glance widget: the date lit by a blue glow, events sliding in, and a bar that fills for the one under way.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: agendaCard.controls, Demo: agendaCard.default },
   { name: "aperture-card", title: "Aperture Card", description: "A card closed by a camera-like iris whose blades turn open to reveal the content.", category: "card", phase: 2, web: "live", version: "1.0.0", controls: apertureCard.controls, Demo: apertureCard.default },
+  { name: "arrival-card", title: "Arrival Card", description: "A square arrival widget: a drawn airliner cruises through a cloud deck that scrolls past behind the landing time.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: arrivalCard.controls, Demo: arrivalCard.default },
   { name: "aspect-picker", title: "Aspect Picker", description: "Aspect-ratio frames drawn to scale; a soft square slides to the pick and its frame grows a touch.", category: "input", phase: 1, web: "live", version: "1.0.0", controls: aspectPicker.controls, Demo: aspectPicker.default },
   { name: "aurora-veil", title: "Aurora Veil", description: "A slow, flowing aurora drawn by a fragment shader, for screen and hero backgrounds.", category: "background", phase: 2, web: "live", version: "1.0.0", controls: auroraVeil.controls, Demo: auroraVeil.default },
   { name: "avatar-stack", title: "Avatar Stack", description: "Overlapping avatars that fan out one after another with names beneath, then tuck back in behind the first.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: avatarStack.controls, Demo: avatarStack.default },
+  { name: "balance-stack", title: "Balance Stack", description: "A dark balance card with payment cards stacked along its edge: tap one to pull it forward as the figure counts.", category: "card", phase: 1, web: "live", version: "1.0.0", controls: balanceStack.controls, Demo: balanceStack.default },
   { name: "bar-chart", title: "Bar Chart", description: "Bars that spring up in a wave; drag across them and the one under the finger stays bright with its value.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: barChart.controls, Demo: barChart.default },
   { name: "beam-button", title: "Beam Button", description: "A button with a beam of light running around its edge, leaving a soft glow that brightens on press.", category: "interaction", phase: 1, web: "live", version: "1.0.0", controls: beamButton.controls, Demo: beamButton.default },
   { name: "bloom-menu", title: "Bloom Menu", description: "A floating action button that blooms: the plus turns, a halo opens and actions spring out one by one.", category: "interaction", phase: 2, web: "live", version: "1.0.0", controls: bloomMenu.controls, Demo: bloomMenu.default },
@@ -194,9 +202,11 @@ export const demos: DemoEntry[] = [
   { name: "count-badge", title: "Count Badge", description: "A count on the corner of an icon that springs in, jumps as it rises, rolls its number and shrinks away at zero.", category: "feedback", phase: 2, web: "live", version: "1.0.0", controls: countBadge.controls, Demo: countBadge.default },
   { name: "countdown", title: "Countdown", description: "A countdown whose digits drop in as they change; at zero the tiles step back for a Live pill with a beating dot.", category: "feedback", phase: 2, web: "live", version: "1.0.0", controls: countdown.controls, Demo: countdown.default },
   { name: "credit-score", title: "Credit Score", description: "A credit score card whose number counts up while a bar meter lights from red through amber to green.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: creditScore.controls, Demo: creditScore.default },
+  { name: "cruise-dial", title: "Cruise Dial", description: "A numbered dial turns under a fixed needle and settles on the speed, while a small LCD counts to the same number.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: cruiseDial.controls, Demo: cruiseDial.default },
   { name: "deckfall", title: "Deckfall", description: "A stack of cards swiped away one at a time, with the cards behind rising into place.", category: "card", phase: 2, web: "live", version: "1.0.0", controls: deckfall.controls, Demo: deckfall.default },
   { name: "dock-bar", title: "Dock Bar", description: "A floating bottom navigation bar whose items swell under the finger like a dock.", category: "navigation", phase: 2, web: "live", version: "1.0.0", controls: dockBar.controls, Demo: dockBar.default },
   { name: "donut-chart", title: "Donut Chart", description: "A ring of rounded slices that sweeps in; tap a slice to bring it forward and read its share in the middle.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: donutChart.controls, Demo: donutChart.default },
+  { name: "dot-board", title: "Dot Board", description: "A departures board of LED dots whose lines light in a left-to-right sweep when their text changes.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: dotBoard.controls, Demo: dotBoard.default },
   { name: "dot-loader", title: "Dot Loader", description: "Loading dots that hop in a wave, breathe in a pulse, or sit in a chat bubble as a typing indicator.", category: "feedback", phase: 2, web: "live", version: "1.0.0", controls: dotLoader.controls, Demo: dotLoader.default },
   { name: "drift-marquee", title: "Drift Marquee", description: "An endless row that drifts on its own; drag it to scrub, fling it, and the items lean into the speed.", category: "card", phase: 2, web: "live", version: "1.0.0", controls: driftMarquee.controls, Demo: driftMarquee.default },
   { name: "elastic-slider", title: "Elastic Slider", description: "A slider that stretches like rubber past its ends and springs back, with a value bubble.", category: "interaction", phase: 1, web: "live", version: "1.0.0", controls: elasticSlider.controls, Demo: elasticSlider.default },
@@ -261,6 +271,7 @@ export const demos: DemoEntry[] = [
   { name: "ripple-field", title: "Ripple Field", description: "A dot-grid surface that ripples outward from every touch, drawn by a shader.", category: "background", phase: 2, web: "live", version: "1.0.0", controls: rippleField.controls, Demo: rippleField.default },
   { name: "roll-stepper", title: "Roll Stepper", description: "A number stepper whose figure rolls up or down with each step, speeds up while held and bumps at its limits.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: rollStepper.controls, Demo: rollStepper.default },
   { name: "rotation-ruler", title: "Rotation Ruler", description: "A straighten dial: a ruler of degree ticks slides under a fixed marker and snaps to level.", category: "input", phase: 1, web: "live", version: "1.0.0", controls: rotationRuler.controls, Demo: rotationRuler.default },
+  { name: "route-card", title: "Route Card", description: "A trip card: a line fills behind a plane between two big codes, above a slowly turning globe of dots.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: routeCard.controls, Demo: routeCard.default },
   { name: "scan-progress", title: "Scan Progress", description: "An analysing state for media: a scan band lights pixel squares over the image while a ring fills a pill.", category: "feedback", phase: 1, web: "live", version: "1.0.0", controls: scanProgress.controls, Demo: scanProgress.default },
   { name: "score-matrix", title: "Score Matrix", description: "A dark score card: the figure counts up as a dot grid lights to its share, beside rows of counting metrics.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: scoreMatrix.controls, Demo: scoreMatrix.default },
   { name: "scramble-text", title: "Scramble Text", description: "Characters cycle through random glyphs and lock into place from left to right.", category: "text", phase: 1, web: "live", version: "1.0.0", controls: scrambleText.controls, Demo: scrambleText.default },
@@ -292,6 +303,7 @@ export const demos: DemoEntry[] = [
   { name: "tag-field", title: "Tag Field", description: "Typed words that pop into tags while the rest make room; a duplicate makes the existing tag jump instead.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: tagField.controls, Demo: tagField.default },
   { name: "theme-switch", title: "Theme Switch", description: "A light and dark switch drawn as a sun whose rays turn and draw in while a shadow slides across to leave a moon.", category: "interaction", phase: 2, web: "live", version: "1.0.0", controls: themeSwitch.controls, Demo: themeSwitch.default },
   { name: "tilt-deck", title: "Tilt Deck", description: "A card that tilts in 3D under the finger, with parallax layers and a drifting floor shadow.", category: "card", phase: 1, web: "live", version: "1.0.0", controls: tiltDeck.controls, Demo: tiltDeck.default },
+  { name: "time-split", title: "Time Split", description: "A total time on a raised panel, its split shown as coloured segments along the panel's curved bottom edge.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: timeSplit.controls, Demo: timeSplit.default },
   { name: "time-wheel", title: "Time Wheel", description: "Wheels for a time of day: rows tilt away like a drum, each wheel snaps row by row with a tick.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: timeWheel.controls, Demo: timeWheel.default },
   { name: "timeline", title: "Timeline", description: "Events along a rail: each node pops in turn, the line draws down to the next, and the text rises in beside it.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: timeline.controls, Demo: timeline.default },
   { name: "tip-bubble", title: "Tip Bubble", description: "A short tip that grows out of its anchor from the arrow's point and closes by itself after a few seconds.", category: "disclosure", phase: 2, web: "live", version: "1.0.0", controls: tipBubble.controls, Demo: tipBubble.default },

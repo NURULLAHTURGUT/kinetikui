@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "arrival-card",
+  "title": "Arrival Card",
+  "description": "A square arrival widget: a drawn airliner cruises through a cloud deck that scrolls past behind the landing time.",
+  "category": "data",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-shaders"],
+  "files": ["arrival-card.tsx", "arrival-card.plane.ts", "arrival-card.shader.ts"],
+  "web": "live",
+  "perf": {
+    "budget": "Each cloud layer is drawn once and then slid as a view on the UI thread, so nothing redraws. The clouds and the sway animate at rest.",
+    "measurements": [
+      {
+        "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+        "kind": "device",
+        "date": "2026-11-02",
+        "build": "release",
+        "frameMs": 32,
+        "p90Ms": 38,
+        "jankyPercent": 100,
+        "atRest": "animating",
+        "memoryMb": 142,
+        "notes": "Animating at rest: three cloud layers slide and the plane sways. Holds about 30 fps on this old mid-range phone; Grain Drift measured the same there and Aurora Veil about 10 fps."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The plane is in place from the start; it does not fly in or sway, and the clouds stand still.",
+    "screenReader": "One label (\"KN204. NRT, TOKYO. LANDS AT: 3:25PM. ON SCHEDULE\").",
+    "touchTarget": "Not interactive."
+  }
+}

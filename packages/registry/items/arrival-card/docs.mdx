@@ -1,0 +1,24 @@
+## Usage
+
+```tsx
+import { ArrivalCard } from '@/components/kinetik/arrival-card';
+
+<ArrivalCard code="NRT" city="TOKYO" time="3:25PM" status="ON SCHEDULE" tag="KN204" />;
+```
+
+## When to use
+
+- A small square widget that answers one question: when does this flight land?
+- Next to Route Card and Cruise Dial on a trip screen.
+
+## When not to use
+
+- Lists: each card runs its own cloud shader. Use a plain row.
+- Trips that are not by air. The plane is part of the design.
+
+## Notes
+
+- The plane is a vector drawing with no airline's marks. Set `tailColor` and `emblemColor` to your brand colours.
+- The plane artwork is credited in `THIRD_PARTY_NOTICES.md`.
+- The card is square and stops growing at 260 pt.
+- The plane flies in once on arrival, then sways gently while the clouds scroll to the left, so it reads as flying forward.

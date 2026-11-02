@@ -1,0 +1,30 @@
+## Usage
+
+```tsx
+import { RouteCard } from '@/components/kinetik/route-card';
+
+<RouteCard
+  from={{ code: 'IST', city: 'ISTANBUL', time: '09:40AM' }}
+  to={{ code: 'NRT', city: 'TOKYO', time: '03:25PM' }}
+  status="ON SCHEDULE"
+  tag="KN204"
+  progress={elapsed / duration}
+/>;
+```
+
+## When to use
+
+- The main card for a trip under way: a flight, a long train, a sea crossing.
+- A hero widget where the globe has room to breathe, next to smaller cards such as Arrival Card and Cruise Dial.
+
+## When not to use
+
+- Lists of trips: every card runs its own turning globe. Use Flight Track instead.
+- Trips with stops: one line cannot show them.
+
+## Notes
+
+- `progress` is yours to compute. Each change glides the plane along the line.
+- Pass your logo as `mark`, or `null` for none.
+- The globe's land is a rough, stylised shape, not a map. Do not use it to show real positions.
+- The plane is the Tabler Icons plane (MIT licence, via iconstack.io).

@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "dot-board",
+  "title": "Dot Board",
+  "description": "A departures board of LED dots whose lines light in a left-to-right sweep when their text changes.",
+  "category": "data",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["dot-board.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One Skia canvas; the dots are prebuilt paths and the sweep only moves a clip on the UI thread. Nothing animates at rest.",
+    "measurements": [
+      {
+        "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+        "kind": "device",
+        "date": "2026-11-02",
+        "build": "release",
+        "frameMs": 16,
+        "p90Ms": 20,
+        "jankyPercent": 54.05,
+        "atRest": "animating",
+        "memoryMb": 129,
+        "notes": "Frames at rest come from the demo, which changes departure every 4 s. A board with unchanged text draws nothing."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Dots appear lit at once, with no sweep.",
+    "screenReader": "The title, subtitle and every line read as one label (\"Next Departure. Your ride leaves from gate twelve. 08:45. KYOTO. NZ204\").",
+    "touchTarget": "Not interactive."
+  }
+}

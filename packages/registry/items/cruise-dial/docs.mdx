@@ -1,0 +1,23 @@
+## Usage
+
+```tsx
+import { CruiseDial } from '@/components/kinetik/cruise-dial';
+
+<CruiseDial speed={842} unit="/KMH" tag="KN204" label="CEILING:" reading="11,234 M" />;
+```
+
+## When to use
+
+- One live speed with character: a flight, a car, a bike ride, a download.
+- Next to Route Card and Arrival Card on a trip screen.
+
+## When not to use
+
+- Readings people must compare or read closely. Use a plain number or a chart.
+- Values that jump around quickly: the dial needs a moment to settle.
+
+## Notes
+
+- The dial shows ten numbered marks from zero, `step` apart. With the default `step` it reads 0 to 900, and `speed` is clamped to that range.
+- Set `step` to fit your range, for example `step={20}` for 0 to 180.
+- The display shows up to four digits, with unlit eights behind them.

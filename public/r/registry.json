@@ -447,6 +447,76 @@
       }
     },
     {
+      "name": "arrival-card",
+      "type": "registry:item",
+      "title": "Arrival Card",
+      "description": "A square arrival widget: a drawn airliner cruises through a cloud deck that scrolls past behind the landing time.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "@shopify/react-native-skia",
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-shaders.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/arrival-card.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/arrival-card.tsx"
+        },
+        {
+          "path": "src/components/kinetik/arrival-card.plane.ts",
+          "type": "registry:file",
+          "target": "~/components/kinetik/arrival-card.plane.ts"
+        },
+        {
+          "path": "src/components/kinetik/arrival-card.shader.ts",
+          "type": "registry:file",
+          "target": "~/components/kinetik/arrival-card.shader.ts"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "Each cloud layer is drawn once and then slid as a view on the UI thread, so nothing redraws. The clouds and the sway animate at rest.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 32,
+              "p90Ms": 38,
+              "jankyPercent": 100,
+              "atRest": "animating",
+              "memoryMb": 142,
+              "notes": "Animating at rest: three cloud layers slide and the plane sways. Holds about 30 fps on this old mid-range phone; Grain Drift measured the same there and Aurora Veil about 10 fps."
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The plane is in place from the start; it does not fly in or sway, and the clouds stand still.",
+          "screenReader": "One label (\"KN204. NRT, TOKYO. LANDS AT: 3:25PM. ON SCHEDULE\").",
+          "touchTarget": "Not interactive."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
       "name": "aspect-picker",
       "type": "registry:item",
       "title": "Aspect Picker",
@@ -627,6 +697,65 @@
           "reducedMotion": "The faces spread and stack at once.",
           "screenReader": "One button that names everyone and says whether the stack is expanded.",
           "touchTarget": "The whole stack is the target, at least 44 pt tall."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "balance-stack",
+      "type": "registry:item",
+      "title": "Balance Stack",
+      "description": "A dark balance card with payment cards stacked along its edge: tap one to pull it forward as the figure counts.",
+      "categories": [
+        "card"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-haptics.json",
+        "https://kinetik-ui.dev/r/kinetik-count.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/balance-stack.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/balance-stack.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "card",
+        "web": "live",
+        "perf": {
+          "budget": "Cards move on short UI-thread springs; the figure re-renders only while it counts. Nothing animates at rest.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 32,
+              "p90Ms": 42,
+              "jankyPercent": 99.65,
+              "atRest": "idle",
+              "memoryMb": 135
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "Cards take their places and the figure changes without moving or counting.",
+          "screenReader": "The header reads as one line (\"Savings Vault, €18,904.60, Earning\") and each card as a button (\"NOVA card ending 6190\") with its selected state.",
+          "touchTarget": "At least 61 pt of each card stays exposed and tappable."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }
@@ -1531,6 +1660,65 @@
       }
     },
     {
+      "name": "cruise-dial",
+      "type": "registry:item",
+      "title": "Cruise Dial",
+      "description": "A numbered dial turns under a fixed needle and settles on the speed, while a small LCD counts to the same number.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "@shopify/react-native-skia",
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-count.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/cruise-dial.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/cruise-dial.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "The dial is a still canvas turned as a view on the UI thread, so it does not redraw. The LCD re-renders only while it counts. Nothing animates at rest.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 24,
+              "p90Ms": 34,
+              "jankyPercent": 96.32,
+              "atRest": "idle",
+              "memoryMb": 132
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The dial and the display jump to the speed.",
+          "screenReader": "One label (\"KN204. CEILING: 11,234 M. 842 /KMH\").",
+          "touchTarget": "Not interactive."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
       "name": "deckfall",
       "type": "registry:item",
       "title": "Deckfall",
@@ -1707,6 +1895,65 @@
           "reducedMotion": "The ring appears complete and selection changes without the bounce.",
           "screenReader": "The ring reads as an image with every slice and value; legend rows are buttons with a selected state.",
           "touchTarget": "Legend rows are 44 pt tall and full width; the ring itself is also tappable."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "dot-board",
+      "type": "registry:item",
+      "title": "Dot Board",
+      "description": "A departures board of LED dots whose lines light in a left-to-right sweep when their text changes.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "@shopify/react-native-skia",
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/dot-board.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/dot-board.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "One Skia canvas; the dots are prebuilt paths and the sweep only moves a clip on the UI thread. Nothing animates at rest.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 16,
+              "p90Ms": 20,
+              "jankyPercent": 54.05,
+              "atRest": "animating",
+              "memoryMb": 129,
+              "notes": "Frames at rest come from the demo, which changes departure every 4 s. A board with unchanged text draws nothing."
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "Dots appear lit at once, with no sweep.",
+          "screenReader": "The title, subtitle and every line read as one label (\"Next Departure. Your ride leaves from gate twelve. 08:45. KYOTO. NZ204\").",
+          "touchTarget": "Not interactive."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }
@@ -5540,6 +5787,66 @@
       }
     },
     {
+      "name": "route-card",
+      "type": "registry:item",
+      "title": "Route Card",
+      "description": "A trip card: a line fills behind a plane between two big codes, above a slowly turning globe of dots.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "@shopify/react-native-skia",
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-clock.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/route-card.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/route-card.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "The globe redraws a few hundred dots on the UI thread at 30 fps while on screen, so it animates at rest. The plane only moves when progress changes.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 19,
+              "p90Ms": 27,
+              "jankyPercent": 72.58,
+              "atRest": "animating",
+              "memoryMb": 142,
+              "notes": "Animating at rest: the globe turns at 30 fps. An old mid-range phone; the numbers include scrolling the demo page."
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The globe holds still and the plane jumps to its place.",
+          "screenReader": "One progress bar reading the route and times (\"IST, ISTANBUL, to NRT, TOKYO. BOARDS: 09:40AM, LANDS: 03:25PM. ON SCHEDULE. KN204.\") with \"58% of the way\".",
+          "touchTarget": "Not interactive."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
       "name": "scan-progress",
       "type": "registry:item",
       "title": "Scan Progress",
@@ -7388,6 +7695,65 @@
           "reducedMotion": "No rotation, parallax or lift; the card dips 2% while pressed.",
           "screenReader": "Button role when onPress is set; pass accessibilityLabel to describe the card. Layers are not separately exposed.",
           "touchTarget": "The whole card is the target."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "time-split",
+      "type": "registry:item",
+      "title": "Time Split",
+      "description": "A total time on a raised panel, its split shown as coloured segments along the panel's curved bottom edge.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "@shopify/react-native-skia",
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-count.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/time-split.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/time-split.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "Segments trim one path on UI-thread springs on arrival and on change; the time re-renders only while it counts. Nothing animates at rest.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 36,
+              "p90Ms": 42,
+              "jankyPercent": 100,
+              "atRest": "idle",
+              "memoryMb": 143
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "Segments take their lengths and the time changes without gliding or counting.",
+          "screenReader": "One label with the total and every item (\"Studio Hours: 4 hours 36 minutes. Coding 2 hours 30 minutes, Reading 1 hour 1 minute.\").",
+          "touchTarget": "Not interactive."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }

@@ -21,6 +21,10 @@ These are installed into your app when you add a component that uses them.
 | [react-native-safe-area-context](https://github.com/AppAndFlow/react-native-safe-area-context)                                             | MIT     | Toast Stack, Parallax Header, screen templates                                       |
 | [react](https://github.com/facebook/react), [react-native](https://github.com/facebook/react-native), [expo](https://github.com/expo/expo) | MIT     | Platform                                                                             |
 
+## Artwork
+
+The airliner in Arrival Card (`packages/registry/items/arrival-card/arrival-card.plane.ts`) is converted shape for shape from `blendertimer-airliner-8886817.svg` by blendertimer. Licence and source page: to be confirmed before release.
+
 ## Icon paths
 
 A few components draw small icons from [Tabler Icons](https://github.com/tabler/tabler-icons) (MIT, Copyright (c) 2020-2024 Paweł Kuna), found through [iconstack.io](https://iconstack.io). The SVG path data is embedded in the component source with a comment that names Tabler:
@@ -28,6 +32,7 @@ A few components draw small icons from [Tabler Icons](https://github.com/tabler/
 | Component     | Icons                                                                             |
 | ------------- | --------------------------------------------------------------------------------- |
 | Flight Track  | plane                                                                             |
+| Route Card    | plane                                                                             |
 | Seat Picker   | armchair                                                                          |
 | Boarding Pass | plane                                                                             |
 | Peek Folder   | arrow-up-right                                                                    |

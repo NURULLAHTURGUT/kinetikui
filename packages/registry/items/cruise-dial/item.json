@@ -1,0 +1,34 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "cruise-dial",
+  "title": "Cruise Dial",
+  "description": "A numbered dial turns under a fixed needle and settles on the speed, while a small LCD counts to the same number.",
+  "category": "data",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-count"],
+  "files": ["cruise-dial.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The dial is a still canvas turned as a view on the UI thread, so it does not redraw. The LCD re-renders only while it counts. Nothing animates at rest.",
+    "measurements": [
+      {
+        "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+        "kind": "device",
+        "date": "2026-11-02",
+        "build": "release",
+        "frameMs": 24,
+        "p90Ms": 34,
+        "jankyPercent": 96.32,
+        "atRest": "idle",
+        "memoryMb": 132
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The dial and the display jump to the speed.",
+    "screenReader": "One label (\"KN204. CEILING: 11,234 M. 842 /KMH\").",
+    "touchTarget": "Not interactive."
+  }
+}

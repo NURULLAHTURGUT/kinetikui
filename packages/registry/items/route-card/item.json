@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "route-card",
+  "title": "Route Card",
+  "description": "A trip card: a line fills behind a plane between two big codes, above a slowly turning globe of dots.",
+  "category": "data",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-clock"],
+  "files": ["route-card.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The globe redraws a few hundred dots on the UI thread at 30 fps while on screen, so it animates at rest. The plane only moves when progress changes.",
+    "measurements": [
+      {
+        "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+        "kind": "device",
+        "date": "2026-11-02",
+        "build": "release",
+        "frameMs": 19,
+        "p90Ms": 27,
+        "jankyPercent": 72.58,
+        "atRest": "animating",
+        "memoryMb": 142,
+        "notes": "Animating at rest: the globe turns at 30 fps. An old mid-range phone; the numbers include scrolling the demo page."
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The globe holds still and the plane jumps to its place.",
+    "screenReader": "One progress bar reading the route and times (\"IST, ISTANBUL, to NRT, TOKYO. BOARDS: 09:40AM, LANDS: 03:25PM. ON SCHEDULE. KN204.\") with \"58% of the way\".",
+    "touchTarget": "Not interactive."
+  }
+}

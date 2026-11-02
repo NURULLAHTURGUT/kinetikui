@@ -41,6 +41,12 @@ export function navOrder() {
 
 /** Shown first in the gallery: the newest and most eye-catching pieces. */
 const FEATURED = [
+  'route-card',
+  'balance-stack',
+  'dot-board',
+  'cruise-dial',
+  'time-split',
+  'arrival-card',
   'now-playing',
   'vinyl-player',
   'agenda-card',

@@ -1,0 +1,31 @@
+## Usage
+
+```tsx
+import { BalanceStack } from '@/components/kinetik/balance-stack';
+
+<BalanceStack
+  label="Savings Vault"
+  status="Earning"
+  currency="€"
+  accounts={[
+    { id: 'travel', balance: 6240.18, digits: '2048', network: 'NOVA' },
+    { id: 'daily', balance: 18904.6, digits: '6190', network: 'NOVA' },
+  ]}
+/>;
+```
+
+## When to use
+
+- A home screen or wallet summary for one person with two or three accounts.
+- Switching between accounts where the balance is the thing people came to read.
+
+## When not to use
+
+- More than three accounts: only three fit, so use a list.
+- When every account must be read at once. Only the front one shows its balance.
+
+## Notes
+
+- Pass `selected` and `onSelect` to control which account is at the front.
+- `network` is plain text, so use your own wordmark. Check the rules before showing a real card network's name.
+- The card stays dark in the light theme so the coloured cards keep their contrast.

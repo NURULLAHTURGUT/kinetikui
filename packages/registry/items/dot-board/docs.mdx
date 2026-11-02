@@ -1,0 +1,31 @@
+## Usage
+
+```tsx
+import { DotBoard } from '@/components/kinetik/dot-board';
+
+<DotBoard
+  title="Next Departure"
+  subtitle="Your ride leaves from gate twelve."
+  lines={[
+    '08:45',
+    [{ text: 'KYOTO', color: amber }],
+    [{ text: 'NZ', color: amber }, { text: '204' }],
+  ]}
+/>;
+```
+
+## When to use
+
+- One short, glanceable status: a departure, a score, a queue number, a countdown.
+- A place where a bit of hardware character suits the product.
+
+## When not to use
+
+- Long text. Each line holds about nine characters at this size.
+- Languages outside A to Z: the dot font has no accents or other scripts, and unknown characters stay blank.
+
+## Notes
+
+- A line is a string, or runs with their own colours.
+- Change a line's text and only that line lights up again.
+- `columns` sets the width of the board; dots shrink to fit, so keep it low on small cards.

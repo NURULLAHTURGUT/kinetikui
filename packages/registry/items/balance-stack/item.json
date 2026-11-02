@@ -1,0 +1,34 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "balance-stack",
+  "title": "Balance Stack",
+  "description": "A dark balance card with payment cards stacked along its edge: tap one to pull it forward as the figure counts.",
+  "category": "card",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics", "kinetik-count"],
+  "files": ["balance-stack.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Cards move on short UI-thread springs; the figure re-renders only while it counts. Nothing animates at rest.",
+    "measurements": [
+      {
+        "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+        "kind": "device",
+        "date": "2026-11-02",
+        "build": "release",
+        "frameMs": 32,
+        "p90Ms": 42,
+        "jankyPercent": 99.65,
+        "atRest": "idle",
+        "memoryMb": 135
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Cards take their places and the figure changes without moving or counting.",
+    "screenReader": "The header reads as one line (\"Savings Vault, €18,904.60, Earning\") and each card as a button (\"NOVA card ending 6190\") with its selected state.",
+    "touchTarget": "At least 61 pt of each card stays exposed and tappable."
+  }
+}

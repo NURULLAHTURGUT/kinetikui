@@ -1,0 +1,31 @@
+## Usage
+
+```tsx
+import { TimeSplit } from '@/components/kinetik/time-split';
+
+<TimeSplit
+  title="Studio Hours"
+  items={[
+    { label: 'Sketching', minutes: 38 },
+    { label: 'Coding', minutes: 112 },
+    { label: 'Reviews', minutes: 44 },
+    { label: 'Reading', minutes: 26 },
+  ]}
+/>;
+```
+
+## When to use
+
+- A daily total and what it was spent on: screen time, focus time, a timesheet.
+- Widgets, where the split matters as a shape more than as exact numbers.
+
+## When not to use
+
+- When people must compare exact amounts per item. The legend has no values, so use a bar chart.
+- More than about six items: the segments get too short to tell apart.
+
+## Notes
+
+- The total is the sum of `minutes`; 90 reads as 01 : 30.
+- Items are matched by `label`, so keep labels stable and each segment glides to its new length.
+- The first and third colours tint the card's soft glow.

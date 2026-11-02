@@ -7,6 +7,7 @@ export default [
       '**/.turbo/**',
       '**/dist/**',
       '**/.next/**',
+      'apps/docs/out/**',
       '**/.expo/**',
       '**/coverage/**',
       'apps/*/android/**',
