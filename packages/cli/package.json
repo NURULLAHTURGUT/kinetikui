@@ -1,6 +1,6 @@
 {
   "name": "kinetik-ui",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "mcpName": "io.github.NURULLAHTURGUT/kinetik-ui",
   "description": "Add Kinetik UI motion components to an Expo project: copies the source, installs SDK-compatible dependencies, and serves the registry to AI agents over MCP.",
   "license": "MIT",

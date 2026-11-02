@@ -1,5 +1,15 @@
 # @kinetik/mcp
 
+## 1.5.0
+
+### Minor Changes
+
+- 22 new components.
+
+  **Card.** Balance Stack.
+
+  **Data.** Arrival Card, Compass Arc, Cruise Dial, Dot Board, Dual Clock, Glow Columns, Level Steps, Month Bars, Moon Phases, Orbit Radar, Order Stages, Pulse Range, Rain Bars, Route Card, Steps Bar, Tide Wave, Time Split, Timer Frame, Trip Glance, Week Capsules, Zone Arc.
+
 ## 1.4.2
 
 ### Patch Changes

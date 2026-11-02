@@ -1,6 +1,6 @@
 {
   "name": "@kinetik/registry",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "private": true,
   "description": "Single source of truth for Kinetik UI components, shared tokens, hooks and shaders.",
   "license": "MIT",
