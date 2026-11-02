@@ -1,0 +1,34 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "orbit-radar",
+  "title": "Orbit Radar",
+  "description": "A radar dish rises from the edge: a beam sweeps round and a small craft climbs the rim as minutes count.",
+  "category": "data",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated", "react-native-svg"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-count"],
+  "files": ["orbit-radar.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The beam and craft are still canvases and views turned on the UI thread, so the beam animates at rest without redrawing.",
+    "measurements": [
+      {
+        "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+        "kind": "device",
+        "date": "2026-11-02",
+        "build": "release",
+        "frameMs": 13,
+        "p90Ms": 16,
+        "jankyPercent": 7.29,
+        "atRest": "animating",
+        "memoryMb": 121
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The beam holds still, the craft jumps to its place and the minutes do not count.",
+    "screenReader": "One label (\"LUNA-2. ARRIVES in 23 minutes\").",
+    "touchTarget": "Not interactive."
+  }
+}

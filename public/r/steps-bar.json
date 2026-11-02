@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "steps-bar",
+  "type": "registry:item",
+  "title": "Steps Bar",
+  "description": "Steps towards a goal: the bar fills from olive to green as a small walker strides along its front.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-svg",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-count.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/steps-bar.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/steps-bar.tsx",
+      "content": "import { useEffect, useState } from 'react';\nimport { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withRepeat,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\nimport Svg, { Circle, Path } from 'react-native-svg';\n\nimport { useCountUp } from '../../lib/kinetik/hooks/use-count-up';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { easings, spring } from '../../lib/kinetik/motion/motion';\nimport { gradient } from '../../lib/kinetik/tokens/gradient';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type StepsBarProps = {\n  steps: number;\n  /** Daily goal. Defaults to 10000. */\n  goal?: number;\n  /** Distance line, e.g. \"4.2 KM\". */\n  distance?: string;\n  /** Climb line, e.g. \"9 FLOORS\". */\n  climb?: string;\n  /** Label over the count. Defaults to \"STEPS\". */\n  label?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst TRACK_H = 26;\nconst KNOB = 24;\n\n/** 10000 as \"10K\", 2500 as \"2.5K\". */\nexport function compactCount(value: number): string {\n  if (value < 1000) return String(value);\n  const k = value / 1000;\n  return `${Number.isInteger(k) ? k : k.toFixed(1)}K`;\n}\n\n/**\n * Steps towards a goal: the bar fills from olive to bright green as a small walker\n * strides along its front and the count climbs. The walker stops once the goal is\n * reached.\n */\nexport function StepsBar({\n  steps,\n  goal = 10000,\n  distance,\n  climb,\n  label = 'STEPS',\n  style,\n}: StepsBarProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const [width, setWidth] = useState(0);\n  const shown = Math.round(useCountUp(steps, { instant: reduced }));\n  const share = Math.max(0, Math.min(1, steps / goal));\n  const walking = share < 1 && !reduced;\n\n  const at = useSharedValue(reduced ? share : 0);\n  const stride = useSharedValue(0);\n\n  useEffect(() => {\n    at.set(reduced ? share : withSpring(share, spring('smooth')));\n  }, [share, reduced, at]);\n\n  useEffect(() => {\n    if (!walking) {\n      stride.set(0);\n      return;\n    }\n    stride.set(withRepeat(withTiming(1, { duration: 420, easing: easings.inOut }), -1, true));\n  }, [walking, stride]);\n\n  const fill = useAnimatedStyle(() => ({\n    width: KNOB + at.get() * Math.max(0, width - KNOB),\n  }));\n  const knob = useAnimatedStyle(() => ({\n    transform: [{ translateX: at.get() * Math.max(0, width - KNOB) }],\n  }));\n  const walker = useAnimatedStyle(() => ({\n    transform: [{ translateY: -stride.get() * 1.5 }, { rotate: `${(stride.get() - 0.5) * 12}deg` }],\n  }));\n\n  const small = { color: MUTED, fontSize: font.size.xs, fontWeight: font.weight.medium } as const;\n\n  return (\n    <View\n      accessible\n      accessibilityRole=\"progressbar\"\n      accessibilityLabel={[`${steps.toLocaleString('en-US')} ${label}`, distance, climb]\n        .filter(Boolean)\n        .join(', ')}\n      accessibilityValue={{ min: 0, max: goal, now: Math.min(steps, goal) }}\n      style={[styles.card, style]}\n    >\n      <View style={styles.head}>\n        <View>\n          <Text style={{ color: GREEN, fontSize: font.size.xs, fontWeight: font.weight.bold }}>\n            {label}\n          </Text>\n          <Text\n            style={{\n              color: colors.highlight,\n              fontSize: font.size.xl,\n              fontWeight: font.weight.semibold,\n              fontVariant: ['tabular-nums'],\n            }}\n          >\n            {shown.toLocaleString('en-US')}\n          </Text>\n        </View>\n        <View style={styles.side}>\n          {distance ? <Text style={small}>↔ {distance}</Text> : null}\n          {climb ? <Text style={small}>↑ {climb}</Text> : null}\n        </View>\n      </View>\n\n      <View\n        testID=\"steps-bar-track\"\n        style={styles.track}\n        onLayout={(e) => setWidth(e.nativeEvent.layout.width)}\n      >\n        <Animated.View style={[styles.fill, gradient(FILL), fill]} />\n        <Animated.View style={[styles.knob, knob]}>\n          <Animated.View style={walker}>\n            <Svg width={16} height={16} viewBox=\"0 0 24 24\">\n              <Circle cx={13} cy={4} r={2.2} fill={KNOB_INK} />\n              <Path\n                d=\"M12 8 8 10.5V14M12 8l1.5 5.5L17 16M13.5 13.5 11 17l-2.5 4M12 8l4 2.5 2.5-.5\"\n                stroke={KNOB_INK}\n                strokeWidth={2.4}\n                strokeLinecap=\"round\"\n                strokeLinejoin=\"round\"\n                fill=\"none\"\n              />\n            </Svg>\n          </Animated.View>\n        </Animated.View>\n      </View>\n\n      <View style={styles.scale}>\n        {[0, goal / 2, goal].map((tick) => (\n          <Text key={tick} style={{ color: MUTED, fontSize: font.size.xs - 2 }}>\n            {compactCount(tick)}\n          </Text>\n        ))}\n      </View>\n    </View>\n  );\n}\n\nconst MUTED = 'hsl(80, 4%, 66%)';\nconst GREEN = 'hsl(92, 76%, 56%)';\nconst KNOB_INK = 'hsl(90, 70%, 10%)';\nconst FILL =\n  'linear-gradient(90deg, hsl(70, 56%, 18%) 0%, hsl(84, 70%, 38%) 62%, hsl(96, 84%, 52%) 100%)';\n\nconst styles = StyleSheet.create({\n  card: {\n    width: '100%',\n    maxWidth: 320,\n    alignSelf: 'center',\n    borderRadius: 24,\n    borderWidth: 1,\n    borderColor: 'hsla(0, 0%, 100%, 0.08)',\n    backgroundColor: 'hsl(0, 0%, 5%)',\n    padding: 16,\n    gap: 8,\n  },\n  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },\n  side: { alignItems: 'flex-end', gap: 2 },\n  track: {\n    height: TRACK_H,\n    borderRadius: TRACK_H / 2,\n    justifyContent: 'center',\n    backgroundColor: 'hsl(0, 0%, 15%)',\n  },\n  fill: {\n    position: 'absolute',\n    left: 0,\n    top: 0,\n    bottom: 0,\n    borderRadius: TRACK_H / 2,\n  },\n  knob: {\n    position: 'absolute',\n    left: 0,\n    width: KNOB,\n    height: KNOB,\n    borderRadius: KNOB / 2,\n    alignItems: 'center',\n    justifyContent: 'center',\n    backgroundColor: 'hsl(96, 92%, 66%)',\n    boxShadow: '0px 0px 12px hsla(96, 92%, 60%, 0.7)',\n  },\n  scale: { flexDirection: 'row', justifyContent: 'space-between' },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "The bar moves on a UI-thread spring on change. The walker is one view on a UI-thread loop until the goal, so it animates at rest.",
+      "measurements": [
+        {
+          "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+          "kind": "device",
+          "date": "2026-11-02",
+          "build": "release",
+          "frameMs": 12,
+          "p90Ms": 15,
+          "jankyPercent": 8.18,
+          "atRest": "animating",
+          "memoryMb": 123
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The bar jumps to its place, the walker holds still and the count does not climb.",
+      "screenReader": "One progress bar (\"6,317 STEPS, 4.2 KM, 9 FLOORS\").",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { StepsBar } from '@/components/kinetik/steps-bar';\n\n<StepsBar steps={6317} distance=\"4.2 KM\" climb=\"9 FLOORS\" />;\n```\n\n## When to use\n\n- Daily step or distance goals.\n- Any single count towards a target with a bit of character.\n\n## When not to use\n\n- Several goals at once. Use Activity Rings.\n- Counts with no target.\n\n## Notes\n\n- The walker stops once the goal is reached.\n- The scale marks 0, half and the goal.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add steps-bar`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

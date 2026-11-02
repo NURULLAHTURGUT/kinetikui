@@ -1,0 +1,34 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "tide-wave",
+  "title": "Tide Wave",
+  "description": "The day's tide as a soft blue swell: the water draws in, drop lines mark highs and lows, and a dot glows at now.",
+  "category": "data",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated", "react-native-svg"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-count"],
+  "files": ["tide-wave.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One Skia canvas drawn on arrival and on change. The halo at now is one view on a UI-thread loop, so it animates at rest.",
+    "measurements": [
+      {
+        "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+        "kind": "device",
+        "date": "2026-11-02",
+        "build": "release",
+        "frameMs": 12,
+        "p90Ms": 16,
+        "jankyPercent": 8.95,
+        "atRest": "animating",
+        "memoryMb": 140
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The swell appears whole, the dot jumps to its place and the halo holds still.",
+    "screenReader": "One label (\"Tide 4.8 feet and falling\").",
+    "touchTarget": "Not interactive."
+  }
+}

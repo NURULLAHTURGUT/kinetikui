@@ -1,0 +1,34 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "week-capsules",
+  "title": "Week Capsules",
+  "description": "A week of minutes: capsules fill in turn, glowing at the goal, and today's breathes inside a ring.",
+  "category": "data",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-count"],
+  "files": ["week-capsules.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Capsules use short UI-thread springs on arrival. Today's ring breathes as one view, so it animates at rest.",
+    "measurements": [
+      {
+        "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+        "kind": "device",
+        "date": "2026-11-02",
+        "build": "release",
+        "frameMs": 18,
+        "p90Ms": 20,
+        "jankyPercent": 78.11,
+        "atRest": "animating",
+        "memoryMb": 125
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Capsules appear filled, the ring holds still and the number does not count.",
+    "screenReader": "One label (\"Today 19 of 30 MIN. Average 31\").",
+    "touchTarget": "Not interactive."
+  }
+}

@@ -21,6 +21,7 @@ import * as chatThread from './items/chat-thread/demo';
 import * as choiceCards from './items/choice-cards/demo';
 import * as codeField from './items/code-field/demo';
 import * as compareSlider from './items/compare-slider/demo';
+import * as compassArc from './items/compass-arc/demo';
 import * as confettiBurst from './items/confetti-burst/demo';
 import * as copyChip from './items/copy-chip/demo';
 import * as countBadge from './items/count-badge/demo';
@@ -33,6 +34,7 @@ import * as donutChart from './items/donut-chart/demo';
 import * as dotBoard from './items/dot-board/demo';
 import * as dotLoader from './items/dot-loader/demo';
 import * as driftMarquee from './items/drift-marquee/demo';
+import * as dualClock from './items/dual-clock/demo';
 import * as elasticSlider from './items/elastic-slider/demo';
 import * as emptyState from './items/empty-state/demo';
 import * as expandCard from './items/expand-card/demo';
@@ -48,6 +50,7 @@ import * as foldPanel from './items/fold-panel/demo';
 import * as gaugeMeter from './items/gauge-meter/demo';
 import * as glideRadio from './items/glide-radio/demo';
 import * as glintCard from './items/glint-card/demo';
+import * as glowColumns from './items/glow-columns/demo';
 import * as gradientSlider from './items/gradient-slider/demo';
 import * as grainDrift from './items/grain-drift/demo';
 import * as growArea from './items/grow-area/demo';
@@ -57,6 +60,7 @@ import * as inkCheck from './items/ink-check/demo';
 import * as inlineEdit from './items/inline-edit/demo';
 import * as intensitySlider from './items/intensity-slider/demo';
 import * as letterMorph from './items/letter-morph/demo';
+import * as levelSteps from './items/level-steps/demo';
 import * as liftMenu from './items/lift-menu/demo';
 import * as likeBurst from './items/like-burst/demo';
 import * as lineChart from './items/line-chart/demo';
@@ -64,13 +68,17 @@ import * as liquidTabs from './items/liquid-tabs/demo';
 import * as magnetButton from './items/magnet-button/demo';
 import * as markerHighlight from './items/marker-highlight/demo';
 import * as moneyField from './items/money-field/demo';
+import * as monthBars from './items/month-bars/demo';
 import * as monthCalendar from './items/month-calendar/demo';
+import * as moonPhases from './items/moon-phases/demo';
 import * as morphIcon from './items/morph-icon/demo';
 import * as morphSelect from './items/morph-select/demo';
 import * as morphSheet from './items/morph-sheet/demo';
 import * as noticeBar from './items/notice-bar/demo';
 import * as nowPlaying from './items/now-playing/demo';
 import * as odometer from './items/odometer/demo';
+import * as orbitRadar from './items/orbit-radar/demo';
+import * as orderStages from './items/order-stages/demo';
 import * as pageDots from './items/page-dots/demo';
 import * as pager from './items/pager/demo';
 import * as paletteStrip from './items/palette-strip/demo';
@@ -84,9 +92,11 @@ import * as popDialog from './items/pop-dialog/demo';
 import * as popMenu from './items/pop-menu/demo';
 import * as pressJelly from './items/press-jelly/demo';
 import * as progressBar from './items/progress-bar/demo';
+import * as pulseRange from './items/pulse-range/demo';
 import * as pulseToggle from './items/pulse-toggle/demo';
 import * as questionDeck from './items/question-deck/demo';
 import * as radarChart from './items/radar-chart/demo';
+import * as rainBars from './items/rain-bars/demo';
 import * as rangeSlider from './items/range-slider/demo';
 import * as readMore from './items/read-more/demo';
 import * as revealField from './items/reveal-field/demo';
@@ -119,6 +129,7 @@ import * as statCard from './items/stat-card/demo';
 import * as statusButton from './items/status-button/demo';
 import * as stepSlider from './items/step-slider/demo';
 import * as stepTracker from './items/step-tracker/demo';
+import * as stepsBar from './items/steps-bar/demo';
 import * as storyCard from './items/story-card/demo';
 import * as streakCard from './items/streak-card/demo';
 import * as streamGraph from './items/stream-graph/demo';
@@ -126,15 +137,18 @@ import * as swatchPicker from './items/swatch-picker/demo';
 import * as swipeRow from './items/swipe-row/demo';
 import * as tagField from './items/tag-field/demo';
 import * as themeSwitch from './items/theme-switch/demo';
+import * as tideWave from './items/tide-wave/demo';
 import * as tiltDeck from './items/tilt-deck/demo';
 import * as timeSplit from './items/time-split/demo';
 import * as timeWheel from './items/time-wheel/demo';
 import * as timeline from './items/timeline/demo';
+import * as timerFrame from './items/timer-frame/demo';
 import * as tipBubble from './items/tip-bubble/demo';
 import * as toastStack from './items/toast-stack/demo';
 import * as topicPicker from './items/topic-picker/demo';
 import * as treeView from './items/tree-view/demo';
 import * as treemap from './items/treemap/demo';
+import * as tripGlance from './items/trip-glance/demo';
 import * as twoStepButton from './items/two-step-button/demo';
 import * as typewriter from './items/typewriter/demo';
 import * as usageMeter from './items/usage-meter/demo';
@@ -142,8 +156,10 @@ import * as vinylPlayer from './items/vinyl-player/demo';
 import * as vitalArcs from './items/vital-arcs/demo';
 import * as waffleChart from './items/waffle-chart/demo';
 import * as walletStack from './items/wallet-stack/demo';
+import * as weekCapsules from './items/week-capsules/demo';
 import * as wordCascade from './items/word-cascade/demo';
 import * as wordRotator from './items/word-rotator/demo';
+import * as zoneArc from './items/zone-arc/demo';
 import * as auth from './templates/auth/demo';
 import * as login from './templates/login/demo';
 import * as onboarding from './templates/onboarding/demo';
@@ -197,6 +213,7 @@ export const demos: DemoEntry[] = [
   { name: "choice-cards", title: "Choice Cards", description: "Option cards for a single choice: one selection ring glides between cards, stretching to fit each one.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: choiceCards.controls, Demo: choiceCards.default },
   { name: "code-field", title: "Code Field", description: "A one-time-code field: digits pop into cells, a caret glides along, a wrong code shakes and a right one ripples.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: codeField.controls, Demo: codeField.default },
   { name: "compare-slider", title: "Compare Slider", description: "Two versions of a picture with a divider you drag to reveal either side; it nudges once to show it moves.", category: "card", phase: 2, web: "live", version: "1.0.0", controls: compareSlider.controls, Demo: compareSlider.default },
+  { name: "compass-arc", title: "Compass Arc", description: "A compass bezel rises from the bottom edge: the dial turns under a red pointer the short way round.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: compassArc.controls, Demo: compassArc.default },
   { name: "confetti-burst", title: "Confetti Burst", description: "A burst of confetti drawn as one Skia Atlas, with physics on the UI thread.", category: "feedback", phase: 2, web: "live", version: "1.0.0", controls: confettiBurst.controls, Demo: confettiBurst.default },
   { name: "copy-chip", title: "Copy Chip", description: "A value with a copy button whose two pages fold into a check while a ring spreads and the outline turns green.", category: "interaction", phase: 2, web: "live", version: "1.0.0", controls: copyChip.controls, Demo: copyChip.default },
   { name: "count-badge", title: "Count Badge", description: "A count on the corner of an icon that springs in, jumps as it rises, rolls its number and shrinks away at zero.", category: "feedback", phase: 2, web: "live", version: "1.0.0", controls: countBadge.controls, Demo: countBadge.default },
@@ -209,6 +226,7 @@ export const demos: DemoEntry[] = [
   { name: "dot-board", title: "Dot Board", description: "A departures board of LED dots whose lines light in a left-to-right sweep when their text changes.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: dotBoard.controls, Demo: dotBoard.default },
   { name: "dot-loader", title: "Dot Loader", description: "Loading dots that hop in a wave, breathe in a pulse, or sit in a chat bubble as a typing indicator.", category: "feedback", phase: 2, web: "live", version: "1.0.0", controls: dotLoader.controls, Demo: dotLoader.default },
   { name: "drift-marquee", title: "Drift Marquee", description: "An endless row that drifts on its own; drag it to scrub, fling it, and the items lean into the speed.", category: "card", phase: 2, web: "live", version: "1.0.0", controls: driftMarquee.controls, Demo: driftMarquee.default },
+  { name: "dual-clock", title: "Dual Clock", description: "Two world clocks side by side, one light and one dark, their hands running on the UI thread.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: dualClock.controls, Demo: dualClock.default },
   { name: "elastic-slider", title: "Elastic Slider", description: "A slider that stretches like rubber past its ends and springs back, with a value bubble.", category: "interaction", phase: 1, web: "live", version: "1.0.0", controls: elasticSlider.controls, Demo: elasticSlider.default },
   { name: "empty-state", title: "Empty State", description: "A calm empty screen: three cards rise and fan out, a blue dot lands, and the next step settles in beneath.", category: "feedback", phase: 2, web: "live", version: "1.0.0", controls: emptyState.controls, Demo: emptyState.default },
   { name: "expand-card", title: "Expand Card", description: "A row that opens into a card: the thumbnail grows into a wide picture and the details rise in beneath it.", category: "card", phase: 2, web: "live", version: "1.0.0", controls: expandCard.controls, Demo: expandCard.default },
@@ -224,6 +242,7 @@ export const demos: DemoEntry[] = [
   { name: "gauge-meter", title: "Gauge Meter", description: "A dial that swings to its value on a spring while the figure counts up beneath it.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: gaugeMeter.controls, Demo: gaugeMeter.default },
   { name: "glide-radio", title: "Glide Radio", description: "A radio group with one dot that travels between the rings like a drop of ink, stretching as it goes.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: glideRadio.controls, Demo: glideRadio.default },
   { name: "glint-card", title: "Glint Card", description: "A card with a specular glint that slides with the finger or the tilt of the device.", category: "card", phase: 1, web: "live", version: "1.0.0", controls: glintCard.controls, Demo: glintCard.default },
+  { name: "glow-columns", title: "Glow Columns", description: "An index through the day: thin stems grow under bright caps in turn, low periods sitting as green dots.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: glowColumns.controls, Demo: glowColumns.default },
   { name: "gradient-slider", title: "Gradient Slider", description: "A colour slider on a hue or white-balance gradient with a ring knob, a live swatch and an action button.", category: "input", phase: 1, web: "live", version: "1.0.0", controls: gradientSlider.controls, Demo: gradientSlider.default },
   { name: "grain-drift", title: "Grain Drift", description: "A drifting four-colour mesh gradient under moving film grain, drawn by a shader.", category: "background", phase: 2, web: "live", version: "1.0.0", controls: grainDrift.controls, Demo: grainDrift.default },
   { name: "grow-area", title: "Grow Area", description: "A multi-line field that springs taller a line at a time, with a ring that fills towards the character limit.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: growArea.controls, Demo: growArea.default },
@@ -233,6 +252,7 @@ export const demos: DemoEntry[] = [
   { name: "inline-edit", title: "Inline Edit", description: "Text you rename in place: it becomes a field without moving, an underline draws in, and a check confirms the save.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: inlineEdit.controls, Demo: inlineEdit.default },
   { name: "intensity-slider", title: "Intensity Slider", description: "A soft gradient slider in a card with a slim handle and a Low-to-High ruler that lights up to the value.", category: "input", phase: 1, web: "live", version: "1.0.0", controls: intensitySlider.controls, Demo: intensitySlider.default },
   { name: "letter-morph", title: "Letter Morph", description: "A label that morphs letter by letter: shared letters slide to new places as others float away or rise in.", category: "text", phase: 2, web: "live", version: "1.0.0", controls: letterMorph.controls, Demo: letterMorph.default },
+  { name: "level-steps", title: "Level Steps", description: "A reading on a rising staircase: steps grow in turn and a bright marker slides to the value.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: levelSteps.controls, Demo: levelSteps.default },
   { name: "lift-menu", title: "Lift Menu", description: "Press and hold: the content sinks, then lifts above a dimmed screen while its actions unfold beneath it.", category: "disclosure", phase: 2, web: "live", version: "1.0.0", controls: liftMenu.controls, Demo: liftMenu.default },
   { name: "like-burst", title: "Like Burst", description: "A like button whose heart pops with a ring of light and a spray of sparks while the count rolls over.", category: "interaction", phase: 2, web: "live", version: "1.0.0", controls: likeBurst.controls, Demo: likeBurst.default },
   { name: "line-chart", title: "Line Chart", description: "A smooth line chart that draws itself in; drag across it and a guide, a dot and a label follow the finger.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: lineChart.controls, Demo: lineChart.default },
@@ -240,13 +260,17 @@ export const demos: DemoEntry[] = [
   { name: "magnet-button", title: "Magnet Button", description: "A button that leans toward the finger from a field around it and presses on release.", category: "interaction", phase: 1, web: "live", version: "1.0.0", controls: magnetButton.controls, Demo: magnetButton.default },
   { name: "marker-highlight", title: "Marker Highlight", description: "A paragraph where key phrases get marked as if with a highlighter, the ink sweeping in phrase by phrase.", category: "text", phase: 2, web: "live", version: "1.0.0", controls: markerHighlight.controls, Demo: markerHighlight.default },
   { name: "money-field", title: "Money Field", description: "A currency field typed like a till: every place rolls to its new digit and separators slide in as it grows.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: moneyField.controls, Demo: moneyField.default },
+  { name: "month-bars", title: "Month Bars", description: "Spending by month: bars rise in turn, the picked month lights teal and the figure counts to it.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: monthBars.controls, Demo: monthBars.default },
   { name: "month-calendar", title: "Month Calendar", description: "Pick a date or a range: a disc glides between days, months slide in from the side and a swipe turns the page.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: monthCalendar.controls, Demo: monthCalendar.default },
+  { name: "moon-phases", title: "Moon Phases", description: "The moon this week: discs pop in around tonight's, which swells in the middle with a soft halo.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: moonPhases.controls, Demo: moonPhases.default },
   { name: "morph-icon", title: "Morph Icon", description: "An icon button whose glyph reshapes between two states: menu to close, play to pause, plus to check.", category: "interaction", phase: 2, web: "live", version: "1.0.0", controls: morphIcon.controls, Demo: morphIcon.default },
   { name: "morph-select", title: "Morph Select", description: "A select whose field stretches open into its list; a highlight glides to your pick as it folds back.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: morphSelect.controls, Demo: morphSelect.default },
   { name: "morph-sheet", title: "Morph Sheet", description: "A bottom sheet with snap points that morphs from a floating card into a full sheet and blurs the screen behind.", category: "navigation", phase: 2, web: "live", version: "1.0.0", controls: morphSheet.controls, Demo: morphSheet.default },
   { name: "notice-bar", title: "Notice Bar", description: "A slim announcement bar whose messages take turns rolling in; closing it folds the bar shut.", category: "feedback", phase: 2, web: "live", version: "1.0.0", controls: noticeBar.controls, Demo: noticeBar.default },
   { name: "now-playing", title: "Now Playing", description: "A dark music widget: the cover springs forward on play, the icon morphs and progress runs on the UI thread.", category: "card", phase: 1, web: "live", version: "1.1.0", controls: nowPlaying.controls, Demo: nowPlaying.default },
   { name: "odometer", title: "Odometer", description: "A number whose digits roll like a mechanical counter, forward or back, the long way round.", category: "text", phase: 1, web: "live", version: "1.0.0", controls: odometer.controls, Demo: odometer.default },
+  { name: "orbit-radar", title: "Orbit Radar", description: "A radar dish rises from the edge: a beam sweeps round and a small craft climbs the rim as minutes count.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: orbitRadar.controls, Demo: orbitRadar.default },
+  { name: "order-stages", title: "Order Stages", description: "An order on its way: a glowing track runs to a knob showing the stage under way, chips for what comes next.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: orderStages.controls, Demo: orderStages.default },
   { name: "page-dots", title: "Page Dots", description: "Page dots that follow the scroll: a worm that stretches to the next page, or a dot that widens into a pill.", category: "navigation", phase: 2, web: "live", version: "1.0.0", controls: pageDots.controls, Demo: pageDots.default },
   { name: "pager", title: "Pager", description: "Pagination with a pill that glides to the page; the row keeps its width while the numbers roll in place.", category: "navigation", phase: 2, web: "live", version: "1.0.0", controls: pager.controls, Demo: pager.default },
   { name: "palette-strip", title: "Palette Strip", description: "Colour swatches joined into one bar that wipe to new colours in turn, with a spinning shuffle button.", category: "input", phase: 1, web: "live", version: "1.0.0", controls: paletteStrip.controls, Demo: paletteStrip.default },
@@ -260,9 +284,11 @@ export const demos: DemoEntry[] = [
   { name: "pop-menu", title: "Pop Menu", description: "A menu that unfolds from its trigger's corner, rows sliding in one by one, with a highlight under the finger.", category: "disclosure", phase: 2, web: "live", version: "1.0.0", controls: popMenu.controls, Demo: popMenu.default },
   { name: "press-jelly", title: "Press Jelly", description: "A primary button that squashes like jelly under the finger and wobbles back on release.", category: "interaction", phase: 1, web: "live", version: "1.0.0", controls: pressJelly.controls, Demo: pressJelly.default },
   { name: "progress-bar", title: "Progress Bar", description: "A bar that springs to each new amount with a sheen along the fill, a counting percentage and a green finish.", category: "feedback", phase: 2, web: "live", version: "1.0.0", controls: progressBar.controls, Demo: progressBar.default },
+  { name: "pulse-range", title: "Pulse Range", description: "The day's heart rate as a glowing range: a capsule slides to the latest reading, its heart beating at that rate.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: pulseRange.controls, Demo: pulseRange.default },
   { name: "pulse-toggle", title: "Pulse Toggle", description: "A switch whose thumb stretches mid-flight, lands as a rounded square and pulses when it turns on.", category: "interaction", phase: 1, web: "live", version: "1.0.0", controls: pulseToggle.controls, Demo: pulseToggle.default },
   { name: "question-deck", title: "Question Deck", description: "A questionnaire card on a loose stack: answers spring in, questions slide and the cards behind shuffle.", category: "card", phase: 1, web: "live", version: "1.0.0", controls: questionDeck.controls, Demo: questionDeck.default },
   { name: "radar-chart", title: "Radar Chart", description: "A radar chart whose shapes grow from the centre and morph to new values; tap the legend to compare.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: radarChart.controls, Demo: radarChart.default },
+  { name: "rain-bars", title: "Rain Bars", description: "A short rain forecast: bars hang from a band and reach down in turn while a few drops keep falling.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: rainBars.controls, Demo: rainBars.default },
   { name: "range-slider", title: "Range Slider", description: "A two-ended slider for a range: the nearer end follows the finger with a value bubble, over an optional histogram.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: rangeSlider.controls, Demo: rangeSlider.default },
   { name: "read-more", title: "Read More", description: "Long text folded to a few lines that fade out; Read more lets it out to full height as the fade dissolves.", category: "disclosure", phase: 2, web: "live", version: "1.0.0", controls: readMore.controls, Demo: readMore.default },
   { name: "reveal-field", title: "Reveal Field", description: "A password field with an eye that blinks as the text turns between dots and letters, and a slash that wipes away.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: revealField.controls, Demo: revealField.default },
@@ -295,6 +321,7 @@ export const demos: DemoEntry[] = [
   { name: "status-button", title: "Status Button", description: "A button that folds into a spinner while it works, then opens in green with a traced check, or shakes in red.", category: "interaction", phase: 1, web: "live", version: "1.0.0", controls: statusButton.controls, Demo: statusButton.default },
   { name: "step-slider", title: "Step Slider", description: "A slider with a few fixed stops marked as dots, a snapping knob and a spinning action button.", category: "input", phase: 1, web: "live", version: "1.0.0", controls: stepSlider.controls, Demo: stepSlider.default },
   { name: "step-tracker", title: "Step Tracker", description: "Progress through a multi-step flow: the line fills on a spring, steps take a check and the new one sends a ring.", category: "feedback", phase: 2, web: "live", version: "1.0.0", controls: stepTracker.controls, Demo: stepTracker.default },
+  { name: "steps-bar", title: "Steps Bar", description: "Steps towards a goal: the bar fills from olive to green as a small walker strides along its front.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: stepsBar.controls, Demo: stepsBar.default },
   { name: "story-card", title: "Story Card", description: "Full-bleed stories with progress bars: tap to step, hold to pause, each picture drifting closer as it plays.", category: "card", phase: 2, web: "live", version: "1.0.0", controls: storyCard.controls, Demo: storyCard.default },
   { name: "streak-card", title: "Streak Card", description: "A streak card: the day count pops into a disc as confetti bursts around it, and the week's marks tick in.", category: "card", phase: 1, web: "live", version: "1.0.0", controls: streakCard.controls, Demo: streakCard.default },
   { name: "stream-graph", title: "Stream Graph", description: "Layered streams on a centred baseline that morph between datasets; tap a layer to lift it and read its share.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: streamGraph.controls, Demo: streamGraph.default },
@@ -302,15 +329,18 @@ export const demos: DemoEntry[] = [
   { name: "swipe-row", title: "Swipe Row", description: "A list row with actions behind it; swipe far enough and the edge action takes over the row and runs.", category: "interaction", phase: 2, web: "live", version: "1.0.0", controls: swipeRow.controls, Demo: swipeRow.default },
   { name: "tag-field", title: "Tag Field", description: "Typed words that pop into tags while the rest make room; a duplicate makes the existing tag jump instead.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: tagField.controls, Demo: tagField.default },
   { name: "theme-switch", title: "Theme Switch", description: "A light and dark switch drawn as a sun whose rays turn and draw in while a shadow slides across to leave a moon.", category: "interaction", phase: 2, web: "live", version: "1.0.0", controls: themeSwitch.controls, Demo: themeSwitch.default },
+  { name: "tide-wave", title: "Tide Wave", description: "The day's tide as a soft blue swell: the water draws in, drop lines mark highs and lows, and a dot glows at now.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: tideWave.controls, Demo: tideWave.default },
   { name: "tilt-deck", title: "Tilt Deck", description: "A card that tilts in 3D under the finger, with parallax layers and a drifting floor shadow.", category: "card", phase: 1, web: "live", version: "1.0.0", controls: tiltDeck.controls, Demo: tiltDeck.default },
   { name: "time-split", title: "Time Split", description: "A total time on a raised panel, its split shown as coloured segments along the panel's curved bottom edge.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: timeSplit.controls, Demo: timeSplit.default },
   { name: "time-wheel", title: "Time Wheel", description: "Wheels for a time of day: rows tilt away like a drum, each wheel snaps row by row with a tick.", category: "input", phase: 2, web: "live", version: "1.0.0", controls: timeWheel.controls, Demo: timeWheel.default },
   { name: "timeline", title: "Timeline", description: "Events along a rail: each node pops in turn, the line draws down to the next, and the text rises in beside it.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: timeline.controls, Demo: timeline.default },
+  { name: "timer-frame", title: "Timer Frame", description: "A countdown drawn around the card's edge: an orange frame drains clockwise as a small comet circles.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: timerFrame.controls, Demo: timerFrame.default },
   { name: "tip-bubble", title: "Tip Bubble", description: "A short tip that grows out of its anchor from the arrow's point and closes by itself after a few seconds.", category: "disclosure", phase: 2, web: "live", version: "1.0.0", controls: tipBubble.controls, Demo: tipBubble.default },
   { name: "toast-stack", title: "Toast Stack", description: "Notifications that stack like cards, fan out on tap and swipe away sideways.", category: "feedback", phase: 1, web: "live", version: "1.0.0", controls: toastStack.controls, Demo: toastStack.default },
   { name: "topic-picker", title: "Topic Picker", description: "Topic chips drifting in rows that run opposite ways; picking one pops it in a soft colour.", category: "input", phase: 1, web: "live", version: "1.0.0", controls: topicPicker.controls, Demo: topicPicker.default },
   { name: "tree-view", title: "Tree View", description: "Nested folders whose branches grow open to their measured height as the chevron turns and rows drift in.", category: "disclosure", phase: 2, web: "live", version: "1.0.0", controls: treeView.controls, Demo: treeView.default },
   { name: "treemap", title: "Treemap", description: "Sizes as nested, near-square tiles; tap a group and the map zooms into it as its parts open out inside.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: treemap.controls, Demo: treemap.default },
+  { name: "trip-glance", title: "Trip Glance", description: "A plane flies along a line that curves down to its destination, a white trail behind and green ahead.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: tripGlance.controls, Demo: tripGlance.default },
   { name: "two-step-button", title: "Two-Step Button", description: "A button that asks before it acts: it splits into Cancel and Confirm, and the question closes by itself.", category: "interaction", phase: 2, web: "live", version: "1.0.0", controls: twoStepButton.controls, Demo: twoStepButton.default },
   { name: "typewriter", title: "Typewriter", description: "Text typed out with a human rhythm; several phrases are typed, held, erased and replaced in turn.", category: "text", phase: 2, web: "live", version: "1.0.0", controls: typewriter.controls, Demo: typewriter.default },
   { name: "usage-meter", title: "Usage Meter", description: "What fills an allowance: segments grow into the bar in turn as the figure counts up, and the rest warns near the limit.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: usageMeter.controls, Demo: usageMeter.default },
@@ -318,8 +348,10 @@ export const demos: DemoEntry[] = [
   { name: "vital-arcs", title: "Vital Arcs", description: "A daily summary widget: concentric arcs sweep from the corner with values at their tips, round a score disc.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: vitalArcs.controls, Demo: vitalArcs.default },
   { name: "waffle-chart", title: "Waffle Chart", description: "A ten-by-ten grid where each cell is one percent; cells fill in a wave and new data washes across the grid.", category: "data", phase: 2, web: "live", version: "1.0.0", controls: waffleChart.controls, Demo: waffleChart.default },
   { name: "wallet-stack", title: "Wallet Stack", description: "Glint Cards tucked in a stitched leather pocket: tap to fan them out, with the balance counting up.", category: "card", phase: 1, web: "live", version: "1.0.0", controls: walletStack.controls, Demo: walletStack.default },
+  { name: "week-capsules", title: "Week Capsules", description: "A week of minutes: capsules fill in turn, glowing at the goal, and today's breathes inside a ring.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: weekCapsules.controls, Demo: weekCapsules.default },
   { name: "word-cascade", title: "Word Cascade", description: "A paragraph that arrives word by word, each word rising into place after the last.", category: "text", phase: 1, web: "live", version: "1.0.0", controls: wordCascade.controls, Demo: wordCascade.default },
   { name: "word-rotator", title: "Word Rotator", description: "A line with one word that keeps changing, rolling out and in letter by letter while its gap springs to fit.", category: "text", phase: 2, web: "live", version: "1.0.0", controls: wordRotator.controls, Demo: wordRotator.default },
+  { name: "zone-arc", title: "Zone Arc", description: "A reading on a half dial of coloured zones: zones sweep in, a marker swings over and its zone lights up.", category: "data", phase: 1, web: "live", version: "1.0.0", controls: zoneArc.controls, Demo: zoneArc.default },
   { name: "auth", title: "Auth", description: "Passwordless sign-in: an email, a one-time code with a resend timer, and a check once you are in.", category: "screen", phase: 3, web: "live", version: "1.0.0", controls: auth.controls, Demo: auth.default },
   { name: "login", title: "Login", description: "An email and password sign-in that settles in row by row, with inline errors and provider buttons.", category: "screen", phase: 3, web: "live", version: "1.0.0", controls: login.controls, Demo: login.default },
   { name: "onboarding", title: "Onboarding", description: "A paged welcome with animated illustration panels, a progress line that follows the swipe and word-by-word titles.", category: "screen", phase: 3, web: "live", version: "1.0.0", controls: onboarding.controls, Demo: onboarding.default },

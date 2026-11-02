@@ -1,0 +1,34 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "pulse-range",
+  "title": "Pulse Range",
+  "description": "The day's heart rate as a glowing range: a capsule slides to the latest reading, its heart beating at that rate.",
+  "category": "data",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-svg"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-count"],
+  "files": ["pulse-range.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The capsule moves on a UI-thread spring on change. The heart is one view on a UI-thread loop, so it animates at rest.",
+    "measurements": [
+      {
+        "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+        "kind": "device",
+        "date": "2026-11-02",
+        "build": "release",
+        "frameMs": 15,
+        "p90Ms": 22,
+        "jankyPercent": 33.74,
+        "atRest": "animating",
+        "memoryMb": 125
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The capsule jumps to its place, the heart holds still and the number does not count.",
+    "screenReader": "One label (\"Heart rate 112 beats per minute. TODAY average 74, low 52, high 168. JUST NOW.\").",
+    "touchTarget": "Not interactive."
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "rain-bars",
+  "title": "Rain Bars",
+  "description": "A short rain forecast: bars hang from a band and reach down in turn while a few drops keep falling.",
+  "category": "data",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-svg"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["rain-bars.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Bars use short UI-thread springs on arrival. Five small drop views loop on the UI thread, so it animates at rest.",
+    "measurements": [
+      {
+        "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+        "kind": "device",
+        "date": "2026-11-02",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 18,
+        "jankyPercent": 75.19,
+        "atRest": "animating",
+        "memoryMb": 119
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Bars appear in place and no drops fall.",
+    "screenReader": "One label (\"Steady Rain, 19 MM expected\").",
+    "touchTarget": "Not interactive."
+  }
+}

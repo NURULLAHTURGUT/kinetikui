@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "tide-wave",
+  "type": "registry:item",
+  "title": "Tide Wave",
+  "description": "The day's tide as a soft blue swell: the water draws in, drop lines mark highs and lows, and a dot glows at now.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-reanimated",
+    "react-native-svg",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-count.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/tide-wave.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/tide-wave.tsx",
+      "content": "import {\n  BlurMask,\n  Canvas,\n  Circle,\n  Group,\n  LinearGradient,\n  Path,\n  rect,\n  Skia,\n  vec,\n} from '@shopify/react-native-skia';\nimport { useEffect, useMemo, useState } from 'react';\nimport { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useDerivedValue,\n  useSharedValue,\n  withRepeat,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\nimport Svg, { Path as SvgPath } from 'react-native-svg';\n\nimport { useCountUp } from '../../lib/kinetik/hooks/use-count-up';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { easings, spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type TidePoint = {\n  /** Hour of the day, 0–24. */\n  hour: number;\n  /** Water height at that high or low tide. */\n  height: number;\n};\n\nexport type TideWaveProps = {\n  /** The day's high and low tides in time order. */\n  tides: TidePoint[];\n  /** The hour now, 0–24. */\n  now: number;\n  /** Unit after the height. Defaults to \"′\" (feet). */\n  unit?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst H = 70;\nconst SIDE = 6;\nconst HOURS = ['00', '06', '12', '18'];\nconst SAMPLES = 72;\n\n/** Water height at an hour, eased between tides with a cosine as real tides roughly are. */\nexport function tideAt(hour: number, tides: TidePoint[]): number {\n  'worklet';\n  const first = tides[0];\n  if (!first) return 0;\n  if (hour <= first.hour) return first.height;\n  for (let i = 1; i < tides.length; i++) {\n    const a = tides[i - 1]!;\n    const b = tides[i]!;\n    if (hour <= b.hour) {\n      const t = (hour - a.hour) / Math.max(0.001, b.hour - a.hour);\n      return a.height + ((b.height - a.height) * (1 - Math.cos(Math.PI * t))) / 2;\n    }\n  }\n  return tides[tides.length - 1]!.height;\n}\n\n/** Whether the water is going down at an hour. */\nexport function isFalling(hour: number, tides: TidePoint[]): boolean {\n  return tideAt(hour + 0.05, tides) < tideAt(hour, tides);\n}\n\n/**\n * The day's tide as a soft blue swell: the water draws in from the left, drop lines\n * mark each high and low, and a glowing dot breathes at the height right now.\n */\nexport function TideWave({ tides, now, unit = '′', style }: TideWaveProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const [width, setWidth] = useState(0);\n  const height = tideAt(now, tides);\n  const shown = useCountUp(height, { instant: reduced });\n  const falling = isFalling(now, tides);\n\n  return (\n    <View\n      accessible\n      accessibilityLabel={`Tide ${height.toFixed(1)} feet and ${falling ? 'falling' : 'rising'}`}\n      style={[styles.card, style]}\n    >\n      <View style={styles.head}>\n        <Text\n          style={{\n            color: colors.highlight,\n            fontSize: font.size.lg,\n            fontWeight: font.weight.semibold,\n            fontVariant: ['tabular-nums'],\n          }}\n        >\n          {shown.toFixed(1)}\n          {unit}\n        </Text>\n        <View style={styles.status}>\n          <Text\n            style={{ color: BLUE, fontSize: font.size.xs + 1, fontWeight: font.weight.semibold }}\n          >\n            Tide {falling ? 'Falling' : 'Rising'}\n          </Text>\n          <View style={[styles.arrow, falling ? null : styles.flip]}>\n            <Svg width={10} height={10} viewBox=\"0 0 24 24\">\n              <SvgPath\n                d=\"M12 4v14M6 12l6 6 6-6\"\n                stroke={colors.highlight}\n                strokeWidth={3.4}\n                strokeLinecap=\"round\"\n                strokeLinejoin=\"round\"\n                fill=\"none\"\n              />\n            </Svg>\n          </View>\n        </View>\n      </View>\n\n      <View\n        testID=\"tide-wave-chart\"\n        style={styles.chart}\n        onLayout={(e) => setWidth(e.nativeEvent.layout.width)}\n      >\n        {width > 0 ? <Swell width={width} tides={tides} now={now} /> : null}\n      </View>\n\n      <View style={styles.hours}>\n        {HOURS.map((hour) => (\n          <Text key={hour} style={{ color: MUTED, fontSize: font.size.xs - 2 }}>\n            {hour}\n          </Text>\n        ))}\n      </View>\n    </View>\n  );\n}\n\nfunction Swell({ width, tides, now }: { width: number; tides: TidePoint[]; now: number }) {\n  const { colors } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const span = width - SIDE * 2;\n  const top = Math.max(...tides.map((t) => t.height), 1);\n  const low = Math.min(...tides.map((t) => t.height), 0);\n  const scale = (H - 16) / Math.max(0.001, top - low);\n  const xOf = (hour: number) => SIDE + (hour / 24) * span;\n  const yOf = (height: number) => H - 2 - (height - low) * scale;\n\n  const { line, area, drops } = useMemo(() => {\n    const curve = Skia.PathBuilder.Make();\n    const fill = Skia.PathBuilder.Make();\n    for (let i = 0; i <= SAMPLES; i++) {\n      const hour = (i / SAMPLES) * 24;\n      const x = xOf(hour);\n      const y = yOf(tideAt(hour, tides));\n      if (i === 0) {\n        curve.moveTo(x, y);\n        fill.moveTo(x, H);\n        fill.lineTo(x, y);\n      } else {\n        curve.lineTo(x, y);\n        fill.lineTo(x, y);\n      }\n    }\n    fill.lineTo(xOf(24), H);\n    fill.close();\n    const marks = Skia.PathBuilder.Make();\n    for (const tide of tides) {\n      marks.moveTo(xOf(tide.hour), yOf(tide.height));\n      marks.lineTo(xOf(tide.hour), H);\n    }\n    return { line: curve.detach(), area: fill.detach(), drops: marks.detach() };\n    // xOf and yOf only depend on these values.\n    // eslint-disable-next-line react-hooks/exhaustive-deps\n  }, [tides, span, top, low]);\n\n  const reveal = useSharedValue(reduced ? 1 : 0);\n  const at = useSharedValue(reduced ? now : (tides[0]?.hour ?? 0));\n\n  useEffect(() => {\n    if (!reduced) reveal.set(withTiming(1, { duration: 900, easing: easings.standard }));\n  }, [reduced, reveal]);\n  useEffect(() => {\n    at.set(reduced ? now : withSpring(now, spring('smooth')));\n  }, [now, reduced, at]);\n\n  const clip = useDerivedValue(() => rect(0, 0, width * reveal.get(), H));\n  const dot = useDerivedValue(() => {\n    const hour = at.get();\n    return [\n      { translateX: SIDE + (hour / 24) * span },\n      { translateY: H - 2 - (tideAt(hour, tides) - low) * scale },\n    ];\n  });\n\n  // The breathing halo is a view, so only the arrival redraws the canvas.\n  const breath = useSharedValue(0);\n  useEffect(() => {\n    if (reduced) return;\n    breath.set(withRepeat(withTiming(1, { duration: 1800, easing: easings.inOut }), -1, true));\n  }, [reduced, breath]);\n  const halo = useAnimatedStyle(() => ({\n    opacity: 0.12 + breath.get() * 0.2,\n    transform: [\n      { translateX: SIDE + (at.get() / 24) * span - HALO / 2 },\n      { translateY: H - 2 - (tideAt(at.get(), tides) - low) * scale - HALO / 2 },\n      { scale: 0.7 + breath.get() * 0.35 },\n    ],\n  }));\n\n  return (\n    <>\n      <Canvas style={{ width, height: H }}>\n        <Group clip={clip}>\n          <Path path={area}>\n            <LinearGradient start={vec(0, 8)} end={vec(0, H)} colors={[WATER_TOP, WATER_LOW]} />\n          </Path>\n          <Path path={drops} style=\"stroke\" strokeWidth={1} color={DROP} />\n          <Path path={line} style=\"stroke\" strokeWidth={2} color={LINE}>\n            <BlurMask blur={0.4} style=\"solid\" />\n          </Path>\n          {tides.map((tide) => (\n            <Circle\n              key={tide.hour}\n              cx={xOf(tide.hour)}\n              cy={yOf(tide.height)}\n              r={2.4}\n              color={colors.highlight}\n            />\n          ))}\n        </Group>\n        <Group transform={dot}>\n          <Circle cx={0} cy={0} r={4.5} color={colors.highlight} />\n        </Group>\n      </Canvas>\n      <Animated.View pointerEvents=\"none\" style={[styles.halo, halo]} />\n    </>\n  );\n}\n\nconst HALO = 22;\nconst MUTED = 'hsl(212, 10%, 62%)';\nconst BLUE = 'hsl(210, 94%, 68%)';\nconst LINE = 'hsl(204, 96%, 78%)';\nconst DROP = 'hsla(0, 0%, 100%, 0.3)';\nconst WATER_TOP = 'hsla(210, 90%, 62%, 0.82)';\nconst WATER_LOW = 'hsla(224, 80%, 30%, 0.12)';\n\nconst styles = StyleSheet.create({\n  card: {\n    width: '100%',\n    maxWidth: 320,\n    alignSelf: 'center',\n    borderRadius: 24,\n    borderWidth: 1,\n    borderColor: 'hsla(0, 0%, 100%, 0.08)',\n    backgroundColor: 'hsl(218, 18%, 5%)',\n    padding: 16,\n    gap: 6,\n  },\n  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },\n  status: { flexDirection: 'row', alignItems: 'center', gap: 5 },\n  arrow: {\n    width: 16,\n    height: 16,\n    borderRadius: 8,\n    alignItems: 'center',\n    justifyContent: 'center',\n    backgroundColor: 'hsl(212, 86%, 42%)',\n  },\n  flip: { transform: [{ rotate: '180deg' }] },\n  chart: { height: H },\n  halo: {\n    position: 'absolute',\n    top: 0,\n    left: 0,\n    width: HALO,\n    height: HALO,\n    borderRadius: HALO / 2,\n    backgroundColor: 'hsl(0, 0%, 100%)',\n  },\n  hours: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: SIDE },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "One Skia canvas drawn on arrival and on change. The halo at now is one view on a UI-thread loop, so it animates at rest.",
+      "measurements": [
+        {
+          "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+          "kind": "device",
+          "date": "2026-11-02",
+          "build": "release",
+          "frameMs": 12,
+          "p90Ms": 16,
+          "jankyPercent": 8.95,
+          "atRest": "animating",
+          "memoryMb": 140
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The swell appears whole, the dot jumps to its place and the halo holds still.",
+      "screenReader": "One label (\"Tide 4.8 feet and falling\").",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { TideWave } from '@/components/kinetik/tide-wave';\n\n<TideWave\n  tides={[\n    { hour: 1, height: 1.2 },\n    { hour: 7, height: 6.1 },\n    { hour: 13, height: 0.8 },\n    { hour: 19, height: 6.6 },\n    { hour: 24, height: 2.1 },\n  ]}\n  now={9}\n/>;\n```\n\n## When to use\n\n- Sailing, surfing, fishing and coastal weather.\n- Any smooth daily cycle with known highs and lows.\n\n## When not to use\n\n- Safety decisions at sea: the curve is a smooth estimate between the times you pass.\n\n## Notes\n\n- Pass each high and low with its hour, and the curve eases between them.\n- The default unit is feet (′). Set `unit` to change the mark; the spoken label still says feet.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add tide-wave`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

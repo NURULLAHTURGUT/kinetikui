@@ -11,7 +11,7 @@
 
 <p align="center">
   <strong>Motion parts for Expo.</strong><br />
-  142 animated components and 5 screen templates for React Native, copied into your app as source.
+  158 animated components and 5 screen templates for React Native, copied into your app as source.
 </p>
 
 <p align="center">
@@ -49,7 +49,7 @@ npx kinetik-ui add glint-card
 
 ## What you get
 
-- **142 components and 5 screen templates**, each with a live demo, a props table and notes on when _not_ to use it.
+- **158 components and 5 screen templates**, each with a live demo, a props table and notes on when _not_ to use it.
 - **Runs on the UI thread.** Gestures, springs and shaders are worklets; a busy JavaScript thread does not drop frames.
 - **Accessible by default.** Every component has a reduced-motion version, screen-reader labels and roles, and 44 pt touch targets. See the [checklist](docs/accessibility.md).
 - **One design language.** Colours, spacing, type, shadows and three springs come from shared tokens; nothing hard-codes a colour. Brand it with `<KinetikProvider colors={{ ember: '#7C5CFF' }}>`.
@@ -196,6 +196,22 @@ npx kinetik-ui add glint-card
 |             | Vital Arcs        | Arcs that sweep from the corner around a score disc, values at their tips.          |
 |             | Score Matrix      | A score that counts up as a dot grid lights, beside metric rows.                    |
 |             | Agenda Card       | The date lit by a blue glow beside the next events sliding in.                      |
+|             | Trip Glance       | A plane on a line that curves to its destination, with a trail and time left.       |
+|             | Level Steps       | A reading on a rising staircase with a bright sliding marker.                       |
+|             | Moon Phases       | The week's moons around tonight's, which swells with a soft halo.                   |
+|             | Rain Bars         | Bars that hang like a curtain under falling drops: a short rain forecast.           |
+|             | Orbit Radar       | A radar dish with a sweeping beam and a craft climbing the rim.                     |
+|             | Dual Clock        | Two world clocks, light and dark, with hands running on the UI thread.              |
+|             | Order Stages      | A glowing track to a knob for the stage under way, chips for what comes next.       |
+|             | Month Bars        | Monthly bars; tap one to light it and count the figure to it.                       |
+|             | Week Capsules     | A week of capsules filling to a goal, today's breathing in a ring.                  |
+|             | Pulse Range       | A glowing range with a capsule whose heart beats at the latest reading.             |
+|             | Zone Arc          | A half dial of coloured zones with a marker that swings to the value.               |
+|             | Timer Frame       | A countdown around the card's edge with a small circling comet.                     |
+|             | Compass Arc       | A compass bezel that turns under a red pointer the short way round.                 |
+|             | Glow Columns      | Thin stems under bright caps: an index through the day.                             |
+|             | Tide Wave         | The day's tide as a swell, with a glowing dot at the height right now.              |
+|             | Steps Bar         | Steps to a goal: a bar fills as a small walker strides along its front.             |
 |             | Dot Board         | A departures board of LED dots whose lines light in a sweep.                        |
 |             | Time Split        | A total time, split into coloured segments along a panel's curved edge.             |
 |             | Route Card        | A line fills behind a plane between two codes, above a turning globe of dots.       |

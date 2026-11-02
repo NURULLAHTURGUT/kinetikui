@@ -1,0 +1,30 @@
+## Usage
+
+```tsx
+import { TideWave } from '@/components/kinetik/tide-wave';
+
+<TideWave
+  tides={[
+    { hour: 1, height: 1.2 },
+    { hour: 7, height: 6.1 },
+    { hour: 13, height: 0.8 },
+    { hour: 19, height: 6.6 },
+    { hour: 24, height: 2.1 },
+  ]}
+  now={9}
+/>;
+```
+
+## When to use
+
+- Sailing, surfing, fishing and coastal weather.
+- Any smooth daily cycle with known highs and lows.
+
+## When not to use
+
+- Safety decisions at sea: the curve is a smooth estimate between the times you pass.
+
+## Notes
+
+- Pass each high and low with its hour, and the curve eases between them.
+- The default unit is feet (′). Set `unit` to change the mark; the spoken label still says feet.

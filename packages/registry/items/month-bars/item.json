@@ -1,0 +1,34 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "month-bars",
+  "title": "Month Bars",
+  "description": "Spending by month: bars rise in turn, the picked month lights teal and the figure counts to it.",
+  "category": "data",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-svg"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics", "kinetik-count"],
+  "files": ["month-bars.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Bars use short UI-thread springs on arrival; the figure re-renders only while it counts. Nothing animates at rest.",
+    "measurements": [
+      {
+        "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+        "kind": "device",
+        "date": "2026-11-02",
+        "build": "release",
+        "frameMs": 11,
+        "p90Ms": 13,
+        "jankyPercent": 0,
+        "atRest": "idle",
+        "memoryMb": 117
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Bars appear in place and the figure changes without counting.",
+    "screenReader": "The figure reads as one line (\"OCT: $2,316.30, +129.11\") and each month as a button with its selected state.",
+    "touchTarget": "Each month is the full column, at least 44 pt tall."
+  }
+}

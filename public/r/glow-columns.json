@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "glow-columns",
+  "type": "registry:item",
+  "title": "Glow Columns",
+  "description": "An index through the day: thin stems grow under bright caps in turn, low periods sitting as green dots.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-svg",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-count.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/glow-columns.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/glow-columns.tsx",
+      "content": "import { useEffect } from 'react';\nimport { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withDelay,\n  withSpring,\n} from 'react-native-reanimated';\nimport Svg, { Path } from 'react-native-svg';\n\nimport { useCountUp } from '../../lib/kinetik/hooks/use-count-up';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { gradient } from '../../lib/kinetik/tokens/gradient';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type GlowColumnsProps = {\n  /** One value per period, oldest first. */\n  values: number[];\n  /** Top of the scale. Defaults to the largest value. */\n  max?: number;\n  /** Index of the current period, which sets the big number. Defaults to 0. */\n  current?: number;\n  /** Word beside the big number, e.g. \"MODERATE\". */\n  level?: string;\n  /** Short name in the corner, e.g. \"UVI\". */\n  name?: string;\n  /** Period labels, spread under the columns. */\n  labels?: string[];\n  style?: StyleProp<ViewStyle>;\n};\n\nconst CHART = 66;\nconst CAP = 6;\nconst STEM = 4;\n\nconst LOW = 'hsl(138, 76%, 48%)';\nconst MID = 'hsl(52, 94%, 58%)';\nconst HIGH = 'hsl(28, 96%, 56%)';\n\n/** The colour of a value on the scale: green when low, yellow in the middle, orange when high. */\nexport function levelColor(share: number): string {\n  if (share < 0.3) return LOW;\n  return share < 0.7 ? MID : HIGH;\n}\n\n/**\n * An index through the day as thin glowing columns: each stem grows from the floor\n * under a bright cap, one after another, and low periods sit as small green dots.\n */\nexport function GlowColumns({\n  values,\n  max,\n  current = 0,\n  level,\n  name,\n  labels,\n  style,\n}: GlowColumnsProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const top = max ?? Math.max(...values, 1);\n  const now = values[current] ?? 0;\n  const shown = Math.round(useCountUp(now, { instant: reduced }));\n  const tone = levelColor(now / top);\n\n  return (\n    <View\n      accessible\n      accessibilityLabel={`${name ? `${name} ` : ''}${now}${level ? `, ${level}` : ''}`}\n      style={[styles.card, style]}\n    >\n      <View style={styles.head}>\n        <Text\n          style={{\n            color: colors.highlight,\n            fontSize: font.size.lg,\n            fontWeight: font.weight.semibold,\n            fontVariant: ['tabular-nums'],\n          }}\n        >\n          {shown}\n        </Text>\n        {level ? (\n          <Text\n            numberOfLines={1}\n            style={[\n              styles.grow,\n              { color: tone, fontSize: font.size.xs, fontWeight: font.weight.bold },\n            ]}\n          >\n            {level}\n          </Text>\n        ) : (\n          <View style={styles.grow} />\n        )}\n        {name ? (\n          <>\n            <Text style={{ color: MUTED, fontSize: font.size.xs, fontWeight: font.weight.medium }}>\n              {name}\n            </Text>\n            <Svg width={14} height={14} viewBox=\"0 0 24 24\">\n              <Path d=\"M21 3 3 10.5l7.2 3.3L13.5 21 21 3Z\" fill={MUTED} />\n            </Svg>\n          </>\n        ) : null}\n      </View>\n\n      <View style={styles.chart}>\n        {values.map((value, i) => (\n          <Column\n            key={i}\n            index={i}\n            share={Math.max(0, Math.min(1, value / top))}\n            current={i === current}\n          />\n        ))}\n      </View>\n\n      {labels ? (\n        <View style={styles.labels}>\n          {labels.map((label) => (\n            <Text key={label} style={{ color: MUTED, fontSize: font.size.xs - 2 }}>\n              {label}\n            </Text>\n          ))}\n        </View>\n      ) : null}\n    </View>\n  );\n}\n\nfunction Column({ index, share, current }: { index: number; share: number; current: boolean }) {\n  const reduced = useReduceMotion();\n  const tone = levelColor(share);\n  const stem = share * (CHART - CAP);\n  const grown = useSharedValue(reduced ? stem : 0);\n  useEffect(() => {\n    grown.set(reduced ? stem : withDelay(index * 35, withSpring(stem, spring('smooth'))));\n  }, [index, stem, reduced, grown]);\n  const rise = useAnimatedStyle(() => ({ height: Math.max(0, grown.get()) }));\n  const lift = useAnimatedStyle(() => ({ transform: [{ translateY: -Math.max(0, grown.get()) }] }));\n\n  return (\n    <View style={styles.column}>\n      <View style={[styles.rail, current ? styles.railNow : null]} />\n      <Animated.View\n        style={[\n          styles.stem,\n          gradient(`linear-gradient(180deg, ${tone} 0%, transparent 100%)`),\n          rise,\n        ]}\n      />\n      <Animated.View\n        style={[styles.cap, { backgroundColor: tone, boxShadow: `0px 0px 8px ${tone}` }, lift]}\n      />\n    </View>\n  );\n}\n\nconst MUTED = 'hsl(0, 0%, 62%)';\n\nconst styles = StyleSheet.create({\n  card: {\n    width: '100%',\n    maxWidth: 320,\n    alignSelf: 'center',\n    borderRadius: 24,\n    borderWidth: 1,\n    borderColor: 'hsla(0, 0%, 100%, 0.08)',\n    backgroundColor: 'hsl(0, 0%, 5%)',\n    padding: 16,\n    gap: 8,\n  },\n  head: { flexDirection: 'row', alignItems: 'center', gap: 6 },\n  grow: { flex: 1 },\n  chart: { flexDirection: 'row', height: CHART },\n  column: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },\n  rail: {\n    position: 'absolute',\n    top: 0,\n    bottom: 0,\n    width: 1,\n    backgroundColor: 'hsla(0, 0%, 100%, 0.12)',\n  },\n  railNow: { width: 1.5, backgroundColor: 'hsla(0, 0%, 100%, 0.42)' },\n  stem: { width: STEM, borderRadius: STEM / 2 },\n  cap: {\n    position: 'absolute',\n    bottom: 0,\n    width: CAP,\n    height: CAP,\n    borderRadius: CAP / 2,\n  },\n  labels: { flexDirection: 'row', justifyContent: 'space-between' },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "Stems and caps use short UI-thread springs on arrival. Nothing animates at rest.",
+      "measurements": [
+        {
+          "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+          "kind": "device",
+          "date": "2026-11-02",
+          "build": "release",
+          "frameMs": 34,
+          "p90Ms": 40,
+          "jankyPercent": 100,
+          "atRest": "idle",
+          "memoryMb": 124
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Columns appear in place and the number does not count.",
+      "screenReader": "One label (\"UVI 6, MODERATE\").",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { GlowColumns } from '@/components/kinetik/glow-columns';\n\n<GlowColumns\n  values={[0, 0, 1, 2, 4, 6, 7, 8, 8, 7, 5, 3, 2, 1, 1, 0, 0, 0]}\n  current={5}\n  max={10}\n  level=\"MODERATE\"\n  name=\"UVI\"\n  labels={['12', '14', '16', '18', '20', '22']}\n/>;\n```\n\n## When to use\n\n- Sun, pollen or air index through a day.\n- Any level where low, medium and high carry the meaning.\n\n## When not to use\n\n- Exact values per period: only the current one is written out.\n- Colour alone cannot carry the meaning: keep `level` on.\n\n## Notes\n\n- Below 30% of the scale is green, below 70% yellow, and orange above.\n- `current` sets the big number and brightens that column's rail.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add glow-columns`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

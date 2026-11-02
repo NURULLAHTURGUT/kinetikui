@@ -1,0 +1,32 @@
+## Usage
+
+```tsx
+import { OrderStages } from '@/components/kinetik/order-stages';
+
+<OrderStages
+  stages={[
+    { label: 'COOKING', icon: 'cook' },
+    { label: 'PACKING', icon: 'pack' },
+    { label: 'ON THE WAY', icon: 'ride' },
+    { label: 'DELIVERED', icon: 'check' },
+  ]}
+  current={0}
+  minutesLeft={21}
+  order="Nº 27"
+/>;
+```
+
+## When to use
+
+- Food, parcel and ride tracking with three to five clear stages.
+- A live activity style widget.
+
+## When not to use
+
+- Many stages: the chips run out of room past about five.
+- When there is no time estimate. Use Step Tracker.
+
+## Notes
+
+- Icons are `cook`, `pack`, `ride` and `check`.
+- Finished stages disappear into the track.

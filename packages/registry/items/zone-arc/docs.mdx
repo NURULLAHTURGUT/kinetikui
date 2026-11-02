@@ -1,0 +1,33 @@
+## Usage
+
+```tsx
+import { ZoneArc } from '@/components/kinetik/zone-arc';
+
+<ZoneArc
+  value={86}
+  min={0}
+  zones={[
+    { to: 50, color: 'hsl(145, 76%, 44%)' },
+    { to: 100, color: 'hsl(50, 90%, 50%)' },
+    { to: 150, color: 'hsl(28, 90%, 50%)' },
+    { to: 200, color: 'hsl(350, 72%, 44%)' },
+  ]}
+  unit="AQI"
+  ago="4 min ago"
+/>;
+```
+
+## When to use
+
+- A reading with named ranges: air quality, noise, battery health.
+- When being in the right zone matters more than the exact figure.
+
+## When not to use
+
+- Colour alone cannot carry the meaning: pair it with a word if the zones have names.
+- Values with no zones. Use Gauge Meter.
+
+## Notes
+
+- Each zone runs from the previous `to` up to its own.
+- The zone holding the value is lit and the rest are dimmed.

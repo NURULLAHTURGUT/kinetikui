@@ -1,0 +1,62 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "week-capsules",
+  "type": "registry:item",
+  "title": "Week Capsules",
+  "description": "A week of minutes: capsules fill in turn, glowing at the goal, and today's breathes inside a ring.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-count.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/week-capsules.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/week-capsules.tsx",
+      "content": "import { useEffect } from 'react';\nimport { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withDelay,\n  withRepeat,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useCountUp } from '../../lib/kinetik/hooks/use-count-up';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { easings, spring } from '../../lib/kinetik/motion/motion';\nimport { gradient } from '../../lib/kinetik/tokens/gradient';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type WeekDay = {\n  /** One letter, e.g. \"M\". */\n  label: string;\n  minutes: number;\n};\n\nexport type WeekCapsulesProps = {\n  /** The days, oldest first. The last one is today. */\n  days: WeekDay[];\n  /** Daily goal in minutes. */\n  goal: number;\n  /** Top of the scale in minutes. Defaults to twice the goal. */\n  max?: number;\n  /** Unit after the goal. Defaults to \"MIN\". */\n  unit?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst CAPSULE_H = 66;\nconst CAPSULE_W = 14;\nconst MIN_FILL = CAPSULE_W;\n\n/** The rounded average minutes across the days. */\nexport function averageMinutes(days: WeekDay[]): number {\n  if (days.length === 0) return 0;\n  return Math.round(days.reduce((sum, d) => sum + d.minutes, 0) / days.length);\n}\n\n/**\n * A week of daily minutes: capsules fill from the bottom in turn, glowing once a\n * day reaches the goal, and today's capsule breathes inside a bright ring.\n */\nexport function WeekCapsules({ days, goal, max, unit = 'MIN', style }: WeekCapsulesProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const today = days[days.length - 1]?.minutes ?? 0;\n  const shown = Math.round(useCountUp(today, { instant: reduced }));\n  const average = averageMinutes(days);\n  const top = max ?? goal * 2;\n\n  return (\n    <View\n      accessible\n      accessibilityLabel={`Today ${today} of ${goal} ${unit}. Average ${average}.`}\n      style={[styles.card, style]}\n    >\n      <View style={styles.head}>\n        <Text\n          style={{\n            color: colors.highlight,\n            fontSize: font.size.lg,\n            fontWeight: font.weight.semibold,\n            fontVariant: ['tabular-nums'],\n          }}\n        >\n          {shown}\n          <Text style={{ color: MUTED, fontSize: font.size.xs }}>\n            /{goal} {unit}\n          </Text>\n        </Text>\n        <Text style={{ color: MUTED, fontSize: font.size.xs, fontWeight: font.weight.medium }}>\n          {average} AVG\n        </Text>\n      </View>\n\n      <View style={styles.body}>\n        <View style={styles.axis}>\n          <Text style={{ color: MUTED, fontSize: font.size.xs - 2 }}>{top}</Text>\n          <Text style={{ color: MUTED, fontSize: font.size.xs - 2 }}>0</Text>\n        </View>\n        {days.map((day, i) => (\n          <Capsule\n            key={`${day.label}-${i}`}\n            index={i}\n            label={day.label}\n            share={Math.min(1, day.minutes / top)}\n            met={day.minutes >= goal}\n            today={i === days.length - 1}\n          />\n        ))}\n      </View>\n    </View>\n  );\n}\n\nfunction Capsule({\n  index,\n  label,\n  share,\n  met,\n  today,\n}: {\n  index: number;\n  label: string;\n  share: number;\n  met: boolean;\n  today: boolean;\n}) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const height = Math.max(MIN_FILL, share * CAPSULE_H);\n  const grown = useSharedValue(reduced ? height : 0);\n  const breath = useSharedValue(0);\n\n  useEffect(() => {\n    grown.set(reduced ? height : withDelay(index * 60, withSpring(height, spring('smooth'))));\n  }, [index, height, reduced, grown]);\n\n  useEffect(() => {\n    if (!today || reduced) {\n      breath.set(0);\n      return;\n    }\n    breath.set(withRepeat(withTiming(1, { duration: 1500, easing: easings.inOut }), -1, true));\n  }, [today, reduced, breath]);\n\n  const fill = useAnimatedStyle(() => ({ height: Math.max(0, grown.get()) }));\n  const ring = useAnimatedStyle(() => ({ opacity: 0.55 + breath.get() * 0.45 }));\n\n  return (\n    <View style={styles.column}>\n      <View style={styles.capsule}>\n        <Animated.View\n          style={[styles.fill, gradient(met ? MET : UNDER), met ? styles.glow : null, fill]}\n        />\n        {today ? (\n          <Animated.View\n            pointerEvents=\"none\"\n            style={[styles.ring, { borderColor: colors.highlight }, ring]}\n          />\n        ) : null}\n      </View>\n      <Text\n        style={{\n          color: today ? colors.highlight : MUTED,\n          fontSize: font.size.xs - 2,\n          fontWeight: today ? font.weight.bold : font.weight.regular,\n        }}\n      >\n        {label}\n      </Text>\n    </View>\n  );\n}\n\nconst MUTED = 'hsl(180, 6%, 60%)';\nconst MET = 'linear-gradient(180deg, hsl(176, 92%, 72%) 0%, hsl(178, 76%, 44%) 100%)';\nconst UNDER = 'linear-gradient(180deg, hsl(182, 40%, 44%) 0%, hsl(184, 44%, 24%) 100%)';\n\nconst styles = StyleSheet.create({\n  card: {\n    width: '100%',\n    maxWidth: 320,\n    alignSelf: 'center',\n    borderRadius: 24,\n    borderWidth: 1,\n    borderColor: 'hsla(0, 0%, 100%, 0.08)',\n    backgroundColor: 'hsl(180, 8%, 5%)',\n    padding: 16,\n    gap: 10,\n  },\n  head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },\n  body: { flexDirection: 'row', gap: 4 },\n  axis: { height: CAPSULE_H, justifyContent: 'space-between', paddingRight: 4 },\n  column: { flex: 1, alignItems: 'center', gap: 4 },\n  capsule: {\n    width: CAPSULE_W,\n    height: CAPSULE_H,\n    borderRadius: CAPSULE_W / 2,\n    justifyContent: 'flex-end',\n    backgroundColor: 'hsl(180, 6%, 16%)',\n  },\n  fill: { borderRadius: CAPSULE_W / 2 },\n  glow: { boxShadow: '0px 0px 10px hsla(176, 92%, 60%, 0.6)' },\n  ring: {\n    position: 'absolute',\n    top: -3,\n    left: -3,\n    right: -3,\n    bottom: -3,\n    borderWidth: 1.5,\n    borderRadius: CAPSULE_W / 2 + 3,\n  },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "Capsules use short UI-thread springs on arrival. Today's ring breathes as one view, so it animates at rest.",
+      "measurements": [
+        {
+          "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+          "kind": "device",
+          "date": "2026-11-02",
+          "build": "release",
+          "frameMs": 18,
+          "p90Ms": 20,
+          "jankyPercent": 78.11,
+          "atRest": "animating",
+          "memoryMb": 125
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Capsules appear filled, the ring holds still and the number does not count.",
+      "screenReader": "One label (\"Today 19 of 30 MIN. Average 31\").",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { WeekCapsules } from '@/components/kinetik/week-capsules';\n\n<WeekCapsules\n  days={[\n    { label: 'F', minutes: 22 },\n    { label: 'S', minutes: 34 },\n    { label: 'S', minutes: 18 },\n    { label: 'M', minutes: 41 },\n    { label: 'T', minutes: 38 },\n    { label: 'W', minutes: 45 },\n    { label: 'T', minutes: 19 },\n  ]}\n  goal={30}\n/>;\n```\n\n## When to use\n\n- A daily habit with a goal: exercise, reading, meditation.\n- A small widget beside other health or focus stats.\n\n## When not to use\n\n- More than a week or so. Use Heat Grid.\n- Values with no goal: nothing marks a good day.\n\n## Notes\n\n- The last day is today.\n- A capsule glows once its day reaches `goal`.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add week-capsules`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

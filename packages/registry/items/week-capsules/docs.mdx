@@ -1,0 +1,33 @@
+## Usage
+
+```tsx
+import { WeekCapsules } from '@/components/kinetik/week-capsules';
+
+<WeekCapsules
+  days={[
+    { label: 'F', minutes: 22 },
+    { label: 'S', minutes: 34 },
+    { label: 'S', minutes: 18 },
+    { label: 'M', minutes: 41 },
+    { label: 'T', minutes: 38 },
+    { label: 'W', minutes: 45 },
+    { label: 'T', minutes: 19 },
+  ]}
+  goal={30}
+/>;
+```
+
+## When to use
+
+- A daily habit with a goal: exercise, reading, meditation.
+- A small widget beside other health or focus stats.
+
+## When not to use
+
+- More than a week or so. Use Heat Grid.
+- Values with no goal: nothing marks a good day.
+
+## Notes
+
+- The last day is today.
+- A capsule glows once its day reaches `goal`.

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "level-steps",
+  "type": "registry:item",
+  "title": "Level Steps",
+  "description": "A reading on a rising staircase: steps grow in turn and a bright marker slides to the value.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-count.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/level-steps.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/level-steps.tsx",
+      "content": "import { useEffect, useState } from 'react';\nimport { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withDelay,\n  withSpring,\n} from 'react-native-reanimated';\n\nimport { useCountUp } from '../../lib/kinetik/hooks/use-count-up';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { gradient } from '../../lib/kinetik/tokens/gradient';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type LevelStepsProps = {\n  /** The reading. */\n  value: number;\n  /** What it measures, e.g. \"AEROBIC SCORE\". */\n  label: string;\n  /** Word for the current level, e.g. \"STRONG\". */\n  rating?: string;\n  /** Where each step starts, ascending. Each one becomes a step on the staircase. */\n  stops: number[];\n  /** Decimal places of the reading. Defaults to 1. */\n  decimals?: number;\n  /** Colours of the steps, low to high. Defaults to a violet to crimson ramp. */\n  tones?: string[];\n  style?: StyleProp<ViewStyle>;\n};\n\nconst CHART = 58;\nconst MARK = 5;\n\nconst RAMP = [\n  'hsl(262, 42%, 30%)',\n  'hsl(282, 48%, 36%)',\n  'hsl(306, 54%, 40%)',\n  'hsl(332, 62%, 44%)',\n  'hsl(350, 66%, 38%)',\n];\n\n/**\n * Where a value sits along the staircase, 0–1. Each step is the same width\n * whatever its range, so the position is found within the step holding the value.\n */\nexport function stairPosition(value: number, stops: number[]): number {\n  const n = stops.length;\n  if (n === 0) return 0;\n  if (value <= stops[0]!) return 0;\n  for (let i = n - 1; i >= 0; i--) {\n    const from = stops[i]!;\n    if (value < from) continue;\n    // The last step has no upper stop, so it borrows the width of the one before.\n    const to = stops[i + 1] ?? from + (from - (stops[i - 1] ?? from - 1));\n    return Math.min(1, (i + Math.min(1, (value - from) / (to - from))) / n);\n  }\n  return 0;\n}\n\n/**\n * A reading on a rising staircase: the steps grow up one after another and a\n * bright marker slides to the reading as the number counts up.\n */\nexport function LevelSteps({\n  value,\n  label,\n  rating,\n  stops,\n  decimals = 1,\n  tones = RAMP,\n  style,\n}: LevelStepsProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const [width, setWidth] = useState(0);\n  const shown = useCountUp(value, { instant: reduced });\n  const position = stairPosition(value, stops);\n\n  const at = useSharedValue(reduced ? position : 0);\n  useEffect(() => {\n    at.set(reduced ? position : withSpring(position, spring('smooth')));\n  }, [position, reduced, at]);\n  const marker = useAnimatedStyle(() => ({\n    transform: [{ translateX: at.get() * Math.max(0, width - MARK) }],\n  }));\n\n  return (\n    <View\n      accessible\n      accessibilityLabel={`${label} ${value.toFixed(decimals)}${rating ? `, ${rating}` : ''}`}\n      style={[styles.card, style]}\n    >\n      <View style={styles.head}>\n        <View>\n          <Text\n            style={{\n              color: colors.highlight,\n              fontSize: font.size.xl,\n              fontWeight: font.weight.semibold,\n              fontVariant: ['tabular-nums'],\n            }}\n          >\n            {shown.toFixed(decimals)}\n          </Text>\n          <Text style={{ color: MUTED, fontSize: font.size.xs, fontWeight: font.weight.medium }}>\n            {label}\n          </Text>\n        </View>\n        {rating ? (\n          <Text style={{ color: RATING, fontSize: font.size.xs, fontWeight: font.weight.bold }}>\n            {rating}\n          </Text>\n        ) : null}\n      </View>\n\n      <View\n        testID=\"level-steps-chart\"\n        style={styles.chart}\n        onLayout={(e) => setWidth(e.nativeEvent.layout.width)}\n      >\n        {stops.map((stop, i) => (\n          <Step\n            key={stop}\n            index={i}\n            height={CHART * (0.3 + (0.7 * (i + 1)) / stops.length)}\n            tone={tones[i % tones.length]!}\n            next={tones[Math.min(i + 1, tones.length - 1)]!}\n          />\n        ))}\n        <Animated.View style={[styles.marker, marker]} />\n      </View>\n\n      <View style={styles.scale}>\n        {stops.map((stop, i) => (\n          <Text key={stop} style={[styles.tick, { color: MUTED, fontSize: font.size.xs - 1 }]}>\n            {i === 0 ? '>' : ''}\n            {stop}\n            {i === stops.length - 1 ? '+' : ''}\n          </Text>\n        ))}\n      </View>\n    </View>\n  );\n}\n\nfunction Step({\n  index,\n  height,\n  tone,\n  next,\n}: {\n  index: number;\n  height: number;\n  tone: string;\n  next: string;\n}) {\n  const reduced = useReduceMotion();\n  const grow = useSharedValue(reduced ? 1 : 0);\n  useEffect(() => {\n    grow.set(reduced ? 1 : withDelay(index * 70, withSpring(1, spring('smooth'))));\n  }, [index, reduced, grow]);\n  const rise = useAnimatedStyle(() => ({ height: Math.max(0, grow.get() * height) }));\n  return (\n    <Animated.View\n      style={[styles.step, gradient(`linear-gradient(90deg, ${tone} 0%, ${next} 100%)`), rise]}\n    />\n  );\n}\n\nconst MUTED = 'hsl(0, 0%, 62%)';\nconst RATING = 'hsl(350, 90%, 62%)';\n\nconst styles = StyleSheet.create({\n  card: {\n    width: '100%',\n    maxWidth: 320,\n    alignSelf: 'center',\n    borderRadius: 24,\n    borderWidth: 1,\n    borderColor: 'hsla(0, 0%, 100%, 0.08)',\n    backgroundColor: 'hsl(0, 0%, 5%)',\n    padding: 16,\n    gap: 8,\n  },\n  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },\n  chart: { flexDirection: 'row', alignItems: 'flex-end', height: CHART, gap: 2, marginTop: -18 },\n  step: {\n    flex: 1,\n    borderTopLeftRadius: 3,\n    borderTopRightRadius: 3,\n    borderTopWidth: 1.5,\n    borderTopColor: 'hsla(0, 0%, 100%, 0.32)',\n  },\n  marker: {\n    position: 'absolute',\n    left: 0,\n    bottom: 0,\n    width: MARK,\n    height: CHART * 0.72,\n    borderRadius: 2,\n    backgroundColor: 'hsl(340, 100%, 90%)',\n    boxShadow: '0px 0px 14px hsla(335, 100%, 66%, 0.9)',\n  },\n  scale: { flexDirection: 'row' },\n  tick: { flex: 1, fontVariant: ['tabular-nums'] },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "Steps and marker use short UI-thread springs on arrival and on change. Nothing animates at rest.",
+      "measurements": [
+        {
+          "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+          "kind": "device",
+          "date": "2026-11-02",
+          "build": "release",
+          "frameMs": 13,
+          "p90Ms": 18,
+          "jankyPercent": 18.2,
+          "atRest": "idle",
+          "memoryMb": 112
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Steps and marker appear in place and the number does not count.",
+      "screenReader": "One label (\"AEROBIC SCORE 47.8, STRONG\").",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { LevelSteps } from '@/components/kinetik/level-steps';\n\n<LevelSteps value={47.8} label=\"AEROBIC SCORE\" rating=\"STRONG\" stops={[15, 25, 34, 44, 53]} />;\n```\n\n## When to use\n\n- One score with known bands: fitness, credit, a level in a game.\n- When where you stand matters as much as the number.\n\n## When not to use\n\n- Values with no meaningful bands. Use a plain figure.\n- Comparing several scores at once.\n\n## Notes\n\n- Each stop becomes one equal-width step, whatever its range.\n- Pass `tones` to recolour the staircase.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add level-steps`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

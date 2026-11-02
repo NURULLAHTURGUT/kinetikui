@@ -1,0 +1,34 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "dual-clock",
+  "title": "Dual Clock",
+  "description": "Two world clocks side by side, one light and one dark, their hands running on the UI thread.",
+  "category": "data",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["dual-clock.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Hands are views on continuous UI-thread timings, so the clocks animate at rest with no re-render. One timer per minute keeps the spoken time current.",
+    "measurements": [
+      {
+        "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+        "kind": "device",
+        "date": "2026-11-02",
+        "build": "release",
+        "frameMs": 22,
+        "p90Ms": 24,
+        "jankyPercent": 99.93,
+        "atRest": "animating",
+        "memoryMb": 126
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The second hand is removed and the other hands move once a minute.",
+    "screenReader": "One label with both times (\"TYO 21:04, RIO 09:04\").",
+    "touchTarget": "Not interactive."
+  }
+}

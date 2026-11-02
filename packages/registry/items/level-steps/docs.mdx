@@ -1,0 +1,22 @@
+## Usage
+
+```tsx
+import { LevelSteps } from '@/components/kinetik/level-steps';
+
+<LevelSteps value={47.8} label="AEROBIC SCORE" rating="STRONG" stops={[15, 25, 34, 44, 53]} />;
+```
+
+## When to use
+
+- One score with known bands: fitness, credit, a level in a game.
+- When where you stand matters as much as the number.
+
+## When not to use
+
+- Values with no meaningful bands. Use a plain figure.
+- Comparing several scores at once.
+
+## Notes
+
+- Each stop becomes one equal-width step, whatever its range.
+- Pass `tones` to recolour the staircase.

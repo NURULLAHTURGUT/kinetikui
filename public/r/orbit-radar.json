@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "orbit-radar",
+  "type": "registry:item",
+  "title": "Orbit Radar",
+  "description": "A radar dish rises from the edge: a beam sweeps round and a small craft climbs the rim as minutes count.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-reanimated",
+    "react-native-svg",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-count.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/orbit-radar.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/orbit-radar.tsx",
+      "content": "import {\n  Canvas,\n  Circle,\n  Path,\n  RadialGradient,\n  Skia,\n  SweepGradient,\n  vec,\n} from '@shopify/react-native-skia';\nimport { useEffect, useMemo } from 'react';\nimport { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useDerivedValue,\n  useSharedValue,\n  withRepeat,\n  withSpring,\n  withTiming,\n  type SharedValue,\n} from 'react-native-reanimated';\nimport Svg, { Path as SvgPath } from 'react-native-svg';\n\nimport { useCountUp } from '../../lib/kinetik/hooks/use-count-up';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { easings, spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\nimport { withAlpha } from '../../lib/kinetik/tokens/tokens';\n\nexport type OrbitRadarProps = {\n  /** Name of what is on its way, e.g. \"LUNA-2\". */\n  name: string;\n  /** Minutes until it arrives. */\n  minutes: number;\n  /** How close it is, 0–1. At 1 it reaches the top of the arc. */\n  progress: number;\n  /** Label over the time. Defaults to \"ARRIVES\". */\n  label?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst SIZE = 176;\nconst R = SIZE / 2;\nconst RIM = R - 5;\nconst VISIBLE = 96;\n/** The craft travels this arc, in degrees clockwise from straight up. */\nconst FROM_DEG = -82;\nconst TO_DEG = 0;\nconst SWEEP_MS = 5200;\nconst CRAFT = 22;\n\n/** The craft's angle for a progress of 0–1. */\nexport function craftAngle(progress: number): number {\n  'worklet';\n  const p = Math.max(0, Math.min(1, progress));\n  return FROM_DEG + (TO_DEG - FROM_DEG) * p;\n}\n\n/**\n * Something on its way, shown on a radar dish rising from the bottom edge: a beam\n * sweeps round and a small craft climbs the rim, leaving a lit trail, as the\n * minutes count down.\n */\nexport function OrbitRadar({ name, minutes, progress, label = 'ARRIVES', style }: OrbitRadarProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const shown = Math.round(useCountUp(minutes, { instant: reduced }));\n  const p = Math.max(0, Math.min(1, progress));\n  const at = useSharedValue(reduced ? p : 0);\n  const beam = useSharedValue(0);\n\n  useEffect(() => {\n    at.set(reduced ? p : withSpring(p, spring('smooth')));\n  }, [p, reduced, at]);\n\n  useEffect(() => {\n    if (reduced) {\n      beam.set(0);\n      return;\n    }\n    beam.set(\n      withRepeat(withTiming(360, { duration: SWEEP_MS, easing: easings.linear }), -1, false),\n    );\n  }, [reduced, beam]);\n\n  const beamStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${beam.get()}deg` }] }));\n  const craftStyle = useAnimatedStyle(() => ({\n    transform: [{ rotate: `${craftAngle(at.get())}deg` }],\n  }));\n\n  return (\n    <View\n      accessible\n      accessibilityLabel={`${name}. ${label} in ${minutes} minutes`}\n      style={[styles.card, style]}\n    >\n      <View style={styles.text}>\n        <View>\n          <Text style={{ color: MUTED, fontSize: font.size.xs, fontWeight: font.weight.medium }}>\n            {label}\n          </Text>\n          <Text\n            style={{\n              color: colors.highlight,\n              fontSize: font.size.xl,\n              fontWeight: font.weight.semibold,\n              fontVariant: ['tabular-nums'],\n            }}\n          >\n            {shown}\n            <Text style={{ fontSize: font.size.sm }}>M</Text>\n          </Text>\n        </View>\n        <Text\n          numberOfLines={1}\n          style={{ color: TEAL, fontSize: font.size.md, fontWeight: font.weight.semibold }}\n        >\n          {name}\n        </Text>\n      </View>\n\n      <View style={styles.window} pointerEvents=\"none\">\n        <Dish at={at} />\n        <Animated.View style={[styles.layer, beamStyle]}>\n          <Canvas style={styles.square}>\n            <Circle cx={R} cy={R} r={RIM - 2}>\n              <SweepGradient\n                c={vec(R, R)}\n                colors={[BEAM_CLEAR, BEAM_CLEAR, BEAM, BEAM_CLEAR]}\n                positions={[0, 0.6, 0.985, 1]}\n              />\n            </Circle>\n          </Canvas>\n        </Animated.View>\n        <Animated.View style={[styles.layer, craftStyle]}>\n          <View style={styles.craft}>\n            <Svg width={CRAFT} height={CRAFT} viewBox=\"0 0 24 24\">\n              <SvgPath d=\"M9 12H6M15 12h3\" stroke={colors.highlight} strokeWidth={1.6} />\n              <SvgPath d=\"M1 8.5h5v7H1zM18 8.5h5v7h-5z\" fill={withAlpha(colors.highlight, 0.82)} />\n              <SvgPath d=\"M10 6.5h4l1 3v5l-1 3h-4l-1-3v-5z\" fill={colors.highlight} />\n            </Svg>\n          </View>\n        </Animated.View>\n      </View>\n    </View>\n  );\n}\n\n/** The dish: disc, rings, rim ticks and the lit trail behind the craft. */\nfunction Dish({ at }: { at: SharedValue<number> }) {\n  const { colors } = useKinetikTheme();\n  const { rim, ticks, rings } = useMemo(() => {\n    const box = { x: R - RIM, y: R - RIM, width: RIM * 2, height: RIM * 2 };\n    const rimPath = Skia.PathBuilder.Make()\n      .addArc(box, 270 + FROM_DEG, TO_DEG - FROM_DEG)\n      .detach();\n    const tickBuilder = Skia.PathBuilder.Make();\n    for (let deg = 0; deg < 360; deg += 6) {\n      const a = (deg * Math.PI) / 180;\n      const inner = RIM - (deg % 30 === 0 ? 8 : 4);\n      tickBuilder.moveTo(R + Math.cos(a) * inner, R + Math.sin(a) * inner);\n      tickBuilder.lineTo(R + Math.cos(a) * RIM, R + Math.sin(a) * RIM);\n    }\n    const ringBuilder = Skia.PathBuilder.Make();\n    for (const radius of [RIM * 0.34, RIM * 0.62, RIM * 0.86]) {\n      ringBuilder.addCircle(R, R, radius);\n    }\n    return { rim: rimPath, ticks: tickBuilder.detach(), rings: ringBuilder.detach() };\n  }, []);\n  const trail = useDerivedValue(() => Math.max(0, Math.min(1, at.get())));\n\n  return (\n    <Canvas style={styles.full}>\n      <Circle cx={R} cy={R} r={RIM}>\n        <RadialGradient c={vec(R, R)} r={RIM} colors={[DISH_CORE, DISH_EDGE]} />\n      </Circle>\n      <Path path={rings} style=\"stroke\" strokeWidth={1} color={RING} />\n      <Path path={ticks} style=\"stroke\" strokeWidth={1} color={TICK} />\n      <Path path={rim} style=\"stroke\" strokeWidth={2} color={TICK} />\n      <Path path={rim} style=\"stroke\" strokeWidth={7} strokeCap=\"round\" color={GLOW} end={trail} />\n      <Path\n        path={rim}\n        style=\"stroke\"\n        strokeWidth={2.5}\n        strokeCap=\"round\"\n        color={colors.highlight}\n        end={trail}\n      />\n      <Circle cx={R} cy={R} r={6} style=\"stroke\" strokeWidth={2.5} color={colors.highlight} />\n    </Canvas>\n  );\n}\n\nconst MUTED = 'hsl(200, 8%, 62%)';\nconst TEAL = 'hsl(190, 74%, 66%)';\nconst BEAM = 'hsla(186, 90%, 74%, 0.44)';\nconst GLOW = 'hsla(190, 90%, 76%, 0.22)';\nconst BEAM_CLEAR = 'hsla(186, 90%, 66%, 0)';\nconst DISH_CORE = 'hsl(192, 46%, 24%)';\nconst DISH_EDGE = 'hsl(200, 26%, 9%)';\nconst RING = 'hsla(190, 40%, 70%, 0.14)';\nconst TICK = 'hsla(0, 0%, 100%, 0.3)';\n\nconst styles = StyleSheet.create({\n  card: {\n    width: '100%',\n    maxWidth: 320,\n    alignSelf: 'center',\n    flexDirection: 'row',\n    overflow: 'hidden',\n    height: 124,\n    borderRadius: 24,\n    borderWidth: 1,\n    borderColor: 'hsla(0, 0%, 100%, 0.08)',\n    backgroundColor: 'hsl(200, 14%, 5%)',\n  },\n  text: { flex: 1, justifyContent: 'space-between', padding: 16 },\n  window: { width: SIZE, height: 124, marginRight: -8, overflow: 'hidden' },\n  full: { width: SIZE, height: SIZE, marginTop: 124 - VISIBLE - 2 },\n  square: { width: SIZE, height: SIZE },\n  layer: {\n    position: 'absolute',\n    top: 0,\n    left: 0,\n    width: SIZE,\n    height: SIZE,\n    marginTop: 124 - VISIBLE - 2,\n  },\n  craft: { position: 'absolute', top: R - RIM - CRAFT / 2, left: R - CRAFT / 2 },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "The beam and craft are still canvases and views turned on the UI thread, so the beam animates at rest without redrawing.",
+      "measurements": [
+        {
+          "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+          "kind": "device",
+          "date": "2026-11-02",
+          "build": "release",
+          "frameMs": 13,
+          "p90Ms": 16,
+          "jankyPercent": 7.29,
+          "atRest": "animating",
+          "memoryMb": 121
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The beam holds still, the craft jumps to its place and the minutes do not count.",
+      "screenReader": "One label (\"LUNA-2. ARRIVES in 23 minutes\").",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { OrbitRadar } from '@/components/kinetik/orbit-radar';\n\n<OrbitRadar name=\"LUNA-2\" minutes={23} progress={0.58} />;\n```\n\n## When to use\n\n- Anything approaching with a known arrival: a satellite pass, a delivery drone, a ferry.\n- A hero widget where a bit of mission control suits the product.\n\n## When not to use\n\n- Real positions: the dish is a picture of progress, not a map.\n\n## Notes\n\n- `progress` is yours to compute. At 1 the craft reaches the top of the arc.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add orbit-radar`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "compass-arc",
+  "type": "registry:item",
+  "title": "Compass Arc",
+  "description": "A compass bezel rises from the bottom edge: the dial turns under a red pointer the short way round.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/compass-arc.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/compass-arc.tsx",
+      "content": "import { Canvas, Path, RadialGradient, Circle, Skia, vec } from '@shopify/react-native-skia';\nimport { useEffect, useMemo } from 'react';\nimport { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type CompassArcProps = {\n  /** Heading in degrees, 0 is north. */\n  heading: number;\n  /** Small line over the heading, e.g. \"12M\". */\n  note?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst SIZE = 288;\nconst R = SIZE / 2;\nconst WINDOW_H = 116;\nconst LABEL_R = R - 34;\n\nconst LABELS: { at: number; text: string; strong?: boolean }[] = [\n  { at: 0, text: 'N', strong: true },\n  { at: 30, text: '30' },\n  { at: 60, text: '60' },\n  { at: 90, text: 'E', strong: true },\n  { at: 120, text: '120' },\n  { at: 150, text: '150' },\n  { at: 180, text: 'S', strong: true },\n  { at: 210, text: '210' },\n  { at: 240, text: '240' },\n  { at: 270, text: 'W', strong: true },\n  { at: 300, text: '300' },\n  { at: 330, text: '330' },\n];\n\nconst CARDINALS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];\n\n/** The eight-point name of a heading. */\nexport function cardinal(heading: number): string {\n  const wrapped = ((heading % 360) + 360) % 360;\n  return CARDINALS[Math.round(wrapped / 45) % 8]!;\n}\n\n/** The turn nearest `from` that points at `heading`, so 350° to 10° goes through north. */\nexport function nearestTurn(from: number, heading: number): number {\n  const delta = ((((heading - from) % 360) + 540) % 360) - 180;\n  return from + delta;\n}\n\n/**\n * A compass bezel rising from the bottom edge: the numbered dial turns under a\n * fixed red pointer the short way round and settles with a soft spring.\n */\nexport function CompassArc({ heading, note, style }: CompassArcProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const turn = useSharedValue(reduced ? heading : heading - 50);\n  const wrapped = ((Math.round(heading) % 360) + 360) % 360;\n\n  useEffect(() => {\n    const to = nearestTurn(turn.get(), heading);\n    turn.set(reduced ? to : withSpring(to, spring('smooth')));\n  }, [heading, reduced, turn]);\n\n  const dial = useAnimatedStyle(() => ({ transform: [{ rotate: `${-turn.get()}deg` }] }));\n\n  const ticks = useMemo(() => {\n    const major = Skia.PathBuilder.Make();\n    const minor = Skia.PathBuilder.Make();\n    for (let deg = 0; deg < 360; deg += 5) {\n      const a = (deg * Math.PI) / 180;\n      const isMajor = deg % 30 === 0;\n      const b = isMajor ? major : minor;\n      const inner = R - (isMajor ? 16 : 9);\n      b.moveTo(R + Math.sin(a) * inner, R - Math.cos(a) * inner);\n      b.lineTo(R + Math.sin(a) * (R - 3), R - Math.cos(a) * (R - 3));\n    }\n    return { major: major.detach(), minor: minor.detach() };\n  }, []);\n\n  return (\n    <View\n      accessible\n      accessibilityLabel={`Heading ${wrapped} degrees ${cardinal(heading)}${note ? `, ${note}` : ''}`}\n      style={[styles.card, style]}\n    >\n      <View style={styles.window} pointerEvents=\"none\">\n        <Animated.View style={[styles.dial, dial]}>\n          <Canvas style={styles.canvas}>\n            <Circle cx={R} cy={R} r={R - 1}>\n              <RadialGradient\n                c={vec(R, R)}\n                r={R}\n                colors={[BEZEL_IN, BEZEL_IN, BEZEL_OUT]}\n                positions={[0, 0.66, 1]}\n              />\n            </Circle>\n            <Path path={ticks.minor} style=\"stroke\" strokeWidth={1} color={TICK_MINOR} />\n            <Path path={ticks.major} style=\"stroke\" strokeWidth={1.5} color={colors.highlight} />\n          </Canvas>\n          {LABELS.map(({ at, text, strong }) => (\n            <View\n              key={text}\n              style={[\n                styles.label,\n                { transform: [{ rotate: `${at}deg` }, { translateY: -LABEL_R }] },\n              ]}\n            >\n              <Text\n                style={{\n                  color: strong ? colors.highlight : MUTED,\n                  fontSize: strong ? font.size.sm : font.size.xs - 1,\n                  fontWeight: strong ? font.weight.bold : font.weight.medium,\n                }}\n              >\n                {text}\n              </Text>\n            </View>\n          ))}\n        </Animated.View>\n        <View style={styles.pointer} />\n      </View>\n\n      <View style={styles.readout} pointerEvents=\"none\">\n        {note ? <Text style={{ color: MUTED, fontSize: font.size.xs }}>{note}</Text> : null}\n        <Text\n          style={{\n            color: colors.highlight,\n            fontSize: font.size.xl,\n            fontWeight: font.weight.semibold,\n            fontVariant: ['tabular-nums'],\n          }}\n        >\n          {wrapped}°<Text style={{ color: RED, fontSize: font.size.md }}> {cardinal(heading)}</Text>\n        </Text>\n      </View>\n    </View>\n  );\n}\n\nconst MUTED = 'hsl(0, 0%, 66%)';\nconst RED = 'hsl(6, 88%, 58%)';\nconst TICK_MINOR = 'hsla(0, 0%, 100%, 0.34)';\nconst BEZEL_IN = 'hsl(0, 0%, 6%)';\nconst BEZEL_OUT = 'hsl(0, 0%, 22%)';\n\nconst styles = StyleSheet.create({\n  card: {\n    width: '100%',\n    maxWidth: 320,\n    height: WINDOW_H + 8,\n    alignSelf: 'center',\n    overflow: 'hidden',\n    alignItems: 'center',\n    borderRadius: 24,\n    borderWidth: 1,\n    borderColor: 'hsla(0, 0%, 100%, 0.08)',\n    backgroundColor: 'hsl(0, 0%, 5%)',\n  },\n  window: { width: SIZE, height: WINDOW_H + 8, alignItems: 'center' },\n  dial: { position: 'absolute', top: 14, width: SIZE, height: SIZE },\n  canvas: { width: SIZE, height: SIZE },\n  label: {\n    position: 'absolute',\n    top: R - 9,\n    left: R - 18,\n    width: 36,\n    height: 18,\n    alignItems: 'center',\n    justifyContent: 'center',\n  },\n  pointer: {\n    position: 'absolute',\n    top: 6,\n    width: 0,\n    height: 0,\n    borderLeftWidth: 7,\n    borderRightWidth: 7,\n    borderTopWidth: 13,\n    borderLeftColor: 'transparent',\n    borderRightColor: 'transparent',\n    borderTopColor: RED,\n  },\n  readout: { position: 'absolute', bottom: 8, alignItems: 'center' },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "The dial is a still canvas turned as a view on a UI-thread spring, so it does not redraw. Nothing animates at rest.",
+      "measurements": [
+        {
+          "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+          "kind": "device",
+          "date": "2026-11-02",
+          "build": "release",
+          "frameMs": 12,
+          "p90Ms": 15,
+          "jankyPercent": 6.03,
+          "atRest": "idle",
+          "memoryMb": 124
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The dial jumps to the heading.",
+      "screenReader": "One label (\"Heading 320 degrees NW, 23 M\").",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { CompassArc } from '@/components/kinetik/compass-arc';\n\n<CompassArc heading={320} note=\"23 M\" />;\n```\n\n## When to use\n\n- Heading in hiking, sailing and flying apps.\n- A small dashboard readout fed by a sensor.\n\n## When not to use\n\n- Navigation people depend on. It shows what you pass it and does not read a sensor.\n\n## Notes\n\n- `heading` can be any number. The dial always takes the short way round.\n- Reading the phone's compass is up to you.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add compass-arc`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

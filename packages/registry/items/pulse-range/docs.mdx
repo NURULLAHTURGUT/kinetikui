@@ -1,0 +1,21 @@
+## Usage
+
+```tsx
+import { PulseRange } from '@/components/kinetik/pulse-range';
+
+<PulseRange bpm={112} min={52} max={168} average={74} ago="JUST NOW" />;
+```
+
+## When to use
+
+- A heart rate summary in a health or workout app.
+- Any reading best shown between today's low and high.
+
+## When not to use
+
+- Medical decisions: this is a summary, not a monitor.
+- Readings with no meaningful range.
+
+## Notes
+
+- The heart beats at `bpm`, kept between 30 and 200 so odd readings cannot make it flicker.

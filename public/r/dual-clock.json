@@ -1,0 +1,62 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "dual-clock",
+  "type": "registry:item",
+  "title": "Dual Clock",
+  "description": "Two world clocks side by side, one light and one dark, their hands running on the UI thread.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/dual-clock.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/dual-clock.tsx",
+      "content": "import { Canvas, Path, Skia } from '@shopify/react-native-skia';\nimport { useEffect, useMemo, useState } from 'react';\nimport { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withRepeat,\n  withTiming,\n  type SharedValue,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { easings } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type DualClockZone = {\n  /** Short city code in the middle of the face, e.g. \"TYO\". */\n  code: string;\n  /** Hours from UTC, e.g. 9 or -5. */\n  offset: number;\n  /** Day face (white) or night face (black). Defaults to following the hour. */\n  face?: 'day' | 'night';\n};\n\nexport type DualClockProps = {\n  /** Two time zones, one per face. */\n  zones: [DualClockZone, DualClockZone];\n  /** A fixed moment to show. Leave it out and the clocks run live. */\n  time?: Date;\n  /** Offset of the viewer's zone, used for the \"+3\" under each code. Defaults to the device's. */\n  homeOffset?: number;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst SIZE = 96;\nconst R = SIZE / 2;\nconst MINUTE_MS = 60_000;\n\nexport type HandAngles = { hour: number; minute: number; second: number };\n\n/** Hand angles in degrees clockwise from twelve, for a moment in a zone. */\nexport function handAngles(date: Date, offset: number): HandAngles {\n  const ms = date.getTime() + offset * 3_600_000;\n  const inMinute = ((ms % MINUTE_MS) + MINUTE_MS) % MINUTE_MS;\n  const inHour = ((ms % 3_600_000) + 3_600_000) % 3_600_000;\n  const inHalfDay = ((ms % 43_200_000) + 43_200_000) % 43_200_000;\n  return {\n    second: (inMinute / MINUTE_MS) * 360,\n    minute: (inHour / 3_600_000) * 360,\n    hour: (inHalfDay / 43_200_000) * 360,\n  };\n}\n\n/** The zone's local hour and minute as text, for screen readers. */\nexport function clockText(date: Date, offset: number): string {\n  const d = new Date(date.getTime() + offset * 3_600_000);\n  const hh = String(d.getUTCHours()).padStart(2, '0');\n  const mm = String(d.getUTCMinutes()).padStart(2, '0');\n  return `${hh}:${mm}`;\n}\n\nfunction formatOffset(hours: number) {\n  if (hours === 0) return 'same';\n  return `${hours > 0 ? '+' : ''}${hours}`;\n}\n\n/** Whether the zone's local time is in the daytime. */\nfunction isDay(date: Date, offset: number) {\n  const hour = new Date(date.getTime() + offset * 3_600_000).getUTCHours();\n  return hour >= 6 && hour < 18;\n}\n\n/**\n * Two world clocks side by side, one light and one dark. The hands run\n * continuously on the UI thread, so nothing re-renders while they turn. Reduced\n * motion drops the second hand and moves the others once a minute.\n */\nexport function DualClock({ zones, time, homeOffset, style }: DualClockProps) {\n  const reduced = useReduceMotion();\n  const [opened] = useState(() => new Date());\n  const [minuteTick, setMinuteTick] = useState(() => new Date());\n  const fixed = time != null;\n\n  useEffect(() => {\n    if (fixed) return;\n    // Keeps the spoken time current, and moves the hands under reduced motion.\n    const id = setInterval(() => setMinuteTick(new Date()), MINUTE_MS);\n    return () => clearInterval(id);\n  }, [fixed]);\n\n  const shown = time ?? minuteTick;\n  const home = homeOffset ?? -opened.getTimezoneOffset() / 60;\n\n  return (\n    <View\n      accessible\n      accessibilityLabel={zones.map((z) => `${z.code} ${clockText(shown, z.offset)}`).join(', ')}\n      style={[styles.card, style]}\n    >\n      {zones.map((zone) => (\n        <Face\n          key={zone.code}\n          zone={zone}\n          angles={handAngles(reduced || fixed ? shown : opened, zone.offset)}\n          still={reduced || fixed}\n          showSeconds={!reduced}\n          note={formatOffset(zone.offset - home)}\n          dark={(zone.face ?? (isDay(shown, zone.offset) ? 'day' : 'night')) === 'night'}\n        />\n      ))}\n    </View>\n  );\n}\n\nfunction Face({\n  zone,\n  angles,\n  still,\n  showSeconds,\n  note,\n  dark,\n}: {\n  zone: DualClockZone;\n  angles: HandAngles;\n  still: boolean;\n  showSeconds: boolean;\n  note: string;\n  dark: boolean;\n}) {\n  const { font } = useKinetikTheme();\n  const ink = dark ? INK_NIGHT : INK_DAY;\n  const ticks = useMemo(() => {\n    const major = Skia.PathBuilder.Make();\n    const minor = Skia.PathBuilder.Make();\n    for (let i = 0; i < 60; i++) {\n      const a = (i * 6 * Math.PI) / 180;\n      const isMajor = i % 5 === 0;\n      const inner = R - (isMajor ? 9 : 5);\n      const b = isMajor ? major : minor;\n      b.moveTo(R + Math.sin(a) * inner, R - Math.cos(a) * inner);\n      b.lineTo(R + Math.sin(a) * (R - 2), R - Math.cos(a) * (R - 2));\n    }\n    return { major: major.detach(), minor: minor.detach() };\n  }, []);\n\n  return (\n    <View style={[styles.face, { backgroundColor: dark ? FACE_NIGHT : FACE_DAY }]}>\n      <Canvas style={styles.dial}>\n        <Path path={ticks.minor} style=\"stroke\" strokeWidth={0.8} color={ink} opacity={0.5} />\n        <Path path={ticks.major} style=\"stroke\" strokeWidth={1.6} color={ink} />\n      </Canvas>\n      <View style={styles.center}>\n        <Text style={{ color: ink, fontSize: font.size.xs, fontWeight: font.weight.bold }}>\n          {zone.code}\n        </Text>\n        <Text style={{ color: ink, fontSize: font.size.xs - 2, opacity: 0.7 }}>{note}</Text>\n      </View>\n      <Hand\n        angle={angles.hour}\n        periodMs={43_200_000}\n        still={still}\n        length={R * 0.48}\n        width={4}\n        color={ink}\n      />\n      <Hand\n        angle={angles.minute}\n        periodMs={3_600_000}\n        still={still}\n        length={R * 0.72}\n        width={3}\n        color={ink}\n      />\n      {showSeconds ? (\n        <Hand\n          angle={angles.second}\n          periodMs={MINUTE_MS}\n          still={still}\n          length={R * 0.82}\n          width={1.2}\n          color={SECOND}\n        />\n      ) : null}\n      <View style={[styles.pin, { backgroundColor: SECOND }]} />\n    </View>\n  );\n}\n\nfunction Hand({\n  angle,\n  periodMs,\n  still,\n  length,\n  width,\n  color,\n}: {\n  angle: number;\n  periodMs: number;\n  still: boolean;\n  length: number;\n  width: number;\n  color: string;\n}) {\n  const turn: SharedValue<number> = useSharedValue(angle);\n\n  useEffect(() => {\n    if (still) {\n      turn.set(angle);\n      return;\n    }\n    // One sweep from here; withRepeat restarts at `angle`, which is the same place on the dial.\n    turn.set(angle);\n    turn.set(\n      withRepeat(\n        withTiming(angle + 360, { duration: periodMs, easing: easings.linear }),\n        -1,\n        false,\n      ),\n    );\n  }, [angle, periodMs, still, turn]);\n\n  const rotate = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.get()}deg` }] }));\n\n  return (\n    <Animated.View pointerEvents=\"none\" style={[styles.handBox, rotate]}>\n      <View\n        style={{\n          position: 'absolute',\n          left: R - width / 2,\n          top: R - length,\n          width,\n          height: length + 6,\n          borderRadius: width / 2,\n          backgroundColor: color,\n        }}\n      />\n    </Animated.View>\n  );\n}\n\nconst FACE_DAY = 'hsl(40, 12%, 96%)';\nconst FACE_NIGHT = 'hsl(220, 6%, 8%)';\nconst INK_DAY = 'hsl(220, 10%, 10%)';\nconst INK_NIGHT = 'hsl(0, 0%, 94%)';\nconst SECOND = 'hsl(6, 88%, 54%)';\n\nconst styles = StyleSheet.create({\n  card: {\n    width: '100%',\n    maxWidth: 320,\n    alignSelf: 'center',\n    flexDirection: 'row',\n    justifyContent: 'center',\n    gap: 12,\n    borderRadius: 24,\n    borderWidth: 1,\n    borderColor: 'hsla(0, 0%, 100%, 0.08)',\n    backgroundColor: 'hsl(0, 0%, 5%)',\n    padding: 16,\n  },\n  face: {\n    width: SIZE,\n    height: SIZE,\n    borderRadius: R,\n    borderWidth: 1,\n    borderColor: 'hsla(0, 0%, 100%, 0.16)',\n    overflow: 'hidden',\n  },\n  dial: { position: 'absolute', top: -1, left: -1, width: SIZE, height: SIZE },\n  center: {\n    position: 'absolute',\n    top: R * 0.36,\n    left: 0,\n    right: 0,\n    alignItems: 'center',\n  },\n  handBox: { position: 'absolute', top: -1, left: -1, width: SIZE, height: SIZE },\n  pin: {\n    position: 'absolute',\n    top: R - 4.5,\n    left: R - 4.5,\n    width: 7,\n    height: 7,\n    borderRadius: 3.5,\n  },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "Hands are views on continuous UI-thread timings, so the clocks animate at rest with no re-render. One timer per minute keeps the spoken time current.",
+      "measurements": [
+        {
+          "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+          "kind": "device",
+          "date": "2026-11-02",
+          "build": "release",
+          "frameMs": 22,
+          "p90Ms": 24,
+          "jankyPercent": 99.93,
+          "atRest": "animating",
+          "memoryMb": 126
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The second hand is removed and the other hands move once a minute.",
+      "screenReader": "One label with both times (\"TYO 21:04, RIO 09:04\").",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { DualClock } from '@/components/kinetik/dual-clock';\n\n<DualClock\n  zones={[\n    { code: 'TYO', offset: 9, face: 'day' },\n    { code: 'RIO', offset: -3, face: 'night' },\n  ]}\n/>;\n```\n\n## When to use\n\n- Teams and travellers who watch two time zones.\n- A clock widget on a dashboard.\n\n## When not to use\n\n- More than two zones. Use a list.\n- Places with daylight saving, unless you update `offset` yourself.\n\n## Notes\n\n- `offset` is hours from UTC, so daylight saving is yours to handle.\n- Pass `time` to show a fixed moment. The clocks then hold still.\n- Each face follows the hour unless you set `face`.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add dual-clock`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

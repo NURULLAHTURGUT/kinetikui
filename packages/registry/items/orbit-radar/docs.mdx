@@ -1,0 +1,20 @@
+## Usage
+
+```tsx
+import { OrbitRadar } from '@/components/kinetik/orbit-radar';
+
+<OrbitRadar name="LUNA-2" minutes={23} progress={0.58} />;
+```
+
+## When to use
+
+- Anything approaching with a known arrival: a satellite pass, a delivery drone, a ferry.
+- A hero widget where a bit of mission control suits the product.
+
+## When not to use
+
+- Real positions: the dish is a picture of progress, not a map.
+
+## Notes
+
+- `progress` is yours to compute. At 1 the craft reaches the top of the arc.

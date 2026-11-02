@@ -1,0 +1,29 @@
+## Usage
+
+```tsx
+import { TripGlance } from '@/components/kinetik/trip-glance';
+
+<TripGlance
+  code="KN81"
+  destination="OSL"
+  minutesLeft={176}
+  progress={0.34}
+  status="Landing early"
+  bags={2}
+/>;
+```
+
+## When to use
+
+- A trip in progress on a home screen or a live widget.
+- Anywhere the time left matters more than the map.
+
+## When not to use
+
+- Trips with stops: one line cannot show them.
+- When progress is unknown: an estimate that jumps backwards confuses people.
+
+## Notes
+
+- `progress` and `minutesLeft` are yours to compute.
+- The plane is the Tabler Icons plane (MIT licence, via iconstack.io).

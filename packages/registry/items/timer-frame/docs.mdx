@@ -1,0 +1,23 @@
+## Usage
+
+```tsx
+import { TimerFrame } from '@/components/kinetik/timer-frame';
+
+<TimerFrame total={300} start={217} label="BREW" />;
+```
+
+## When to use
+
+- Cooking, brewing, workouts and focus sessions.
+- Live timers where the time left should read at a glance.
+
+## When not to use
+
+- Long timers: the frame barely moves over hours.
+- Exact timing. It runs on the JS clock and is only as precise as a second.
+
+## Notes
+
+- The timer owns its countdown. Remount it with a new `key` to restart.
+- Setting `running` to false holds it, and it picks up from the same time.
+- `onDone` fires once when the time runs out.

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "pulse-range",
+  "type": "registry:item",
+  "title": "Pulse Range",
+  "description": "The day's heart rate as a glowing range: a capsule slides to the latest reading, its heart beating at that rate.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-svg",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-count.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/pulse-range.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/pulse-range.tsx",
+      "content": "import { useEffect, useState } from 'react';\nimport { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withRepeat,\n  withSequence,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\nimport Svg, { Path } from 'react-native-svg';\n\nimport { useCountUp } from '../../lib/kinetik/hooks/use-count-up';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { gradient } from '../../lib/kinetik/tokens/gradient';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type PulseRangeProps = {\n  /** The latest reading. The heart beats at this rate. */\n  bpm: number;\n  /** Lowest reading today. */\n  min: number;\n  /** Highest reading today. */\n  max: number;\n  /** Today's average. */\n  average: number;\n  /** When the reading was taken, e.g. \"JUST NOW\". */\n  ago?: string;\n  /** Label over the average. Defaults to \"TODAY\". */\n  label?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst CAPSULE_W = 84;\nconst CAPSULE_H = 34;\nconst TRACK_H = 14;\n\n/** Where a reading sits between the day's low and high, 0–1. */\nexport function rangePosition(value: number, min: number, max: number): number {\n  if (max <= min) return 0.5;\n  return Math.max(0, Math.min(1, (value - min) / (max - min)));\n}\n\n/** Milliseconds per beat; clamped so an odd reading cannot make the heart flicker or stall. */\nexport function beatDuration(bpm: number): number {\n  return 60_000 / Math.max(30, Math.min(200, bpm));\n}\n\n/**\n * The day's heart rate as a glowing range: a capsule slides along it to the latest\n * reading while its heart beats at that rate with a double thump.\n */\nexport function PulseRange({\n  bpm,\n  min,\n  max,\n  average,\n  ago,\n  label = 'TODAY',\n  style,\n}: PulseRangeProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const [width, setWidth] = useState(0);\n  const shown = Math.round(useCountUp(bpm, { instant: reduced, from: min }));\n  const position = rangePosition(bpm, min, max);\n  const beat = beatDuration(bpm);\n\n  const at = useSharedValue(reduced ? position : 0);\n  const thump = useSharedValue(1);\n\n  useEffect(() => {\n    at.set(reduced ? position : withSpring(position, spring('smooth')));\n  }, [position, reduced, at]);\n\n  useEffect(() => {\n    if (reduced) {\n      thump.set(1);\n      return;\n    }\n    thump.set(\n      withRepeat(\n        withSequence(\n          withTiming(1.26, { duration: beat * 0.12 }),\n          withTiming(1, { duration: beat * 0.14 }),\n          withTiming(1.14, { duration: beat * 0.1 }),\n          withTiming(1, { duration: beat * 0.64 }),\n        ),\n        -1,\n        false,\n      ),\n    );\n  }, [beat, reduced, thump]);\n\n  const capsule = useAnimatedStyle(() => ({\n    transform: [{ translateX: at.get() * Math.max(0, width - CAPSULE_W) }],\n  }));\n  const heart = useAnimatedStyle(() => ({ transform: [{ scale: thump.get() }] }));\n\n  const small = { color: MUTED, fontSize: font.size.xs, fontWeight: font.weight.medium } as const;\n\n  return (\n    <View\n      accessible\n      accessibilityLabel={`Heart rate ${bpm} beats per minute. ${label} average ${average}, low ${min}, high ${max}.${ago ? ` ${ago}.` : ''}`}\n      style={[styles.card, style]}\n    >\n      <View style={styles.between}>\n        <View>\n          <Text style={small}>{label}</Text>\n          <Text\n            style={{\n              color: colors.highlight,\n              fontSize: font.size.md,\n              fontWeight: font.weight.semibold,\n              fontVariant: ['tabular-nums'],\n            }}\n          >\n            {average}\n            <Text style={{ color: RED, fontSize: font.size.xs }}>BPM</Text>\n          </Text>\n        </View>\n        {ago ? <Text style={small}>{ago}</Text> : null}\n      </View>\n\n      <View\n        testID=\"pulse-range-track\"\n        style={styles.stage}\n        onLayout={(e) => setWidth(e.nativeEvent.layout.width)}\n      >\n        <View style={[styles.track, gradient(TRACK)]} />\n        <Animated.View style={[styles.capsule, gradient(CAPSULE), capsule]}>\n          <Animated.View style={heart}>\n            <Svg width={16} height={16} viewBox=\"0 0 24 24\">\n              <Path\n                d=\"M12 21s-9-6.3-9-12.5A5 5 0 0 1 12 5.6a5 5 0 0 1 9 2.9C21 14.7 12 21 12 21Z\"\n                fill={colors.highlight}\n              />\n            </Svg>\n          </Animated.View>\n          <Text\n            style={{\n              color: colors.highlight,\n              fontSize: font.size.md,\n              fontWeight: font.weight.bold,\n              fontVariant: ['tabular-nums'],\n            }}\n          >\n            {shown}\n          </Text>\n        </Animated.View>\n      </View>\n\n      <View style={styles.between}>\n        <Text style={[small, styles.num]}>↓ {min}</Text>\n        <Text style={[small, styles.num]}>{max} ↑</Text>\n      </View>\n    </View>\n  );\n}\n\nconst MUTED = 'hsl(0, 0%, 66%)';\nconst RED = 'hsl(356, 90%, 60%)';\nconst TRACK =\n  'linear-gradient(90deg, hsl(356, 60%, 24%) 0%, hsl(356, 86%, 46%) 50%, hsl(356, 60%, 24%) 100%)';\nconst CAPSULE = 'linear-gradient(180deg, hsl(356, 96%, 62%) 0%, hsl(354, 84%, 42%) 100%)';\n\nconst styles = StyleSheet.create({\n  card: {\n    width: '100%',\n    maxWidth: 320,\n    alignSelf: 'center',\n    borderRadius: 24,\n    borderWidth: 1,\n    borderColor: 'hsla(0, 0%, 100%, 0.08)',\n    backgroundColor: 'hsl(0, 0%, 5%)',\n    padding: 16,\n    gap: 8,\n  },\n  between: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },\n  num: { fontVariant: ['tabular-nums'] },\n  stage: { height: CAPSULE_H + 6, justifyContent: 'center' },\n  track: {\n    height: TRACK_H,\n    borderRadius: TRACK_H / 2,\n    boxShadow: '0px 0px 18px hsla(356, 90%, 50%, 0.5)',\n  },\n  capsule: {\n    position: 'absolute',\n    left: 0,\n    width: CAPSULE_W,\n    height: CAPSULE_H,\n    borderRadius: CAPSULE_H / 2,\n    flexDirection: 'row',\n    alignItems: 'center',\n    justifyContent: 'center',\n    gap: 6,\n    boxShadow: '0px 0px 20px hsla(356, 96%, 58%, 0.9)',\n  },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "The capsule moves on a UI-thread spring on change. The heart is one view on a UI-thread loop, so it animates at rest.",
+      "measurements": [
+        {
+          "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+          "kind": "device",
+          "date": "2026-11-02",
+          "build": "release",
+          "frameMs": 15,
+          "p90Ms": 22,
+          "jankyPercent": 33.74,
+          "atRest": "animating",
+          "memoryMb": 125
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The capsule jumps to its place, the heart holds still and the number does not count.",
+      "screenReader": "One label (\"Heart rate 112 beats per minute. TODAY average 74, low 52, high 168. JUST NOW.\").",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { PulseRange } from '@/components/kinetik/pulse-range';\n\n<PulseRange bpm={112} min={52} max={168} average={74} ago=\"JUST NOW\" />;\n```\n\n## When to use\n\n- A heart rate summary in a health or workout app.\n- Any reading best shown between today's low and high.\n\n## When not to use\n\n- Medical decisions: this is a summary, not a monitor.\n- Readings with no meaningful range.\n\n## Notes\n\n- The heart beats at `bpm`, kept between 30 and 200 so odd readings cannot make it flicker.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add pulse-range`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

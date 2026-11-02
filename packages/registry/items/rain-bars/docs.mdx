@@ -1,0 +1,27 @@
+## Usage
+
+```tsx
+import { RainBars } from '@/components/kinetik/rain-bars';
+
+<RainBars
+  title="Steady Rain"
+  total={19}
+  amounts={[3, 5, 8, 6, 9, 12, 16, 11, 7, 10, 14, 18, 15, 9, 6, 8, 12, 17, 13, 8, 5, 7, 4, 3]}
+  times={['NOW', '12:30', '13:00', '13:30']}
+/>;
+```
+
+## When to use
+
+- The next hour or two of rain in a weather app.
+- Any short forecast where the shape over time matters.
+
+## When not to use
+
+- Long forecasts: the bars get too thin past about 40.
+- Exact amounts per period. There is no scale.
+
+## Notes
+
+- The first bar is now and is drawn in white.
+- Times are spread evenly under the bars.

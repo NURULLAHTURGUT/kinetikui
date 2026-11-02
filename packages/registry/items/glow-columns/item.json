@@ -1,0 +1,34 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "glow-columns",
+  "title": "Glow Columns",
+  "description": "An index through the day: thin stems grow under bright caps in turn, low periods sitting as green dots.",
+  "category": "data",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-svg"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-count"],
+  "files": ["glow-columns.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Stems and caps use short UI-thread springs on arrival. Nothing animates at rest.",
+    "measurements": [
+      {
+        "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+        "kind": "device",
+        "date": "2026-11-02",
+        "build": "release",
+        "frameMs": 34,
+        "p90Ms": 40,
+        "jankyPercent": 100,
+        "atRest": "idle",
+        "memoryMb": 124
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "Columns appear in place and the number does not count.",
+    "screenReader": "One label (\"UVI 6, MODERATE\").",
+    "touchTarget": "Not interactive."
+  }
+}

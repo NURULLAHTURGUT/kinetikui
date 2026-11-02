@@ -1,0 +1,34 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "order-stages",
+  "title": "Order Stages",
+  "description": "An order on its way: a glowing track runs to a knob showing the stage under way, chips for what comes next.",
+  "category": "data",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["react-native-reanimated", "react-native-svg"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-haptics", "kinetik-count"],
+  "files": ["order-stages.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "Knob and track use UI-thread springs on change. A sheen loops along the track as one view, so it animates at rest.",
+    "measurements": [
+      {
+        "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+        "kind": "device",
+        "date": "2026-11-02",
+        "build": "release",
+        "frameMs": 17,
+        "p90Ms": 19,
+        "jankyPercent": 74.69,
+        "atRest": "animating",
+        "memoryMb": 121
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The knob jumps to its place, does not swell, the sheen stops and the minutes do not count.",
+    "screenReader": "One progress bar (\"21 minutes left. COOKING. Nº 27\") with the stage number.",
+    "touchTarget": "Not interactive."
+  }
+}

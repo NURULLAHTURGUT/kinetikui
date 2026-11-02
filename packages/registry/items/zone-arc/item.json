@@ -1,0 +1,34 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "zone-arc",
+  "title": "Zone Arc",
+  "description": "A reading on a half dial of coloured zones: zones sweep in, a marker swings over and its zone lights up.",
+  "category": "data",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion", "kinetik-count"],
+  "files": ["zone-arc.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "One Skia canvas. The sweep and marker run on the UI thread on arrival and on change. Nothing animates at rest.",
+    "measurements": [
+      {
+        "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+        "kind": "device",
+        "date": "2026-11-02",
+        "build": "release",
+        "frameMs": 12,
+        "p90Ms": 18,
+        "jankyPercent": 15.31,
+        "atRest": "idle",
+        "memoryMb": 126
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The dial appears whole, the marker jumps to its place and the number does not count.",
+    "screenReader": "One label (\"86 AQI, zone 2 of 4, 4 min ago\").",
+    "touchTarget": "Not interactive."
+  }
+}

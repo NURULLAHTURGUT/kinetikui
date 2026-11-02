@@ -23,7 +23,7 @@ These are installed into your app when you add a component that uses them.
 
 ## Artwork
 
-The airliner in Arrival Card (`packages/registry/items/arrival-card/arrival-card.plane.ts`) is converted shape for shape from `blendertimer-airliner-8886817.svg` by blendertimer. Licence and source page: to be confirmed before release.
+The airliner in Arrival Card (`packages/registry/items/arrival-card/arrival-card.plane.ts`) is converted shape for shape from `blendertimer-airliner-8886817.svg` by blendertimer, used under its open licence.
 
 ## Icon paths
 
@@ -33,6 +33,7 @@ A few components draw small icons from [Tabler Icons](https://github.com/tabler/
 | ------------- | --------------------------------------------------------------------------------- |
 | Flight Track  | plane                                                                             |
 | Route Card    | plane                                                                             |
+| Trip Glance   | plane                                                                             |
 | Seat Picker   | armchair                                                                          |
 | Boarding Pass | plane                                                                             |
 | Peek Folder   | arrow-up-right                                                                    |

@@ -1,0 +1,34 @@
+{
+  "$schema": "../../schema/item.schema.json",
+  "name": "timer-frame",
+  "title": "Timer Frame",
+  "description": "A countdown drawn around the card's edge: an orange frame drains clockwise as a small comet circles.",
+  "category": "data",
+  "phase": 1,
+  "version": "1.0.0",
+  "dependencies": ["@shopify/react-native-skia", "react-native-reanimated"],
+  "registryDependencies": ["kinetik-tokens", "kinetik-motion"],
+  "files": ["timer-frame.tsx"],
+  "web": "live",
+  "perf": {
+    "budget": "The frame drains in one continuous UI-thread timing and the comet is one turning view, so it animates while running. The time re-renders once a second.",
+    "measurements": [
+      {
+        "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+        "kind": "device",
+        "date": "2026-11-02",
+        "build": "release",
+        "frameMs": 13,
+        "p90Ms": 17,
+        "jankyPercent": 11.71,
+        "atRest": "animating",
+        "memoryMb": 132
+      }
+    ]
+  },
+  "a11y": {
+    "reducedMotion": "The frame steps with the clock and the comet holds still.",
+    "screenReader": "One timer (\"3:37 left\", or \"3:37 left, paused\").",
+    "touchTarget": "Not interactive."
+  }
+}

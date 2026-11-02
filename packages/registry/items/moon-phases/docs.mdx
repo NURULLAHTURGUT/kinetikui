@@ -1,0 +1,21 @@
+## Usage
+
+```tsx
+import { MoonPhases } from '@/components/kinetik/moon-phases';
+
+<MoonPhases phase={0.57} />;
+```
+
+## When to use
+
+- Weather, tide, night sky and outdoors apps.
+- Calendars that follow the lunar month.
+
+## When not to use
+
+- Astronomy that needs precision: the phase is yours to compute, and the row is a picture.
+
+## Notes
+
+- `phase` runs 0–1: 0 is new moon and 0.5 is full moon.
+- Waxing moons are lit on the right, as seen from the northern hemisphere.

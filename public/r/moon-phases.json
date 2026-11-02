@@ -1,0 +1,63 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "moon-phases",
+  "type": "registry:item",
+  "title": "Moon Phases",
+  "description": "The moon this week: discs pop in around tonight's, which swells in the middle with a soft halo.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-count.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/moon-phases.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/moon-phases.tsx",
+      "content": "import {\n  BlurMask,\n  Canvas,\n  Circle,\n  Group,\n  Path,\n  RadialGradient,\n  Skia,\n  vec,\n} from '@shopify/react-native-skia';\nimport { useEffect, useMemo, useState } from 'react';\nimport { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport {\n  useDerivedValue,\n  useSharedValue,\n  withSequence,\n  withSpring,\n  type SharedValue,\n} from 'react-native-reanimated';\n\nimport { useCountUp } from '../../lib/kinetik/hooks/use-count-up';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { gradient } from '../../lib/kinetik/tokens/gradient';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type MoonPhasesProps = {\n  /** Position in the lunar cycle, 0–1: 0 is new moon, 0.5 is full moon. */\n  phase: number;\n  /** Heading. Defaults to the phase's name, e.g. \"Waning Gibbous\". */\n  title?: string;\n  /** Line under the moons. Defaults to the days until the next full moon. */\n  caption?: string;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst LUNAR_DAYS = 29.53;\nconst COUNT = 7;\nconst STEP = 1 / 8;\nconst ROW_H = 64;\nconst SIDE_R = 11;\nconst CENTER_R = 18;\n/** Dark seas on the moon's face, as [x, y, radius] in disc radii. */\nconst SEAS = [\n  [-0.32, -0.38, 0.26],\n  [0.08, -0.5, 0.2],\n  [0.3, -0.08, 0.3],\n  [-0.2, 0.22, 0.22],\n  [0.22, 0.52, 0.16],\n] as const;\n\nconst NAMES = [\n  'New Moon',\n  'Waxing Crescent',\n  'First Quarter',\n  'Waxing Gibbous',\n  'Full Moon',\n  'Waning Gibbous',\n  'Last Quarter',\n  'Waning Crescent',\n];\n\n/** The phase wrapped into 0–1. */\nfunction wrap(phase: number) {\n  return ((phase % 1) + 1) % 1;\n}\n\nexport function phaseName(phase: number): string {\n  return NAMES[Math.round(wrap(phase) * 8) % 8]!;\n}\n\n/** How much of the disc is lit, 0–1. */\nexport function illumination(phase: number): number {\n  return (1 - Math.cos(2 * Math.PI * wrap(phase))) / 2;\n}\n\n/** Whole days until the next full moon. */\nexport function daysToFull(phase: number): number {\n  return Math.round(wrap(0.5 - phase) * LUNAR_DAYS);\n}\n\n/**\n * SVG path of the lit part of a moon of radius `r` centred on the origin: one\n * half of the disc closed by the terminator, an ellipse that narrows towards the\n * quarters. Waxing moons are lit on the right, waning moons on the left.\n */\nexport function moonPath(r: number, phase: number): string {\n  const p = wrap(phase);\n  const rx = (r * Math.abs(Math.cos(2 * Math.PI * p))).toFixed(3);\n  const waxing = p < 0.5;\n  const gibbous = p > 0.25 && p < 0.75;\n  const edge = waxing ? 1 : 0;\n  const terminator = waxing === gibbous ? 1 : 0;\n  return `M0 ${-r}A${r} ${r} 0 0 ${edge} 0 ${r}A${rx} ${r} 0 0 ${terminator} 0 ${-r}Z`;\n}\n\n/**\n * The moon this week: a row of discs around tonight's, which swells in the middle\n * with a soft halo. The discs pop in from the centre outwards, and stepping to a\n * new night makes tonight's moon bounce.\n */\nexport function MoonPhases({ phase, title, caption, style }: MoonPhasesProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const [width, setWidth] = useState(0);\n  const lit = Math.round(illumination(phase) * 100);\n  const shown = Math.round(useCountUp(lit, { instant: reduced }));\n  const heading = title ?? phaseName(phase);\n  const days = daysToFull(phase);\n\n  return (\n    <View\n      accessible\n      accessibilityLabel={`${heading}, ${lit}% lit. ${caption ?? `Next full moon in ${days} days`}`}\n      style={[styles.card, style]}\n    >\n      <View pointerEvents=\"none\" style={[StyleSheet.absoluteFill, styles.glow, gradient(GLOW)]} />\n      <View style={styles.head}>\n        <Text\n          numberOfLines={1}\n          style={[\n            styles.grow,\n            { color: TITLE, fontSize: font.size.sm + 1, fontWeight: font.weight.semibold },\n          ]}\n        >\n          {heading}\n        </Text>\n        <Text\n          style={{\n            color: colors.highlight,\n            fontSize: font.size.lg,\n            fontWeight: font.weight.semibold,\n            fontVariant: ['tabular-nums'],\n          }}\n        >\n          {shown}\n          <Text style={{ fontSize: font.size.xs }}>%</Text>\n        </Text>\n      </View>\n\n      <View\n        testID=\"moon-phases-row\"\n        style={styles.row}\n        onLayout={(e) => setWidth(e.nativeEvent.layout.width)}\n      >\n        {width > 0 ? <Row width={width} phase={phase} /> : null}\n      </View>\n\n      <Text style={{ color: MUTED, fontSize: font.size.xs + 1 }}>\n        {caption ?? (\n          <>\n            Next full moon in{' '}\n            <Text style={{ color: colors.highlight, fontWeight: font.weight.semibold }}>\n              {days} days\n            </Text>\n          </>\n        )}\n      </Text>\n    </View>\n  );\n}\n\nfunction Row({ width, phase }: { width: number; phase: number }) {\n  const reduced = useReduceMotion();\n  const reveal = useSharedValue(reduced ? 1 : 0);\n  const bounce = useSharedValue(1);\n\n  useEffect(() => {\n    if (!reduced) reveal.set(withSpring(1, spring('smooth')));\n  }, [reduced, reveal]);\n\n  useEffect(() => {\n    if (reduced) return;\n    bounce.set(withSequence(withSpring(1.14, spring('snappy')), withSpring(1, spring('bouncy'))));\n  }, [phase, reduced, bounce]);\n\n  const mid = (COUNT - 1) / 2;\n  return (\n    <Canvas style={{ width, height: ROW_H }}>\n      {Array.from({ length: COUNT }, (_, i) => (\n        <Disc\n          key={i}\n          x={SIDE_R + (i * (width - SIDE_R * 2)) / (COUNT - 1)}\n          distance={Math.abs(i - mid)}\n          radius={i === mid ? CENTER_R : SIDE_R}\n          phase={phase + (i - mid) * STEP}\n          reveal={reveal}\n          bounce={i === mid ? bounce : null}\n        />\n      ))}\n    </Canvas>\n  );\n}\n\nfunction Disc({\n  x,\n  distance,\n  radius,\n  phase,\n  reveal,\n  bounce,\n}: {\n  x: number;\n  distance: number;\n  radius: number;\n  phase: number;\n  reveal: SharedValue<number>;\n  bounce: SharedValue<number> | null;\n}) {\n  const lit = useMemo(() => Skia.Path.MakeFromSVGString(moonPath(radius, phase))!, [radius, phase]);\n  const disc = useMemo(() => Skia.PathBuilder.Make().addCircle(0, 0, radius).detach(), [radius]);\n  const place = useDerivedValue(() => {\n    // The middle disc arrives first and the rest follow it outwards.\n    const start = distance * 0.14;\n    const t = Math.max(0, Math.min(1, (reveal.get() - start) / (1 - start)));\n    return [\n      { translateX: x },\n      { translateY: ROW_H / 2 },\n      { scale: t * (bounce ? bounce.get() : 1) },\n    ];\n  });\n  return (\n    <Group transform={place}>\n      {bounce ? (\n        <Circle cx={0} cy={0} r={radius + 2} color={HALO}>\n          <BlurMask blur={7} style=\"normal\" />\n        </Circle>\n      ) : null}\n      <Group clip={disc}>\n        <Circle cx={0} cy={0} r={radius}>\n          <RadialGradient c={vec(0, 0)} r={radius} colors={[NIGHT_CORE, NIGHT_EDGE]} />\n        </Circle>\n        {/* A blurred edge makes the shadow fall off round the sphere rather than cut it. */}\n        <Group opacity={distance === 0 ? 1 : 0.78}>\n          <Path path={lit}>\n            <RadialGradient\n              c={vec(0, 0)}\n              r={radius * 1.04}\n              colors={[LIGHT_CORE, LIGHT_MID, LIGHT_LIMB]}\n              positions={[0, 0.72, 1]}\n            />\n            <BlurMask blur={radius * 0.1} style=\"normal\" />\n          </Path>\n          <Group clip={lit}>\n            {SEAS.map(([sx, sy, sr], i) => (\n              <Circle key={i} cx={sx * radius} cy={sy * radius} r={sr * radius} color={SEA}>\n                <BlurMask blur={radius * 0.07} style=\"normal\" />\n              </Circle>\n            ))}\n          </Group>\n        </Group>\n      </Group>\n    </Group>\n  );\n}\n\nconst MUTED = 'hsl(240, 8%, 66%)';\nconst TITLE = 'hsl(248, 90%, 80%)';\nconst HALO = 'hsla(46, 60%, 82%, 0.42)';\nconst NIGHT_CORE = 'hsl(240, 12%, 15%)';\nconst NIGHT_EDGE = 'hsl(240, 14%, 9%)';\nconst LIGHT_CORE = 'hsl(46, 30%, 94%)';\nconst LIGHT_MID = 'hsl(44, 18%, 82%)';\nconst LIGHT_LIMB = 'hsl(232, 8%, 56%)';\nconst SEA = 'hsla(226, 10%, 46%, 0.2)';\nconst GLOW =\n  'linear-gradient(115deg, hsl(258, 70%, 34%) 0%, transparent 44%, transparent 60%, hsl(238, 60%, 30%) 100%)';\n\nconst styles = StyleSheet.create({\n  card: {\n    width: '100%',\n    maxWidth: 320,\n    alignSelf: 'center',\n    overflow: 'hidden',\n    borderRadius: 24,\n    borderWidth: 1,\n    borderColor: 'hsla(0, 0%, 100%, 0.08)',\n    backgroundColor: 'hsl(240, 12%, 5%)',\n    padding: 16,\n    gap: 2,\n  },\n  glow: { opacity: 0.32 },\n  head: { flexDirection: 'row', alignItems: 'center', gap: 8 },\n  grow: { flex: 1 },\n  row: { height: ROW_H },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "One Skia canvas with prebuilt paths. Discs scale on UI-thread springs on arrival and on change. Nothing animates at rest.",
+      "measurements": [
+        {
+          "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+          "kind": "device",
+          "date": "2026-11-02",
+          "build": "release",
+          "frameMs": 10,
+          "p90Ms": 14,
+          "jankyPercent": 2.16,
+          "atRest": "idle",
+          "memoryMb": 120
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Discs appear in place, tonight does not bounce and the percentage does not count.",
+      "screenReader": "One label (\"Waning Gibbous, 95% lit. Next full moon in 27 days\").",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { MoonPhases } from '@/components/kinetik/moon-phases';\n\n<MoonPhases phase={0.57} />;\n```\n\n## When to use\n\n- Weather, tide, night sky and outdoors apps.\n- Calendars that follow the lunar month.\n\n## When not to use\n\n- Astronomy that needs precision: the phase is yours to compute, and the row is a picture.\n\n## Notes\n\n- `phase` runs 0–1: 0 is new moon and 0.5 is full moon.\n- Waxing moons are lit on the right, as seen from the northern hemisphere.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add moon-phases`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

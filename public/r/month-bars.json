@@ -1,0 +1,64 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "month-bars",
+  "type": "registry:item",
+  "title": "Month Bars",
+  "description": "Spending by month: bars rise in turn, the picked month lights teal and the figure counts to it.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-svg",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json",
+    "https://kinetik-ui.dev/r/kinetik-haptics.json",
+    "https://kinetik-ui.dev/r/kinetik-count.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/month-bars.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/month-bars.tsx",
+      "content": "import { useEffect, useState } from 'react';\nimport { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withDelay,\n  withSpring,\n} from 'react-native-reanimated';\nimport Svg, { Path } from 'react-native-svg';\n\nimport { useCountUp } from '../../lib/kinetik/hooks/use-count-up';\nimport { useHaptic } from '../../lib/kinetik/hooks/use-haptic';\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { spring } from '../../lib/kinetik/motion/motion';\nimport { gradient } from '../../lib/kinetik/tokens/gradient';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type MonthBar = {\n  /** Short label, e.g. \"MAY\". */\n  label: string;\n  value: number;\n};\n\nexport type MonthBarsProps = {\n  /** Months, oldest first. The last one starts selected. */\n  months: MonthBar[];\n  /** Symbol before the figure. Defaults to \"$\". */\n  currency?: string;\n  /** Vibrate on tap. Defaults to true. */\n  haptics?: boolean;\n  /** Called with the index of a tapped month. */\n  onSelect?: (index: number) => void;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst CHART = 62;\nconst FLOOR = 0.34;\n\nfunction money(value: number) {\n  return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });\n}\n\n/** The change from the month before, and \"+\" or \"−\" in front of it. */\nexport function monthDelta(months: MonthBar[], index: number): { sign: string; amount: string } {\n  const change =\n    (months[index]?.value ?? 0) - (months[index - 1]?.value ?? months[index]?.value ?? 0);\n  return { sign: change < 0 ? '−' : '+', amount: money(Math.abs(change)) };\n}\n\n/**\n * Spending by month: bars rise from the floor in turn and the picked month lights\n * up in teal. Tap another month and the figure counts to it, cents dimmed.\n */\nexport function MonthBars({\n  months,\n  currency = '$',\n  haptics = true,\n  onSelect,\n  style,\n}: MonthBarsProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const haptic = useHaptic(haptics);\n  const [picked, setPicked] = useState(months.length - 1);\n  const value = months[picked]?.value ?? 0;\n  const delta = monthDelta(months, picked);\n  const most = Math.max(...months.map((m) => m.value), 1);\n  const least = Math.min(...months.map((m) => m.value));\n  const range = Math.max(1, most - least);\n\n  // Cents as a whole number, so the figure can never round to \".100\".\n  const cents = Math.round(useCountUp(value, { instant: reduced }) * 100);\n  const whole = Math.floor(cents / 100).toLocaleString('en-US');\n  const part = String(cents % 100).padStart(2, '0');\n\n  return (\n    <View style={[styles.card, style]}>\n      <View\n        accessible\n        accessibilityLabel={`${months[picked]?.label}: ${currency}${money(value)}, ${delta.sign}${delta.amount}`}\n        style={styles.head}\n      >\n        <Svg width={16} height={16} viewBox=\"0 0 24 24\">\n          <Path\n            d=\"M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2H3V6Zm0 5h18v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7Zm3 4v2h5v-2H6Z\"\n            fill={colors.highlight}\n            fillRule=\"evenodd\"\n          />\n        </Svg>\n        <Text\n          numberOfLines={1}\n          style={{\n            color: colors.highlight,\n            fontSize: font.size.md,\n            fontWeight: font.weight.semibold,\n            fontVariant: ['tabular-nums'],\n          }}\n        >\n          {currency} {whole}\n          <Text style={{ color: MUTED }}>.{part}</Text>\n        </Text>\n        <Text\n          numberOfLines={1}\n          style={{ color: DELTA, fontSize: font.size.xs, fontWeight: font.weight.semibold }}\n        >\n          {delta.sign}\n          {delta.amount}\n        </Text>\n      </View>\n\n      <View style={styles.bars}>\n        {months.map((month, i) => (\n          <Column\n            key={month.label}\n            month={month}\n            index={i}\n            share={FLOOR + (1 - FLOOR) * ((month.value - least) / range)}\n            picked={i === picked}\n            onPress={() => {\n              haptic('tick');\n              setPicked(i);\n              onSelect?.(i);\n            }}\n          />\n        ))}\n      </View>\n    </View>\n  );\n}\n\nfunction Column({\n  month,\n  index,\n  share,\n  picked,\n  onPress,\n}: {\n  month: MonthBar;\n  index: number;\n  share: number;\n  picked: boolean;\n  onPress: () => void;\n}) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const height = share * CHART;\n  const grown = useSharedValue(reduced ? height : 0);\n  useEffect(() => {\n    grown.set(reduced ? height : withDelay(index * 55, withSpring(height, spring('smooth'))));\n  }, [index, height, reduced, grown]);\n  const rise = useAnimatedStyle(() => ({ height: Math.max(0, grown.get()) }));\n\n  return (\n    <Pressable\n      accessibilityRole=\"button\"\n      accessibilityState={{ selected: picked }}\n      accessibilityLabel={`${month.label}, ${month.value}`}\n      onPress={onPress}\n      style={styles.column}\n    >\n      <View style={styles.plot}>\n        <Animated.View style={[styles.bar, gradient(picked ? PICKED : BAR), rise]} />\n      </View>\n      <Text\n        style={{\n          color: picked ? colors.highlight : MUTED,\n          fontSize: font.size.xs - 2,\n          fontWeight: picked ? font.weight.bold : font.weight.regular,\n        }}\n      >\n        {month.label}\n      </Text>\n    </Pressable>\n  );\n}\n\nconst MUTED = 'hsl(0, 0%, 60%)';\nconst DELTA = 'hsl(354, 90%, 66%)';\nconst BAR = 'linear-gradient(180deg, hsl(0, 0%, 30%) 0%, hsl(0, 0%, 10%) 100%)';\nconst PICKED = 'linear-gradient(180deg, hsl(172, 72%, 56%) 0%, hsl(176, 70%, 18%) 100%)';\n\nconst styles = StyleSheet.create({\n  card: {\n    width: '100%',\n    maxWidth: 320,\n    alignSelf: 'center',\n    borderRadius: 24,\n    borderWidth: 1,\n    borderColor: 'hsla(0, 0%, 100%, 0.08)',\n    backgroundColor: 'hsl(0, 0%, 5%)',\n    padding: 16,\n    gap: 10,\n  },\n  head: { flexDirection: 'row', alignItems: 'center', gap: 6 },\n  bars: { flexDirection: 'row', gap: 3 },\n  column: { flex: 1, alignItems: 'center', gap: 4, minHeight: 44 },\n  plot: { height: CHART, alignSelf: 'stretch', justifyContent: 'flex-end' },\n  bar: {\n    borderTopLeftRadius: 3,\n    borderTopRightRadius: 3,\n    borderTopWidth: 1.5,\n    borderTopColor: 'hsla(0, 0%, 100%, 0.36)',\n  },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "Bars use short UI-thread springs on arrival; the figure re-renders only while it counts. Nothing animates at rest.",
+      "measurements": [
+        {
+          "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+          "kind": "device",
+          "date": "2026-11-02",
+          "build": "release",
+          "frameMs": 11,
+          "p90Ms": 13,
+          "jankyPercent": 0,
+          "atRest": "idle",
+          "memoryMb": 117
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Bars appear in place and the figure changes without counting.",
+      "screenReader": "The figure reads as one line (\"OCT: $2,316.30, +129.11\") and each month as a button with its selected state.",
+      "touchTarget": "Each month is the full column, at least 44 pt tall."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { MonthBars } from '@/components/kinetik/month-bars';\n\n<MonthBars\n  months={[\n    { label: 'MAY', value: 1840.5 },\n    { label: 'JUN', value: 2410.2 },\n    { label: 'JUL', value: 1975.75 },\n    { label: 'AUG', value: 2120 },\n    { label: 'SEP', value: 2187.19 },\n    { label: 'OCT', value: 2316.3 },\n  ]}\n/>;\n```\n\n## When to use\n\n- Monthly totals in a banking or budgeting app.\n- Six or so periods where each one can be tapped.\n\n## When not to use\n\n- More than about eight months: targets get too narrow.\n- Precise comparisons, as bars start from a raised floor. Use Bar Chart.\n\n## Notes\n\n- Bars are scaled from a raised floor, so small changes are easy to see.\n- The last month starts selected.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add month-bars`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

@@ -1364,6 +1364,64 @@
       }
     },
     {
+      "name": "compass-arc",
+      "type": "registry:item",
+      "title": "Compass Arc",
+      "description": "A compass bezel rises from the bottom edge: the dial turns under a red pointer the short way round.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "@shopify/react-native-skia",
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/compass-arc.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/compass-arc.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "The dial is a still canvas turned as a view on a UI-thread spring, so it does not redraw. Nothing animates at rest.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 12,
+              "p90Ms": 15,
+              "jankyPercent": 6.03,
+              "atRest": "idle",
+              "memoryMb": 124
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The dial jumps to the heading.",
+          "screenReader": "One label (\"Heading 320 degrees NW, 23 M\").",
+          "touchTarget": "Not interactive."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
       "name": "confetti-burst",
       "type": "registry:item",
       "title": "Confetti Burst",
@@ -2072,6 +2130,64 @@
           "reducedMotion": "No drift and no lean. The row still scrolls by dragging.",
           "screenReader": "Each item is read once; the copies that fill the loop are hidden.",
           "touchTarget": "The whole row is the drag area."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "dual-clock",
+      "type": "registry:item",
+      "title": "Dual Clock",
+      "description": "Two world clocks side by side, one light and one dark, their hands running on the UI thread.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "@shopify/react-native-skia",
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/dual-clock.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/dual-clock.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "Hands are views on continuous UI-thread timings, so the clocks animate at rest with no re-render. One timer per minute keeps the spoken time current.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 22,
+              "p90Ms": 24,
+              "jankyPercent": 99.93,
+              "atRest": "animating",
+              "memoryMb": 126
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The second hand is removed and the other hands move once a minute.",
+          "screenReader": "One label with both times (\"TYO 21:04, RIO 09:04\").",
+          "touchTarget": "Not interactive."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }
@@ -2967,6 +3083,65 @@
       }
     },
     {
+      "name": "glow-columns",
+      "type": "registry:item",
+      "title": "Glow Columns",
+      "description": "An index through the day: thin stems grow under bright caps in turn, low periods sitting as green dots.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-svg",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-count.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/glow-columns.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/glow-columns.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "Stems and caps use short UI-thread springs on arrival. Nothing animates at rest.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 34,
+              "p90Ms": 40,
+              "jankyPercent": 100,
+              "atRest": "idle",
+              "memoryMb": 124
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "Columns appear in place and the number does not count.",
+          "screenReader": "One label (\"UVI 6, MODERATE\").",
+          "touchTarget": "Not interactive."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
       "name": "gradient-slider",
       "type": "registry:item",
       "title": "Gradient Slider",
@@ -3515,6 +3690,64 @@
       }
     },
     {
+      "name": "level-steps",
+      "type": "registry:item",
+      "title": "Level Steps",
+      "description": "A reading on a rising staircase: steps grow in turn and a bright marker slides to the value.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-count.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/level-steps.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/level-steps.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "Steps and marker use short UI-thread springs on arrival and on change. Nothing animates at rest.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 13,
+              "p90Ms": 18,
+              "jankyPercent": 18.2,
+              "atRest": "idle",
+              "memoryMb": 112
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "Steps and marker appear in place and the number does not count.",
+          "screenReader": "One label (\"AEROBIC SCORE 47.8, STRONG\").",
+          "touchTarget": "Not interactive."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
       "name": "lift-menu",
       "type": "registry:item",
       "title": "Lift Menu",
@@ -3933,6 +4166,66 @@
       }
     },
     {
+      "name": "month-bars",
+      "type": "registry:item",
+      "title": "Month Bars",
+      "description": "Spending by month: bars rise in turn, the picked month lights teal and the figure counts to it.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-svg",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-haptics.json",
+        "https://kinetik-ui.dev/r/kinetik-count.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/month-bars.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/month-bars.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "Bars use short UI-thread springs on arrival; the figure re-renders only while it counts. Nothing animates at rest.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 11,
+              "p90Ms": 13,
+              "jankyPercent": 0,
+              "atRest": "idle",
+              "memoryMb": 117
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "Bars appear in place and the figure changes without counting.",
+          "screenReader": "The figure reads as one line (\"OCT: $2,316.30, +129.11\") and each month as a button with its selected state.",
+          "touchTarget": "Each month is the full column, at least 44 pt tall."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
       "name": "month-calendar",
       "type": "registry:item",
       "title": "Month Calendar",
@@ -3988,6 +4281,65 @@
           "reducedMotion": "The disc jumps to the new day and months change in place.",
           "screenReader": "A header with the month, Previous and Next buttons, and a button for every day that reads its full date and selected state.",
           "touchTarget": "Day cells are 44 pt tall and a seventh of the width; the arrows are 44 pt."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "moon-phases",
+      "type": "registry:item",
+      "title": "Moon Phases",
+      "description": "The moon this week: discs pop in around tonight's, which swells in the middle with a soft halo.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "@shopify/react-native-skia",
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-count.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/moon-phases.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/moon-phases.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "One Skia canvas with prebuilt paths. Discs scale on UI-thread springs on arrival and on change. Nothing animates at rest.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 10,
+              "p90Ms": 14,
+              "jankyPercent": 2.16,
+              "atRest": "idle",
+              "memoryMb": 120
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "Discs appear in place, tonight does not bounce and the percentage does not count.",
+          "screenReader": "One label (\"Waning Gibbous, 95% lit. Next full moon in 27 days\").",
+          "touchTarget": "Not interactive."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }
@@ -4346,6 +4698,126 @@
         "a11y": {
           "reducedMotion": "Digits change in place without rolling; no column transitions.",
           "screenReader": "Exposed as one text element with the formatted value. Set `announce` to read changes aloud (live region).",
+          "touchTarget": "Not interactive."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "orbit-radar",
+      "type": "registry:item",
+      "title": "Orbit Radar",
+      "description": "A radar dish rises from the edge: a beam sweeps round and a small craft climbs the rim as minutes count.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "@shopify/react-native-skia",
+        "react-native-reanimated",
+        "react-native-svg",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-count.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/orbit-radar.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/orbit-radar.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "The beam and craft are still canvases and views turned on the UI thread, so the beam animates at rest without redrawing.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 13,
+              "p90Ms": 16,
+              "jankyPercent": 7.29,
+              "atRest": "animating",
+              "memoryMb": 121
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The beam holds still, the craft jumps to its place and the minutes do not count.",
+          "screenReader": "One label (\"LUNA-2. ARRIVES in 23 minutes\").",
+          "touchTarget": "Not interactive."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "order-stages",
+      "type": "registry:item",
+      "title": "Order Stages",
+      "description": "An order on its way: a glowing track runs to a knob showing the stage under way, chips for what comes next.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-svg",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-haptics.json",
+        "https://kinetik-ui.dev/r/kinetik-count.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/order-stages.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/order-stages.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "Knob and track use UI-thread springs on change. A sheen loops along the track as one view, so it animates at rest.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 17,
+              "p90Ms": 19,
+              "jankyPercent": 74.69,
+              "atRest": "animating",
+              "memoryMb": 121
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The knob jumps to its place, does not swell, the sheen stops and the minutes do not count.",
+          "screenReader": "One progress bar (\"21 minutes left. COOKING. Nº 27\") with the stage number.",
           "touchTarget": "Not interactive."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
@@ -5122,6 +5594,65 @@
       }
     },
     {
+      "name": "pulse-range",
+      "type": "registry:item",
+      "title": "Pulse Range",
+      "description": "The day's heart rate as a glowing range: a capsule slides to the latest reading, its heart beating at that rate.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-svg",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-count.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/pulse-range.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/pulse-range.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "The capsule moves on a UI-thread spring on change. The heart is one view on a UI-thread loop, so it animates at rest.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 15,
+              "p90Ms": 22,
+              "jankyPercent": 33.74,
+              "atRest": "animating",
+              "memoryMb": 125
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The capsule jumps to its place, the heart holds still and the number does not count.",
+          "screenReader": "One label (\"Heart rate 112 beats per minute. TODAY average 74, low 52, high 168. JUST NOW.\").",
+          "touchTarget": "Not interactive."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
       "name": "pulse-toggle",
       "type": "registry:item",
       "title": "Pulse Toggle",
@@ -5297,6 +5828,64 @@
           "reducedMotion": "Shapes appear at their values; new values replace the old without morphing.",
           "screenReader": "The chart reads as an image listing every series by axis; legend chips are switches.",
           "touchTarget": "Legend chips are at least 44 pt tall."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "rain-bars",
+      "type": "registry:item",
+      "title": "Rain Bars",
+      "description": "A short rain forecast: bars hang from a band and reach down in turn while a few drops keep falling.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-svg",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/rain-bars.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/rain-bars.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "Bars use short UI-thread springs on arrival. Five small drop views loop on the UI thread, so it animates at rest.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 17,
+              "p90Ms": 18,
+              "jankyPercent": 75.19,
+              "atRest": "animating",
+              "memoryMb": 119
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "Bars appear in place and no drops fall.",
+          "screenReader": "One label (\"Steady Rain, 19 MM expected\").",
+          "touchTarget": "Not interactive."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }
@@ -7220,6 +7809,65 @@
       }
     },
     {
+      "name": "steps-bar",
+      "type": "registry:item",
+      "title": "Steps Bar",
+      "description": "Steps towards a goal: the bar fills from olive to green as a small walker strides along its front.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-svg",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-count.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/steps-bar.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/steps-bar.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "The bar moves on a UI-thread spring on change. The walker is one view on a UI-thread loop until the goal, so it animates at rest.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 12,
+              "p90Ms": 15,
+              "jankyPercent": 8.18,
+              "atRest": "animating",
+              "memoryMb": 123
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The bar jumps to its place, the walker holds still and the count does not climb.",
+          "screenReader": "One progress bar (\"6,317 STEPS, 4.2 KM, 9 FLOORS\").",
+          "touchTarget": "Not interactive."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
       "name": "story-card",
       "type": "registry:item",
       "title": "Story Card",
@@ -7640,6 +8288,66 @@
       }
     },
     {
+      "name": "tide-wave",
+      "type": "registry:item",
+      "title": "Tide Wave",
+      "description": "The day's tide as a soft blue swell: the water draws in, drop lines mark highs and lows, and a dot glows at now.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "@shopify/react-native-skia",
+        "react-native-reanimated",
+        "react-native-svg",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-count.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/tide-wave.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/tide-wave.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "One Skia canvas drawn on arrival and on change. The halo at now is one view on a UI-thread loop, so it animates at rest.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 12,
+              "p90Ms": 16,
+              "jankyPercent": 8.95,
+              "atRest": "animating",
+              "memoryMb": 140
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The swell appears whole, the dot jumps to its place and the halo holds still.",
+          "screenReader": "One label (\"Tide 4.8 feet and falling\").",
+          "touchTarget": "Not interactive."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
       "name": "tilt-deck",
       "type": "registry:item",
       "title": "Tilt Deck",
@@ -7872,6 +8580,64 @@
           "reducedMotion": "Every event is in place from the start.",
           "screenReader": "Each event is one element that reads its time, title, description and whether it is happening now or coming up.",
           "touchTarget": "Not interactive itself; content passed as children keeps its own targets."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "timer-frame",
+      "type": "registry:item",
+      "title": "Timer Frame",
+      "description": "A countdown drawn around the card's edge: an orange frame drains clockwise as a small comet circles.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "@shopify/react-native-skia",
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/timer-frame.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/timer-frame.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "The frame drains in one continuous UI-thread timing and the comet is one turning view, so it animates while running. The time re-renders once a second.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 13,
+              "p90Ms": 17,
+              "jankyPercent": 11.71,
+              "atRest": "animating",
+              "memoryMb": 132
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The frame steps with the clock and the comet holds still.",
+          "screenReader": "One timer (\"3:37 left\", or \"3:37 left, paused\").",
+          "touchTarget": "Not interactive."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }
@@ -8168,6 +8934,66 @@
           "reducedMotion": "Levels change in place, without the zoom.",
           "screenReader": "Every tile reads its label, size and share; groups are buttons that say they have parts. The trail above has a Back to button for each level.",
           "touchTarget": "Tiles are as big as their share; the trail's buttons are 44 pt tall. Keep small slices out of a tap-only flow."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "trip-glance",
+      "type": "registry:item",
+      "title": "Trip Glance",
+      "description": "A plane flies along a line that curves down to its destination, a white trail behind and green ahead.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "@shopify/react-native-skia",
+        "react-native-reanimated",
+        "react-native-svg",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-count.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/trip-glance.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/trip-glance.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "The plane and trail run on one UI-thread spring when progress changes. One small view ripples at the destination until arrival.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 19,
+              "p90Ms": 24,
+              "jankyPercent": 51.44,
+              "atRest": "animating",
+              "memoryMb": 130
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The plane jumps to its place, the time does not count and the destination does not ripple.",
+          "screenReader": "One progress bar (\"KN81 to OSL. 2 hours 56 minutes left. Landing early. 2 bags\").",
+          "touchTarget": "Not interactive."
         },
         "requires": "React Native New Architecture (Reanimated 4)"
       }
@@ -8587,6 +9413,64 @@
       }
     },
     {
+      "name": "week-capsules",
+      "type": "registry:item",
+      "title": "Week Capsules",
+      "description": "A week of minutes: capsules fill in turn, glowing at the goal, and today's breathes inside a ring.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-count.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/week-capsules.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/week-capsules.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "Capsules use short UI-thread springs on arrival. Today's ring breathes as one view, so it animates at rest.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 18,
+              "p90Ms": 20,
+              "jankyPercent": 78.11,
+              "atRest": "animating",
+              "memoryMb": 125
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "Capsules appear filled, the ring holds still and the number does not count.",
+          "screenReader": "One label (\"Today 19 of 30 MIN. Average 31\").",
+          "touchTarget": "Not interactive."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
       "name": "word-cascade",
       "type": "registry:item",
       "title": "Word Cascade",
@@ -8698,6 +9582,65 @@
         "a11y": {
           "reducedMotion": "Words crossfade in place; the gap still resizes.",
           "screenReader": "Reads the whole line once, with every word in turn, instead of announcing each change.",
+          "touchTarget": "Not interactive."
+        },
+        "requires": "React Native New Architecture (Reanimated 4)"
+      }
+    },
+    {
+      "name": "zone-arc",
+      "type": "registry:item",
+      "title": "Zone Arc",
+      "description": "A reading on a half dial of coloured zones: zones sweep in, a marker swings over and its zone lights up.",
+      "categories": [
+        "data"
+      ],
+      "dependencies": [
+        "@shopify/react-native-skia",
+        "react-native-reanimated",
+        "react-native-worklets"
+      ],
+      "registryDependencies": [
+        "https://kinetik-ui.dev/r/kinetik-tokens.json",
+        "https://kinetik-ui.dev/r/kinetik-motion.json",
+        "https://kinetik-ui.dev/r/kinetik-count.json"
+      ],
+      "files": [
+        {
+          "path": "src/components/kinetik/zone-arc.tsx",
+          "type": "registry:file",
+          "target": "~/components/kinetik/zone-arc.tsx"
+        }
+      ],
+      "meta": {
+        "version": "1.0.0",
+        "kind": "component",
+        "platforms": [
+          "ios",
+          "android",
+          "web"
+        ],
+        "category": "data",
+        "web": "live",
+        "perf": {
+          "budget": "One Skia canvas. The sweep and marker run on the UI thread on arrival and on change. Nothing animates at rest.",
+          "measurements": [
+            {
+              "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+              "kind": "device",
+              "date": "2026-11-02",
+              "build": "release",
+              "frameMs": 12,
+              "p90Ms": 18,
+              "jankyPercent": 15.31,
+              "atRest": "idle",
+              "memoryMb": 126
+            }
+          ]
+        },
+        "a11y": {
+          "reducedMotion": "The dial appears whole, the marker jumps to its place and the number does not count.",
+          "screenReader": "One label (\"86 AQI, zone 2 of 4, 4 min ago\").",
           "touchTarget": "Not interactive."
         },
         "requires": "React Native New Architecture (Reanimated 4)"

@@ -1,0 +1,31 @@
+## Usage
+
+```tsx
+import { MonthBars } from '@/components/kinetik/month-bars';
+
+<MonthBars
+  months={[
+    { label: 'MAY', value: 1840.5 },
+    { label: 'JUN', value: 2410.2 },
+    { label: 'JUL', value: 1975.75 },
+    { label: 'AUG', value: 2120 },
+    { label: 'SEP', value: 2187.19 },
+    { label: 'OCT', value: 2316.3 },
+  ]}
+/>;
+```
+
+## When to use
+
+- Monthly totals in a banking or budgeting app.
+- Six or so periods where each one can be tapped.
+
+## When not to use
+
+- More than about eight months: targets get too narrow.
+- Precise comparisons, as bars start from a raised floor. Use Bar Chart.
+
+## Notes
+
+- Bars are scaled from a raised floor, so small changes are easy to see.
+- The last month starts selected.

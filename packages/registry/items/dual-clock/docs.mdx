@@ -1,0 +1,28 @@
+## Usage
+
+```tsx
+import { DualClock } from '@/components/kinetik/dual-clock';
+
+<DualClock
+  zones={[
+    { code: 'TYO', offset: 9, face: 'day' },
+    { code: 'RIO', offset: -3, face: 'night' },
+  ]}
+/>;
+```
+
+## When to use
+
+- Teams and travellers who watch two time zones.
+- A clock widget on a dashboard.
+
+## When not to use
+
+- More than two zones. Use a list.
+- Places with daylight saving, unless you update `offset` yourself.
+
+## Notes
+
+- `offset` is hours from UTC, so daylight saving is yours to handle.
+- Pass `time` to show a fixed moment. The clocks then hold still.
+- Each face follows the hour unless you set `face`.

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "rain-bars",
+  "type": "registry:item",
+  "title": "Rain Bars",
+  "description": "A short rain forecast: bars hang from a band and reach down in turn while a few drops keep falling.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "react-native-reanimated",
+    "react-native-svg",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/rain-bars.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/rain-bars.tsx",
+      "content": "import { useEffect, useState } from 'react';\nimport { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  useAnimatedStyle,\n  useSharedValue,\n  withDelay,\n  withRepeat,\n  withSpring,\n  withTiming,\n} from 'react-native-reanimated';\nimport Svg, { Path } from 'react-native-svg';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { easings, spring } from '../../lib/kinetik/motion/motion';\nimport { gradient } from '../../lib/kinetik/tokens/gradient';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type RainBarsProps = {\n  /** Heading, e.g. \"Steady Rain\". */\n  title: string;\n  /** Total in the corner, e.g. 19. */\n  total: number;\n  /** Unit after the total. Defaults to \"MM\". */\n  unit?: string;\n  /** Rain in each period, oldest first. The first bar is now. */\n  amounts: number[];\n  /** Time labels spread under the bars, e.g. [\"NOW\", \"12:30\", \"13:00\"]. */\n  times: string[];\n  style?: StyleProp<ViewStyle>;\n};\n\nconst CHART = 56;\nconst MIN_BAR = 6;\nconst DROPS = [0.12, 0.3, 0.46, 0.63, 0.82];\n\n/** Bar lengths in points: rain scaled to the wettest period, with a floor so dry spells show. */\nexport function barLengths(amounts: number[], chart: number): number[] {\n  const most = Math.max(...amounts, 0.001);\n  return amounts.map((a) => Math.max(MIN_BAR, (Math.max(0, a) / most) * chart));\n}\n\n/**\n * A short rain forecast: bars hang from a bright band like a curtain, reaching\n * down in turn from now onwards, while a few drops keep falling across them.\n */\nexport function RainBars({ title, total, unit = 'MM', amounts, times, style }: RainBarsProps) {\n  const { colors, font } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const [width, setWidth] = useState(0);\n  const lengths = barLengths(amounts, CHART);\n\n  return (\n    <View\n      accessible\n      accessibilityLabel={`${title}, ${total} ${unit} expected`}\n      style={[styles.card, style]}\n    >\n      <View style={styles.head}>\n        <Svg width={18} height={18} viewBox=\"0 0 24 24\">\n          <Path\n            d=\"M7 15a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 7.1 4 4 0 0 1 17.5 15Z\"\n            fill={colors.highlight}\n          />\n          <Path\n            d=\"M8 18l-1 3M12.5 18l-1 3M17 18l-1 3\"\n            stroke={TEAL}\n            strokeWidth={2}\n            strokeLinecap=\"round\"\n          />\n        </Svg>\n        <Text\n          numberOfLines={1}\n          style={[\n            styles.grow,\n            { color: TEAL, fontSize: font.size.sm, fontWeight: font.weight.semibold },\n          ]}\n        >\n          {title}\n        </Text>\n        <Text\n          style={{\n            color: colors.highlight,\n            fontSize: font.size.md,\n            fontWeight: font.weight.semibold,\n          }}\n        >\n          {total}\n          <Text style={{ fontSize: font.size.xs - 2 }}> {unit}</Text>\n        </Text>\n      </View>\n\n      <View\n        testID=\"rain-bars-chart\"\n        style={[styles.chart, gradient(BAND)]}\n        onLayout={(e) => setWidth(e.nativeEvent.layout.width)}\n      >\n        <View style={styles.bars}>\n          {lengths.map((length, i) => (\n            <Bar key={i} index={i} length={length} now={i === 0} />\n          ))}\n        </View>\n        {width > 0 && !reduced\n          ? DROPS.map((x, i) => <Drop key={x} left={x * width} delay={i * 260} />)\n          : null}\n      </View>\n\n      <View style={styles.times}>\n        {times.map((time, i) => (\n          <Text\n            key={time}\n            style={{\n              color: i === 0 ? colors.highlight : MUTED,\n              fontSize: font.size.xs - 1,\n              fontWeight: i === 0 ? font.weight.bold : font.weight.regular,\n            }}\n          >\n            {time}\n          </Text>\n        ))}\n      </View>\n    </View>\n  );\n}\n\nfunction Bar({ index, length, now }: { index: number; length: number; now: boolean }) {\n  const reduced = useReduceMotion();\n  const grown = useSharedValue(reduced ? length : 0);\n  useEffect(() => {\n    grown.set(reduced ? length : withDelay(index * 18, withSpring(length, spring('smooth'))));\n  }, [index, length, reduced, grown]);\n  const reach = useAnimatedStyle(() => ({ height: Math.max(0, grown.get()) }));\n  return <Animated.View style={[styles.bar, gradient(now ? NOW_BAR : RAIN_BAR), reach]} />;\n}\n\n/** One falling drop: a looped view, so it costs no re-render. */\nfunction Drop({ left, delay }: { left: number; delay: number }) {\n  const t = useSharedValue(0);\n  useEffect(() => {\n    t.set(\n      withDelay(\n        delay,\n        withRepeat(withTiming(1, { duration: 1100, easing: easings.exit }), -1, false),\n      ),\n    );\n  }, [delay, t]);\n  const fall = useAnimatedStyle(() => ({\n    opacity: Math.sin(t.get() * Math.PI) * 0.9,\n    transform: [{ translateY: t.get() * CHART }],\n  }));\n  return <Animated.View pointerEvents=\"none\" style={[styles.drop, { left }, fall]} />;\n}\n\nconst MUTED = 'hsl(190, 8%, 60%)';\nconst TEAL = 'hsl(186, 72%, 62%)';\nconst BAND = 'linear-gradient(180deg, hsla(188, 60%, 26%, 0.34) 0%, hsla(188, 60%, 12%, 0) 100%)';\nconst RAIN_BAR = 'linear-gradient(180deg, hsl(186, 84%, 66%) 0%, hsla(190, 80%, 40%, 0.16) 100%)';\nconst NOW_BAR = 'linear-gradient(180deg, hsl(0, 0%, 100%) 0%, hsla(0, 0%, 100%, 0.24) 100%)';\n\nconst styles = StyleSheet.create({\n  card: {\n    width: '100%',\n    maxWidth: 320,\n    alignSelf: 'center',\n    borderRadius: 24,\n    borderWidth: 1,\n    borderColor: 'hsla(0, 0%, 100%, 0.08)',\n    backgroundColor: 'hsl(190, 14%, 5%)',\n    padding: 16,\n    gap: 8,\n  },\n  head: { flexDirection: 'row', alignItems: 'center', gap: 6 },\n  grow: { flex: 1 },\n  chart: { height: CHART, overflow: 'hidden', borderRadius: 4 },\n  bars: { flexDirection: 'row', alignItems: 'flex-start', gap: 2.5, flex: 1 },\n  bar: { flex: 1, borderBottomLeftRadius: 2, borderBottomRightRadius: 2 },\n  drop: {\n    position: 'absolute',\n    top: 0,\n    width: 1.5,\n    height: 9,\n    borderRadius: 1,\n    backgroundColor: 'hsl(190, 90%, 88%)',\n  },\n  times: { flexDirection: 'row', justifyContent: 'space-between' },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "Bars use short UI-thread springs on arrival. Five small drop views loop on the UI thread, so it animates at rest.",
+      "measurements": [
+        {
+          "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+          "kind": "device",
+          "date": "2026-11-02",
+          "build": "release",
+          "frameMs": 17,
+          "p90Ms": 18,
+          "jankyPercent": 75.19,
+          "atRest": "animating",
+          "memoryMb": 119
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "Bars appear in place and no drops fall.",
+      "screenReader": "One label (\"Steady Rain, 19 MM expected\").",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { RainBars } from '@/components/kinetik/rain-bars';\n\n<RainBars\n  title=\"Steady Rain\"\n  total={19}\n  amounts={[3, 5, 8, 6, 9, 12, 16, 11, 7, 10, 14, 18, 15, 9, 6, 8, 12, 17, 13, 8, 5, 7, 4, 3]}\n  times={['NOW', '12:30', '13:00', '13:30']}\n/>;\n```\n\n## When to use\n\n- The next hour or two of rain in a weather app.\n- Any short forecast where the shape over time matters.\n\n## When not to use\n\n- Long forecasts: the bars get too thin past about 40.\n- Exact amounts per period. There is no scale.\n\n## Notes\n\n- The first bar is now and is drawn in white.\n- Times are spread evenly under the bars.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add rain-bars`: it installs dependencies with expo install, so versions match your Expo SDK."
+}

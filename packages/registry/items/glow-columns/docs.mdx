@@ -1,0 +1,29 @@
+## Usage
+
+```tsx
+import { GlowColumns } from '@/components/kinetik/glow-columns';
+
+<GlowColumns
+  values={[0, 0, 1, 2, 4, 6, 7, 8, 8, 7, 5, 3, 2, 1, 1, 0, 0, 0]}
+  current={5}
+  max={10}
+  level="MODERATE"
+  name="UVI"
+  labels={['12', '14', '16', '18', '20', '22']}
+/>;
+```
+
+## When to use
+
+- Sun, pollen or air index through a day.
+- Any level where low, medium and high carry the meaning.
+
+## When not to use
+
+- Exact values per period: only the current one is written out.
+- Colour alone cannot carry the meaning: keep `level` on.
+
+## Notes
+
+- Below 30% of the scale is green, below 70% yellow, and orange above.
+- `current` sets the big number and brightens that column's rail.

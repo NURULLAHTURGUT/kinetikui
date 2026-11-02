@@ -41,6 +41,22 @@ export function navOrder() {
 
 /** Shown first in the gallery: the newest and most eye-catching pieces. */
 const FEATURED = [
+  'trip-glance',
+  'level-steps',
+  'moon-phases',
+  'rain-bars',
+  'orbit-radar',
+  'dual-clock',
+  'order-stages',
+  'month-bars',
+  'week-capsules',
+  'pulse-range',
+  'zone-arc',
+  'timer-frame',
+  'compass-arc',
+  'glow-columns',
+  'tide-wave',
+  'steps-bar',
   'route-card',
   'balance-stack',
   'dot-board',

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "timer-frame",
+  "type": "registry:item",
+  "title": "Timer Frame",
+  "description": "A countdown drawn around the card's edge: an orange frame drains clockwise as a small comet circles.",
+  "categories": [
+    "data"
+  ],
+  "dependencies": [
+    "@shopify/react-native-skia",
+    "react-native-reanimated",
+    "react-native-worklets"
+  ],
+  "registryDependencies": [
+    "https://kinetik-ui.dev/r/kinetik-tokens.json",
+    "https://kinetik-ui.dev/r/kinetik-motion.json"
+  ],
+  "files": [
+    {
+      "path": "src/components/kinetik/timer-frame.tsx",
+      "type": "registry:file",
+      "target": "~/components/kinetik/timer-frame.tsx",
+      "content": "import { Canvas, Circle, Path, Skia, SweepGradient, vec } from '@shopify/react-native-skia';\nimport { useEffect, useMemo, useRef, useState } from 'react';\nimport { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';\nimport Animated, {\n  cancelAnimation,\n  useAnimatedStyle,\n  useSharedValue,\n  withRepeat,\n  withTiming,\n} from 'react-native-reanimated';\n\nimport { useReduceMotion } from '../../lib/kinetik/hooks/use-reduce-motion';\nimport { easings } from '../../lib/kinetik/motion/motion';\nimport { useKinetikTheme } from '../../lib/kinetik/tokens/theme';\n\nexport type TimerFrameProps = {\n  /** Full length of the timer in seconds. */\n  total: number;\n  /** Seconds left when it starts. Defaults to `total`. */\n  start?: number;\n  /** Run or hold. Defaults to true. */\n  running?: boolean;\n  /** Label in the pill, e.g. \"BREW\". Defaults to the length in minutes. */\n  label?: string;\n  /** Called once when the time runs out. */\n  onDone?: () => void;\n  style?: StyleProp<ViewStyle>;\n};\n\nconst H = 104;\nconst RING = 8;\nconst CORNER = 26;\nconst COMET_R = 15;\nconst COMET_C = COMET_R + 6;\n/** Degrees of tail behind the head, which sits at the top of the orbit. */\nconst TAIL_SWEEP = 270;\nconst COMET_BOX = {\n  x: COMET_C - COMET_R,\n  y: COMET_C - COMET_R,\n  width: COMET_R * 2,\n  height: COMET_R * 2,\n};\nconst ORBIT_PATH = Skia.PathBuilder.Make().addCircle(COMET_C, COMET_C, COMET_R).detach();\nconst TAIL_PATH = Skia.PathBuilder.Make().addArc(COMET_BOX, 0, TAIL_SWEEP).detach();\n\n/** Seconds as \"3:37\". */\nexport function clockLabel(seconds: number): string {\n  const whole = Math.max(0, Math.ceil(seconds));\n  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;\n}\n\n/** A rounded rectangle traced clockwise from the middle of its top edge. */\nexport function framePath(width: number, height: number, inset: number, corner: number): string {\n  const l = inset;\n  const t = inset;\n  const r = width - inset;\n  const b = height - inset;\n  const c = corner;\n  return (\n    `M${width / 2} ${t}H${r - c}A${c} ${c} 0 0 1 ${r} ${t + c}V${b - c}` +\n    `A${c} ${c} 0 0 1 ${r - c} ${b}H${l + c}A${c} ${c} 0 0 1 ${l} ${b - c}` +\n    `V${t + c}A${c} ${c} 0 0 1 ${l + c} ${t}H${width / 2}`\n  );\n}\n\n/**\n * A countdown drawn around the card's edge: a thick orange frame drains clockwise\n * in one continuous UI-thread animation, and a small comet circles beside the time\n * while it runs.\n */\nexport function TimerFrame({\n  total,\n  start,\n  running = true,\n  label,\n  onDone,\n  style,\n}: TimerFrameProps) {\n  const { colors, font, radius } = useKinetikTheme();\n  const reduced = useReduceMotion();\n  const [width, setWidth] = useState(0);\n  const [left, setLeft] = useState(start ?? total);\n  const active = running && left > 0;\n\n  const done = useRef(onDone);\n  useEffect(() => {\n    done.current = onDone;\n  }, [onDone]);\n\n  useEffect(() => {\n    if (!active) return;\n    const id = setInterval(() => {\n      setLeft((s) => {\n        const next = Math.max(0, s - 1);\n        if (next === 0 && s > 0) done.current?.();\n        return next;\n      });\n    }, 1000);\n    return () => clearInterval(id);\n  }, [active]);\n\n  const share = total > 0 ? left / total : 0;\n  const drain = useSharedValue(share);\n  const spin = useSharedValue(0);\n\n  // The frame runs off the UI thread, so a held timer stops it and a resumed one\n  // sets off again from wherever the time really is.\n  useEffect(() => {\n    if (reduced) return;\n    if (active) {\n      drain.set(share);\n      drain.set(withTiming(0, { duration: left * 1000, easing: easings.linear }));\n    } else {\n      cancelAnimation(drain);\n      drain.set(share);\n    }\n    // eslint-disable-next-line react-hooks/exhaustive-deps -- only a run or a hold restarts it.\n  }, [active, reduced, drain]);\n\n  // Without motion the frame steps with the clock instead.\n  useEffect(() => {\n    if (reduced) drain.set(share);\n  }, [reduced, share, drain]);\n\n  useEffect(() => {\n    if (active && !reduced) {\n      spin.set(0);\n      spin.set(withRepeat(withTiming(360, { duration: 2400, easing: easings.linear }), -1, false));\n    } else {\n      cancelAnimation(spin);\n    }\n  }, [active, reduced, spin]);\n\n  const comet = useAnimatedStyle(() => ({ transform: [{ rotate: `${spin.get()}deg` }] }));\n\n  const frame = useMemo(\n    () =>\n      width > 0 ? Skia.Path.MakeFromSVGString(framePath(width, H, RING / 2 + 1, CORNER)) : null,\n    [width],\n  );\n\n  return (\n    <View\n      accessible\n      accessibilityRole=\"timer\"\n      accessibilityLabel={`${clockLabel(left)} left${active ? '' : ', paused'}`}\n      testID=\"timer-frame\"\n      onLayout={(e) => setWidth(e.nativeEvent.layout.width)}\n      style={[styles.card, style]}\n    >\n      {frame ? (\n        <Canvas style={{ ...styles.canvas, width }} pointerEvents=\"none\">\n          <Path path={frame} style=\"stroke\" strokeWidth={RING} color={TRACK} />\n          <Path\n            path={frame}\n            style=\"stroke\"\n            strokeWidth={RING}\n            strokeCap=\"round\"\n            color={ORANGE}\n            end={drain}\n          />\n        </Canvas>\n      ) : null}\n\n      <Text\n        style={{\n          color: colors.highlight,\n          fontSize: font.size.xl,\n          fontWeight: font.weight.semibold,\n          fontVariant: ['tabular-nums'],\n        }}\n      >\n        {clockLabel(left)}\n      </Text>\n\n      <Animated.View style={[styles.orbit, comet]}>\n        <Canvas style={styles.orbit}>\n          <Path path={ORBIT_PATH} style=\"stroke\" strokeWidth={1} color={ORBIT_LINE} />\n          <Path path={TAIL_PATH} style=\"stroke\" strokeWidth={3} strokeCap=\"round\">\n            <SweepGradient\n              c={vec(COMET_C, COMET_C)}\n              colors={[TAIL_CLEAR, colors.highlight, TAIL_CLEAR]}\n              positions={[0, TAIL_SWEEP / 360, 1]}\n            />\n          </Path>\n          <Circle cx={COMET_C} cy={COMET_C - COMET_R} r={4} color={colors.highlight} />\n        </Canvas>\n      </Animated.View>\n\n      <View style={[styles.pill, { borderRadius: radius.sm }]}>\n        <Text style={{ color: ORANGE, fontSize: font.size.xs, fontWeight: font.weight.bold }}>\n          {label ?? `${Math.round(total / 60)} MIN`}\n        </Text>\n      </View>\n    </View>\n  );\n}\n\nconst ORANGE = 'hsl(26, 96%, 54%)';\nconst TRACK = 'hsl(26, 30%, 14%)';\nconst TAIL_CLEAR = 'hsla(0, 0%, 100%, 0)';\nconst ORBIT_LINE = 'hsla(0, 0%, 100%, 0.1)';\n\nconst styles = StyleSheet.create({\n  card: {\n    width: '100%',\n    maxWidth: 320,\n    height: H,\n    alignSelf: 'center',\n    flexDirection: 'row',\n    alignItems: 'center',\n    justifyContent: 'center',\n    gap: 14,\n    borderRadius: CORNER + RING / 2 + 1,\n    backgroundColor: 'hsl(0, 0%, 5%)',\n  },\n  canvas: { position: 'absolute', top: 0, left: 0, height: H },\n  orbit: { width: COMET_C * 2, height: COMET_C * 2 },\n  pill: {\n    paddingHorizontal: 10,\n    paddingVertical: 6,\n    borderWidth: 1,\n    borderColor: 'hsl(26, 50%, 28%)',\n  },\n});\n"
+    }
+  ],
+  "meta": {
+    "version": "1.0.0",
+    "kind": "component",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "category": "data",
+    "web": "live",
+    "perf": {
+      "budget": "The frame drains in one continuous UI-thread timing and the comet is one turning view, so it animates while running. The time re-renders once a second.",
+      "measurements": [
+        {
+          "device": "Huawei P20 Lite (ANE-LX1), Android 9",
+          "kind": "device",
+          "date": "2026-11-02",
+          "build": "release",
+          "frameMs": 13,
+          "p90Ms": 17,
+          "jankyPercent": 11.71,
+          "atRest": "animating",
+          "memoryMb": 132
+        }
+      ]
+    },
+    "a11y": {
+      "reducedMotion": "The frame steps with the clock and the comet holds still.",
+      "screenReader": "One timer (\"3:37 left\", or \"3:37 left, paused\").",
+      "touchTarget": "Not interactive."
+    },
+    "requires": "React Native New Architecture (Reanimated 4)",
+    "guide": "## Usage\n\n```tsx\nimport { TimerFrame } from '@/components/kinetik/timer-frame';\n\n<TimerFrame total={300} start={217} label=\"BREW\" />;\n```\n\n## When to use\n\n- Cooking, brewing, workouts and focus sessions.\n- Live timers where the time left should read at a glance.\n\n## When not to use\n\n- Long timers: the frame barely moves over hours.\n- Exact timing. It runs on the JS clock and is only as precise as a second.\n\n## Notes\n\n- The timer owns its countdown. Remount it with a new `key` to restart.\n- Setting `running` to false holds it, and it picks up from the same time.\n- `onDone` fires once when the time runs out.\n"
+  },
+  "docs": "Prefer `npx kinetik-ui add timer-frame`: it installs dependencies with expo install, so versions match your Expo SDK."
+}
